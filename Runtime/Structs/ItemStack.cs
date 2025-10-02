@@ -1,13 +1,13 @@
+using System;
+using System.Runtime.CompilerServices;
 using Kryz.RPG.Items.Interfaces;
 
 namespace Kryz.RPG.Items.Structs
 {
-	public readonly struct ItemStack
+	public readonly struct ItemStack : IEquatable<ItemStack>
 	{
 		public readonly IItem? Item;
 		public readonly int Count;
-
-		public bool IsValid => Item != null && Count > 0;
 
 		public ItemStack(IItem item) : this(item, 1) { }
 
@@ -68,5 +68,24 @@ namespace Kryz.RPG.Items.Structs
 			removedStack = default;
 			return false;
 		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public bool Equals(ItemStack other)
+		{
+			return Item == other.Item && Count == other.Count;
+		}
+
+		public override bool Equals(object obj)
+		{
+			return obj is ItemStack other && Equals(other);
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(Item, Count);
+		}
+
+		public static bool operator ==(ItemStack a, ItemStack b) => a.Equals(b);
+		public static bool operator !=(ItemStack a, ItemStack b) => !a.Equals(b);
 	}
 }
