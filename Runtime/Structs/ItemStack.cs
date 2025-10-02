@@ -1,5 +1,3 @@
-using System;
-
 namespace Kryz.RPG.Items
 {
 	public readonly struct ItemStack
