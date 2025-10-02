@@ -1,4 +1,6 @@
-namespace Kryz.RPG.Items
+using Kryz.RPG.Items.Interfaces;
+
+namespace Kryz.RPG.Items.Structs
 {
 	public readonly struct ItemStack
 	{

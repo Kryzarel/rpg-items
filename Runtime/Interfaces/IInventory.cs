@@ -1,6 +1,7 @@
 using System.Collections.Generic;
+using Kryz.RPG.Items.Structs;
 
-namespace Kryz.RPG.Items
+namespace Kryz.RPG.Items.Interfaces
 {
 	public interface IInventory
 	{

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Kryz.RPG.Items
+namespace Kryz.RPG.Items.Interfaces
 {
 	public interface IItemDefinition
 	{
