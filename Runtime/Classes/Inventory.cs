@@ -12,14 +12,14 @@ namespace Kryz.RPG.Items
 		private int numSlots;
 		private ItemStack[] slots;
 
-		public int NumSlots { get => numSlots; set => slots = GetSlots(value); }
+		public int NumSlots { get => numSlots; set => slots = SetNumSlots(value); }
 
 		public ReadOnlySpan<ItemStack> Slots => new(slots, 0, numSlots);
 
 		public Inventory(int numSlots, ArrayPool<ItemStack>? arrayPool = null)
 		{
 			this.arrayPool = arrayPool ?? ArrayPool<ItemStack>.Shared;
-			slots = GetSlots(numSlots);
+			slots = SetNumSlots(numSlots);
 		}
 
 		public bool TryAdd(ItemStack stack, out ItemStack remainder)
@@ -54,7 +54,7 @@ namespace Kryz.RPG.Items
 				slot = slot.Add(stack, maxCount, out stack);
 
 				// Success, we added the whole stack
-				if (stack.Count == 0)
+				if (stack.Item == null || stack.Count == 0)
 				{
 					remainder = default;
 					return true;
@@ -147,7 +147,7 @@ namespace Kryz.RPG.Items
 					slot = slot.Add(stack, maxCount, out stack);
 
 					// Success, we added the whole stack
-					if (stack == default)
+					if (stack.Item == null || stack.Count == 0)
 					{
 						return default;
 					}
@@ -161,17 +161,23 @@ namespace Kryz.RPG.Items
 			return freeBuffer[..freeCount];
 		}
 
-		private ItemStack[] GetSlots(int value)
+		private ItemStack[] SetNumSlots(int value)
 		{
-			if (slots.Length < value)
+			if (value <= 0)
+			{
+				value = 0;
+				slots = Array.Empty<ItemStack>();
+			}
+
+			if (value > slots.Length)
 			{
 				if (slots != null)
 				{
-					Array.Clear(slots, 0, value);
+					Array.Clear(slots, 0, numSlots);
 					arrayPool.Return(slots);
 				}
+
 				slots = arrayPool.Rent(value);
-				Array.Clear(slots, 0, slots.Length);
 			}
 
 			numSlots = value;
