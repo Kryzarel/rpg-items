@@ -1,20 +1,20 @@
-using System.Collections.Generic;
+using System;
 using Kryz.RPG.Items.Structs;
 
 namespace Kryz.RPG.Items.Interfaces
 {
 	public interface IInventory
 	{
-		int NumSlots { get; }
+		int NumSlots { get; set; }
 
-		IReadOnlyList<ItemStack> Slots { get; }
+		ReadOnlySpan<ItemStack> Slots { get; }
 
 		/// <summary>
 		/// Try to add an item stack to the first inventory slot that can receive it.
 		/// </summary>
 		/// <param name="stack">The item stack to add.</param>
 		/// <returns>True if the inventory had enough space and the item was added. False otherwise.</returns>
-		bool TryAdd(ItemStack stack);
+		bool TryAdd(ItemStack stack, out ItemStack remainder);
 
 		/// <summary>
 		/// Try to add an item stack to a specific inventory slot.
@@ -22,7 +22,7 @@ namespace Kryz.RPG.Items.Interfaces
 		/// <param name="index">The slot index to add to.</param>
 		/// <param name="stack">The item stack to add.</param>
 		/// <returns>True if the slot had enough space and the item was added. False otherwise.</returns>
-		bool TryAdd(int index, ItemStack stack);
+		bool TryAdd(int index, ItemStack stack, out ItemStack remainder);
 
 		/// <summary>
 		/// Try to remove an item stack from a specific inventory slot.

@@ -39,14 +39,14 @@ namespace Kryz.RPG.Items.Structs
 
 		public bool TryAdd(ItemStack toAdd, int maxCount, out ItemStack result, out ItemStack remainder)
 		{
-			if (toAdd.Count > 0 && toAdd.Item != null && toAdd.Item == Item)
+			if (toAdd.Count > 0 && toAdd.Item != null && (toAdd.Item == Item || Item == null))
 			{
 				int newCount = Count + toAdd.Count;
 				int remainingCount = newCount - maxCount;
 				int resultCount = remainingCount > 0 ? maxCount : newCount;
 
-				result = new ItemStack(Item, resultCount);
-				remainder = new ItemStack(Item, remainingCount);
+				result = new ItemStack(toAdd.Item, resultCount);
+				remainder = new ItemStack(toAdd.Item, remainingCount);
 				return true;
 			}
 
