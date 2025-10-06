@@ -70,6 +70,37 @@ namespace Kryz.RPG.Items.Tests
 				Assert.IsTrue(result == stack1);
 				Assert.IsTrue(stack2 == remainder);
 			}
+
+			ItemStack result2 = stack1.Add(stack2, maxCount, out ItemStack remainder2);
+			Assert.IsTrue(result2 == result);
+			Assert.IsTrue(remainder2 == remainder);
+		}
+
+		[Test]
+		public void ItemStack_Remove([ValueSource(itemsSouce)] IItem item, [ValueSource(stackSizesSouce)] int stackSize, [ValueSource(stackSizesSouce)] int amountToRemove)
+		{
+			ItemStack stack = new(item, stackSize);
+
+			bool success = stack.TryRemove(amountToRemove, out ItemStack result, out ItemStack removedStack);
+
+			if (amountToRemove > 0 && amountToRemove <= stack.Count && stack != default)
+			{
+				int resultCount = Math.Max(stack.Count - amountToRemove, 0);
+				int removedCount = Math.Min(stack.Count, amountToRemove);
+
+				Assert.AreEqual(result.Count, resultCount, 0);
+				Assert.AreEqual(removedStack.Count, removedCount, 0);
+			}
+			else
+			{
+				Assert.IsFalse(success);
+				Assert.IsTrue(result == stack);
+				Assert.IsTrue(removedStack == default);
+			}
+
+			ItemStack result2 = stack.Remove(amountToRemove, out ItemStack removedStack2);
+			Assert.IsTrue(result2 == result);
+			Assert.IsTrue(removedStack2 == removedStack);
 		}
 	}
 }
