@@ -1,5 +1,7 @@
 using System;
 using System.Buffers;
+using System.Collections;
+using System.Collections.Generic;
 using Kryz.RPG.Items.Interfaces;
 using Kryz.RPG.Items.Structs;
 
@@ -14,7 +16,9 @@ namespace Kryz.RPG.Items
 
 		public int NumSlots { get => numSlots; set => slots = SetNumSlots(value); }
 
-		public ReadOnlySpan<ItemStack> Slots => new(slots, 0, numSlots);
+		public ItemStack this[int index] => slots[index];
+
+		int IReadOnlyCollection<ItemStack>.Count => numSlots;
 
 		public Inventory(int numSlots, ArrayPool<ItemStack>? arrayPool = null)
 		{
@@ -50,6 +54,7 @@ namespace Kryz.RPG.Items
 			// If we still haven't added the whole stack, we try to add to free slots
 			foreach (int index in freeSlots)
 			{
+				// Get the slot by reference so we can change it without having to reindex into the array
 				ref ItemStack slot = ref slots[index];
 				slot = slot.Add(stack, maxCount, out stack);
 
@@ -134,12 +139,18 @@ namespace Kryz.RPG.Items
 			return true;
 		}
 
+		public Enumerator<ItemStack> GetEnumerator() => new(slots, numSlots);
+
+		IEnumerator<ItemStack> IEnumerable<ItemStack>.GetEnumerator() => GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
 		private ReadOnlySpan<int> AddOrGetFreeSlots(ref ItemStack stack, int maxCount, Span<int> freeBuffer)
 		{
 			int freeCount = 0;
 
 			for (int i = 0; i < numSlots; i++)
 			{
+				// Get the slot by reference so we can change it without having to reindex into the array
 				ref ItemStack slot = ref slots[i];
 
 				if (slot.Item == stack.Item)
@@ -182,6 +193,51 @@ namespace Kryz.RPG.Items
 
 			numSlots = value;
 			return slots;
+		}
+
+		public struct Enumerator<T> : IEnumerable<T>, IEnumerator<T>
+		{
+			private readonly T[] slots;
+			private readonly int count;
+
+			private int index;
+			private T current;
+
+			public readonly T Current => current;
+
+			readonly object IEnumerator.Current => Current!;
+
+			public Enumerator(T[] slots) : this(slots, slots.Length) { }
+
+			public Enumerator(T[] slots, int count)
+			{
+				this.slots = slots;
+				this.count = count;
+
+				index = 0;
+				current = default!;
+			}
+
+			public bool MoveNext()
+			{
+				if (index < count)
+				{
+					current = slots[index++];
+					return true;
+				}
+				return false;
+			}
+
+			public void Reset()
+			{
+				index = 0;
+				current = default!;
+			}
+
+			public readonly void Dispose() { }
+
+			readonly IEnumerator<T> IEnumerable<T>.GetEnumerator() => this;
+			readonly IEnumerator IEnumerable.GetEnumerator() => this;
 		}
 	}
 }

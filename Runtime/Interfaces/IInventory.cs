@@ -1,13 +1,11 @@
-using System;
+using System.Collections.Generic;
 using Kryz.RPG.Items.Structs;
 
 namespace Kryz.RPG.Items.Interfaces
 {
-	public interface IInventory
+	public interface IInventory : IReadOnlyList<ItemStack>
 	{
 		int NumSlots { get; set; }
-
-		ReadOnlySpan<ItemStack> Slots { get; }
 
 		/// <summary>
 		/// Try to add an item stack to the first inventory slot that can receive it.
