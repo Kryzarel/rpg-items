@@ -85,6 +85,11 @@ namespace Kryz.RPG.Items.Structs
 			return HashCode.Combine(Item, Count);
 		}
 
+		public override string ToString()
+		{
+			return Item == null ? "Empty Stack" : $"{Item.Definition.Name}x{Count}";
+		}
+
 		public static bool operator ==(ItemStack a, ItemStack b) => a.Equals(b);
 		public static bool operator !=(ItemStack a, ItemStack b) => !a.Equals(b);
 	}
