@@ -1,0 +1,75 @@
+using System;
+using Kryz.RPG.Items.Interfaces;
+using Kryz.RPG.Items.Structs;
+using NUnit.Framework;
+using UnityEngine;
+
+namespace Kryz.RPG.Items.Tests
+{
+	public class ItemStackTests
+	{
+		public class TestItemDefinition : IItemDefinition
+		{
+			public Sprite Icon => null!;
+			public string Name => "Test Item";
+			public string Description => "An item just for testing";
+			public int MaxStacks => 20;
+		}
+
+		public class TestItem : IItem
+		{
+			public IItemDefinition Definition { get; private set; }
+
+			public TestItem(IItemDefinition itemDefinition) => Definition = itemDefinition;
+		}
+
+		private const string itemsSouce = nameof(items);
+		private const string stackSizesSouce = nameof(stackSizes);
+
+		private static readonly TestItemDefinition definition = new();
+		private static readonly IItem[] items = { null!, new TestItem(definition), new TestItem(definition) };
+		private static readonly int[] stackSizes = { -1, 0, 1, definition.MaxStacks / 2, definition.MaxStacks, definition.MaxStacks * 2 };
+
+		[Test]
+		public void ItemStack_Create([ValueSource(itemsSouce)] IItem item, [ValueSource(stackSizesSouce)] int stackSize)
+		{
+			ItemStack stack = new(item, stackSize);
+
+			if (item == null || stackSize <= 0)
+			{
+				Assert.AreEqual(default(ItemStack), stack);
+			}
+			else
+			{
+				Assert.AreEqual(stack.Item, item);
+				Assert.AreEqual(stack.Count, stackSize, 0);
+			}
+		}
+
+		[Test]
+		public void ItemStack_Add([ValueSource(itemsSouce)] IItem item1, [ValueSource(itemsSouce)] IItem item2, [ValueSource(stackSizesSouce)] int stackSize1, [ValueSource(stackSizesSouce)] int stackSize2)
+		{
+			ItemStack stack1 = new(item1, stackSize1);
+			ItemStack stack2 = new(item2, stackSize2);
+
+			int maxCount = item1?.Definition?.MaxStacks ?? 0;
+
+			bool success = stack1.TryAdd(stack2, maxCount, out ItemStack result, out ItemStack remainder);
+
+			if (stack2 != default && (stack2.Item == stack1.Item || stack1 == default))
+			{
+				int resultCount = Math.Min(stack1.Count + stack2.Count, maxCount);
+				int remainderCount = Math.Max(stack1.Count + stack2.Count - maxCount, 0);
+
+				Assert.AreEqual(result.Count, resultCount, 0);
+				Assert.AreEqual(remainder.Count, remainderCount, 0);
+			}
+			else
+			{
+				Assert.IsFalse(success);
+				Assert.IsTrue(result == stack1);
+				Assert.IsTrue(stack2 == remainder);
+			}
+		}
+	}
+}

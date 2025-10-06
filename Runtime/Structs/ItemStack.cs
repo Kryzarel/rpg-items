@@ -51,7 +51,7 @@ namespace Kryz.RPG.Items.Structs
 			}
 
 			result = this;
-			remainder = default;
+			remainder = toAdd;
 			return false;
 		}
 
