@@ -6,6 +6,8 @@ namespace Kryz.RPG.Items.Interfaces
 	public interface IInventory : IReadOnlyList<ItemStack>
 	{
 		int NumSlots { get; set; }
+		int FullSlots { get; }
+		int FreeSlots { get; }
 
 		/// <summary>
 		/// Try to add an item stack to the first inventory slot that can receive it.

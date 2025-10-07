@@ -11,10 +11,13 @@ namespace Kryz.RPG.Items
 	{
 		private readonly ArrayPool<ItemStack> arrayPool;
 
-		private int numSlots;
 		private ItemStack[] slots;
+		private int numSlots;
+		private int fullSlots;
 
-		public int NumSlots { get => numSlots; set => slots = SetNumSlots(value); }
+		public int NumSlots { get => numSlots; set => SetNumSlots(value); }
+		public int FullSlots => fullSlots;
+		public int FreeSlots => numSlots - fullSlots;
 
 		public ItemStack this[int index] => slots[index];
 
@@ -23,7 +26,9 @@ namespace Kryz.RPG.Items
 		public Inventory(int numSlots, ArrayPool<ItemStack>? arrayPool = null)
 		{
 			this.arrayPool = arrayPool ?? ArrayPool<ItemStack>.Shared;
-			slots = SetNumSlots(numSlots);
+			this.numSlots = numSlots;
+			slots = this.numSlots > 0 ? this.arrayPool.Rent(numSlots) : Array.Empty<ItemStack>();
+			fullSlots = 0;
 		}
 
 		public bool TryAdd(ItemStack stack, out ItemStack remainder)
@@ -56,7 +61,15 @@ namespace Kryz.RPG.Items
 			{
 				// Get the slot by reference so we can change it without having to reindex into the array
 				ref ItemStack slot = ref slots[index];
+
+				bool wasEmpty = slot.Count == 0;
 				slot = slot.Add(stack, maxCount, out stack);
+				bool isEmpty = slot.Count == 0;
+
+				if (wasEmpty && !isEmpty)
+				{
+					fullSlots++;
+				}
 
 				// Success, we added the whole stack
 				if (stack.Item == null || stack.Count == 0)
@@ -81,10 +94,18 @@ namespace Kryz.RPG.Items
 			int maxCount = stack.Item.Definition.MaxStacks;
 			ref ItemStack slot = ref slots[index];
 
+			bool wasEmpty = slot.Count == 0;
+
 			if (slot.TryAdd(stack, maxCount, out ItemStack result, out stack))
 			{
 				slot = result;
 				remainder = stack;
+
+				bool isEmpty = slot.Count == 0;
+				if (wasEmpty && !isEmpty)
+				{
+					fullSlots++;
+				}
 				return true;
 			}
 
@@ -136,6 +157,7 @@ namespace Kryz.RPG.Items
 
 			stack = slot;
 			slot = default;
+			fullSlots--;
 			return true;
 		}
 
@@ -155,7 +177,14 @@ namespace Kryz.RPG.Items
 
 				if (slot.Item == stack.Item)
 				{
+					bool wasEmpty = slot.Count == 0;
 					slot = slot.Add(stack, maxCount, out stack);
+					bool isEmpty = slot.Count == 0;
+
+					if (wasEmpty && !isEmpty)
+					{
+						fullSlots++;
+					}
 
 					// Success, we added the whole stack
 					if (stack.Item == null || stack.Count == 0)
@@ -172,27 +201,35 @@ namespace Kryz.RPG.Items
 			return freeBuffer[..freeCount];
 		}
 
-		private ItemStack[] SetNumSlots(int value)
+		private void SetNumSlots(int value)
 		{
 			if (value <= 0)
 			{
 				value = 0;
-				slots = Array.Empty<ItemStack>();
-			}
 
-			if (value > slots.Length)
-			{
 				if (slots != null)
 				{
 					Array.Clear(slots, 0, numSlots);
 					arrayPool.Return(slots);
 				}
 
-				slots = arrayPool.Rent(value);
+				slots = Array.Empty<ItemStack>();
+			}
+			else if (value > slots.Length)
+			{
+				ItemStack[] newSlots = arrayPool.Rent(value);
+
+				if (slots != null)
+				{
+					Array.Copy(slots, newSlots, numSlots);
+					Array.Clear(slots, 0, numSlots);
+					arrayPool.Return(slots);
+				}
+
+				slots = newSlots;
 			}
 
 			numSlots = value;
-			return slots;
 		}
 
 		public struct Enumerator<T> : IEnumerable<T>, IEnumerator<T>
