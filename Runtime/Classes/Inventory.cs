@@ -15,11 +15,12 @@ namespace Kryz.RPG.Items.Classes
 		private int numSlots;
 		private int fullSlots;
 
+		public event Action<int> OnSlotChanged = delegate { };
+
+		public ItemStack this[int index] => slots[index];
 		public int NumSlots { get => numSlots; set => SetNumSlots(value); }
 		public int FullSlots => fullSlots;
 		public int FreeSlots => numSlots - fullSlots;
-
-		public ItemStack this[int index] => slots[index];
 
 		int IReadOnlyCollection<ItemStack>.Count => numSlots;
 
@@ -63,12 +64,12 @@ namespace Kryz.RPG.Items.Classes
 				ref ItemStack slot = ref slots[index];
 
 				bool wasEmpty = slot.Count == 0;
-				slot = slot.Add(stack, maxCount, out stack);
-				bool isEmpty = slot.Count == 0;
 
-				if (wasEmpty && !isEmpty)
+				if (slot.TryAdd(stack, maxCount, out ItemStack result, out stack))
 				{
-					fullSlots++;
+					slot = result;
+					if (wasEmpty) fullSlots++;
+					OnSlotChanged(index);
 				}
 
 				// Success, we added the whole stack
@@ -100,12 +101,8 @@ namespace Kryz.RPG.Items.Classes
 			{
 				slot = result;
 				remainder = stack;
-
-				bool isEmpty = slot.Count == 0;
-				if (wasEmpty && !isEmpty)
-				{
-					fullSlots++;
-				}
+				if (wasEmpty) fullSlots++;
+				OnSlotChanged(index);
 				return true;
 			}
 
@@ -133,10 +130,14 @@ namespace Kryz.RPG.Items.Classes
 			{
 				fromSlot = remainder;
 				toSlot = result;
+				OnSlotChanged(from);
+				OnSlotChanged(to);
 				return true;
 			}
 
 			(fromSlot, toSlot) = (toSlot, fromSlot);
+			OnSlotChanged(from);
+			OnSlotChanged(to);
 			return true;
 		}
 
@@ -158,6 +159,7 @@ namespace Kryz.RPG.Items.Classes
 			stack = slot;
 			slot = default;
 			fullSlots--;
+			OnSlotChanged(index);
 			return true;
 		}
 
@@ -178,12 +180,12 @@ namespace Kryz.RPG.Items.Classes
 				if (slot.Item == stack.Item)
 				{
 					bool wasEmpty = slot.Count == 0;
-					slot = slot.Add(stack, maxCount, out stack);
-					bool isEmpty = slot.Count == 0;
 
-					if (wasEmpty && !isEmpty)
+					if (slot.TryAdd(stack, maxCount, out ItemStack result, out stack))
 					{
-						fullSlots++;
+						slot = result;
+						if (wasEmpty) fullSlots++;
+						OnSlotChanged(i);
 					}
 
 					// Success, we added the whole stack

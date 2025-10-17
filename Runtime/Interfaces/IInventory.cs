@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Kryz.RPG.Items.Structs;
 
@@ -5,6 +6,8 @@ namespace Kryz.RPG.Items.Interfaces
 {
 	public interface IInventory : IReadOnlyList<ItemStack>
 	{
+		event Action<int> OnSlotChanged;
+
 		int NumSlots { get; set; }
 		int FullSlots { get; }
 		int FreeSlots { get; }
