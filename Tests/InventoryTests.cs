@@ -1,4 +1,5 @@
 using System;
+using Kryz.RPG.Items.Classes;
 using Kryz.RPG.Items.Structs;
 using NUnit.Framework;
 

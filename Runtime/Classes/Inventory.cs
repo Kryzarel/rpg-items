@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using Kryz.RPG.Items.Interfaces;
 using Kryz.RPG.Items.Structs;
 
-namespace Kryz.RPG.Items
+namespace Kryz.RPG.Items.Classes
 {
 	public class Inventory : IInventory
 	{
@@ -234,7 +234,7 @@ namespace Kryz.RPG.Items
 
 		public struct Enumerator<T> : IEnumerable<T>, IEnumerator<T>
 		{
-			private readonly T[] slots;
+			private readonly T[] array;
 			private readonly int count;
 
 			private int index;
@@ -244,11 +244,11 @@ namespace Kryz.RPG.Items
 
 			readonly object IEnumerator.Current => Current!;
 
-			public Enumerator(T[] slots) : this(slots, slots.Length) { }
+			public Enumerator(T[] array) : this(array, array.Length) { }
 
-			public Enumerator(T[] slots, int count)
+			public Enumerator(T[] array, int count)
 			{
-				this.slots = slots;
+				this.array = array;
 				this.count = count;
 
 				index = 0;
@@ -259,7 +259,7 @@ namespace Kryz.RPG.Items
 			{
 				if (index < count)
 				{
-					current = slots[index++];
+					current = array[index++];
 					return true;
 				}
 				return false;
