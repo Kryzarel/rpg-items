@@ -141,22 +141,22 @@ namespace Kryz.RPG.Items.Classes
 			return true;
 		}
 
-		public bool TryRemove(int index, out ItemStack stack)
+		public bool TryRemove(int index, out ItemStack removed)
 		{
 			if (index < 0 || index >= numSlots)
 			{
-				stack = default;
+				removed = default;
 				return false;
 			}
 
 			ref ItemStack slot = ref slots[index];
 			if (slot.Item == null || slot.Count == 0)
 			{
-				stack = default;
+				removed = default;
 				return false;
 			}
 
-			stack = slot;
+			removed = slot;
 			slot = default;
 			fullSlots--;
 			OnSlotChanged(index);
@@ -244,7 +244,7 @@ namespace Kryz.RPG.Items.Classes
 
 			public readonly T Current => current;
 
-			readonly object IEnumerator.Current => Current!;
+			readonly object? IEnumerator.Current => Current;
 
 			public Enumerator(T[] array) : this(array, array.Length) { }
 

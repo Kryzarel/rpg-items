@@ -31,9 +31,9 @@ namespace Kryz.RPG.Items.Interfaces
 		/// Try to remove an item stack from a specific inventory slot.
 		/// </summary>
 		/// <param name="index">The slot index to remove from.</param>
-		/// <param name="stack">The item stack that was removed.</param>
+		/// <param name="removed">The item stack that was removed.</param>
 		/// <returns>True if the slot had a valid item stack and it was removed. False otherwise.</returns>
-		bool TryRemove(int index, out ItemStack stack);
+		bool TryRemove(int index, out ItemStack removed);
 
 		/// <summary>
 		/// <para>Try to move an item stack from a specific inventory slot to another.</para>
