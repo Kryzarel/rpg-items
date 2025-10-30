@@ -2,8 +2,10 @@ using System;
 using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Kryz.RPG.Items.Interfaces;
 using Kryz.RPG.Items.Structs;
+using Kryz.Utils;
 
 namespace Kryz.RPG.Items.Classes
 {
@@ -41,14 +43,21 @@ namespace Kryz.RPG.Items.Classes
 			}
 
 			int startingCount = stack.Count;
-			// We might have some modifier to the maximum stacks each inventory can hold
+			// If we have some modifier to the maximum stacks each inventory can hold, apply it here
 			int maxCount = stack.Item.Definition.MaxStacks;
 			// If the stack has more items than 1 free slot can take, we need multiple free slots
 			// Fast integer division that always rounds up: https://stackoverflow.com/a/4175152
 			int freeSlotsNeeded = (stack.Count + maxCount - 1) / maxCount;
+			// There's no point requesting more free slots than the inventory has available
+			freeSlotsNeeded = Math.Min(freeSlotsNeeded, FreeSlots);
+
+			// If we need less than 1024 slots, we stackalloc an array of ints, otherwise we get an array from the pool to prevent a stack overflow
+			// Using 'SpanScope' shortens this process to a single line, rather than having to manually manage pooled arrays
+			// The likelyhood that we'll ever need more than 1024 slots for a single item stack is pretty small, but you never know
+			using SpanScope<int> scope = freeSlotsNeeded > 1024 ? new SpanScope<int>(freeSlotsNeeded) : stackalloc int[freeSlotsNeeded];
 
 			// First we try to add to slots that already have this item
-			ReadOnlySpan<int> freeSlots = AddOrGetFreeSlots(ref stack, maxCount, stackalloc int[freeSlotsNeeded]);
+			ReadOnlySpan<int> freeSlots = AddOrGetFreeSlots(ref stack, maxCount, scope);
 
 			// Success, we added the whole stack
 			if (stack.Count == 0)
@@ -73,7 +82,7 @@ namespace Kryz.RPG.Items.Classes
 				}
 
 				// Success, we added the whole stack
-				if (stack.Item == null || stack.Count == 0)
+				if (stack.Count == 0)
 				{
 					remainder = default;
 					return true;
@@ -163,11 +172,12 @@ namespace Kryz.RPG.Items.Classes
 			return true;
 		}
 
-		public Enumerator<ItemStack> GetEnumerator() => new(slots, numSlots);
+		public ArrayEnumerator<ItemStack> GetEnumerator() => new(slots, numSlots);
 
 		IEnumerator<ItemStack> IEnumerable<ItemStack>.GetEnumerator() => GetEnumerator();
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private ReadOnlySpan<int> AddOrGetFreeSlots(ref ItemStack stack, int maxCount, Span<int> freeBuffer)
 		{
 			int freeCount = 0;
@@ -189,7 +199,7 @@ namespace Kryz.RPG.Items.Classes
 					}
 
 					// Success, we added the whole stack
-					if (stack.Item == null || stack.Count == 0)
+					if (stack.Count == 0)
 					{
 						return default;
 					}
@@ -232,51 +242,6 @@ namespace Kryz.RPG.Items.Classes
 			}
 
 			numSlots = value;
-		}
-
-		public struct Enumerator<T> : IEnumerable<T>, IEnumerator<T>
-		{
-			private readonly T[] array;
-			private readonly int count;
-
-			private int index;
-			private T current;
-
-			public readonly T Current => current;
-
-			readonly object? IEnumerator.Current => Current;
-
-			public Enumerator(T[] array) : this(array, array.Length) { }
-
-			public Enumerator(T[] array, int count)
-			{
-				this.array = array;
-				this.count = count;
-
-				index = 0;
-				current = default!;
-			}
-
-			public bool MoveNext()
-			{
-				if (index < count)
-				{
-					current = array[index++];
-					return true;
-				}
-				return false;
-			}
-
-			public void Reset()
-			{
-				index = 0;
-				current = default!;
-			}
-
-			public readonly void Dispose() { }
-
-			readonly IEnumerator<T> IEnumerable<T>.GetEnumerator() => this;
-			readonly IEnumerator IEnumerable.GetEnumerator() => this;
 		}
 	}
 }
