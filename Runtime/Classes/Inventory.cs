@@ -178,7 +178,7 @@ namespace Kryz.RPG.Items.Classes
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private ReadOnlySpan<int> AddOrGetFreeSlots(ref ItemStack stack, int maxCount, Span<int> freeBuffer)
+		private ReadOnlySpan<int> AddOrGetFreeSlots(ref ItemStack stack, int maxCount, Span<int> freeSlots)
 		{
 			int freeCount = 0;
 
@@ -204,13 +204,13 @@ namespace Kryz.RPG.Items.Classes
 						return default;
 					}
 				}
-				else if (freeCount < freeBuffer.Length && slot.Item == null)
+				else if (freeCount < freeSlots.Length && slot.Item == null)
 				{
-					freeBuffer[freeCount++] = i;
+					freeSlots[freeCount++] = i;
 				}
 			}
 
-			return freeBuffer[..freeCount];
+			return freeSlots[..freeCount];
 		}
 
 		private void SetNumSlots(int value)
