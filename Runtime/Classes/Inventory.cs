@@ -92,6 +92,65 @@ namespace Kryz.RPG.Items.Classes
 			return remainder.Count < startingCount; // Return true if we added at least 1 item
 		}
 
+		public bool TryRemove(IItem item, int count, out ItemStack removed)
+		{
+			if (item == null || count <= 0)
+			{
+				removed = default;
+				return false;
+			}
+
+			// First we check if there's enough of the requested item
+			// We save the slot indexes where the item is found so that we can go back to them faster when removing
+			using SpanScope<int> scope = numSlots > 1024 ? new SpanScope<int>(numSlots) : stackalloc int[numSlots];
+			ReadOnlySpan<int> slotsWithItem = GetSlotsWithItem(item, scope, out int availableCount, count);
+
+			// We don't have enough of the requested item
+			if (availableCount < count)
+			{
+				removed = default;
+				return false;
+			}
+
+			for (int i = 0, required = count; i < slotsWithItem.Length && required > 0; i++)
+			{
+				int index = slotsWithItem[i];
+				ref ItemStack slot = ref slots[index];
+
+				// How much to remove from this slot. We either remove the whole stack, or just enough to get what we need.
+				int toRemove = Math.Min(required, slot.Count);
+				slot = slot.Remove(toRemove, out _);
+				OnSlotChanged(index);
+
+				required -= toRemove;
+			}
+
+			removed = new ItemStack(item, count);
+			return false;
+		}
+
+		public bool TryRemove(int index, out ItemStack removed)
+		{
+			if (index < 0 || index >= numSlots)
+			{
+				removed = default;
+				return false;
+			}
+
+			ref ItemStack slot = ref slots[index];
+			if (slot.Item == null || slot.Count == 0)
+			{
+				removed = default;
+				return false;
+			}
+
+			removed = slot;
+			slot = default;
+			fullSlots--;
+			OnSlotChanged(index);
+			return true;
+		}
+
 		public bool TryAdd(int index, ItemStack stack, out ItemStack remainder)
 		{
 			if (index < 0 || index >= numSlots || stack.Item == null || stack.Count == 0)
@@ -149,28 +208,6 @@ namespace Kryz.RPG.Items.Classes
 			return true;
 		}
 
-		public bool TryRemove(int index, out ItemStack removed)
-		{
-			if (index < 0 || index >= numSlots)
-			{
-				removed = default;
-				return false;
-			}
-
-			ref ItemStack slot = ref slots[index];
-			if (slot.Item == null || slot.Count == 0)
-			{
-				removed = default;
-				return false;
-			}
-
-			removed = slot;
-			slot = default;
-			fullSlots--;
-			OnSlotChanged(index);
-			return true;
-		}
-
 		public ArrayEnumerator<ItemStack> GetEnumerator() => new(slots, numSlots);
 
 		IEnumerator<ItemStack> IEnumerable<ItemStack>.GetEnumerator() => GetEnumerator();
@@ -210,6 +247,26 @@ namespace Kryz.RPG.Items.Classes
 			}
 
 			return freeSlots[..freeCount];
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private ReadOnlySpan<int> GetSlotsWithItem(IItem item, Span<int> slotIndexes, out int availableCount, int requiredCount = int.MaxValue)
+		{
+			availableCount = 0;
+			int slotCount = 0;
+
+			for (int i = 0; i < numSlots && availableCount < requiredCount; i++)
+			{
+				ItemStack slot = slots[i];
+
+				if (slot.Item == item)
+				{
+					availableCount += slot.Count;
+					slotIndexes[slotCount++] = i;
+				}
+			}
+
+			return slotIndexes[..slotCount];
 		}
 
 		private void SetNumSlots(int value)

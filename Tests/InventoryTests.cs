@@ -9,7 +9,6 @@ namespace Kryz.RPG.Items.Tests
 {
 	public class InventoryTests
 	{
-
 		private class TestItemDefinition : IItemDefinition
 		{
 			public Sprite Icon => null!;
@@ -48,7 +47,7 @@ namespace Kryz.RPG.Items.Tests
 
 			if (expectedSize <= 0)
 			{
-				Assert.Throws<IndexOutOfRangeException>(() => { ItemStack asd = inventory[0]; });
+				Assert.Throws<IndexOutOfRangeException>(() => { ItemStack stack = inventory[0]; });
 			}
 			else
 			{
@@ -57,6 +56,53 @@ namespace Kryz.RPG.Items.Tests
 					ItemStack slot = inventory[i];
 					Assert.IsTrue(slot.Item == null && slot.Count == 0);
 				}
+			}
+		}
+
+		[Test]
+		public void Iventory_Add_OneItem([ValueSource(sizesSouce)] int size, [ValueSource(itemsSouce)] IItem item, [ValueSource(stackSizesSouce)] int stackSize)
+		{
+			Inventory inventory = new(size);
+			ItemStack stack = new(item, stackSize);
+
+			if (inventory.NumSlots == 0 || stack.Count == 0 || stack.Item == null)
+			{
+				Assert.IsFalse(inventory.TryAdd(stack, out ItemStack remainder));
+				Assert.AreEqual(stack, remainder);
+			}
+			else
+			{
+				int freeSlots = inventory.FreeSlots;
+				int requiredSlots = (int)Math.Ceiling(stack.Count / (float)stack.Item.Definition.MaxStacks);
+
+				Assert.IsTrue(inventory.TryAdd(stack, out ItemStack remainder));
+
+				if (requiredSlots <= freeSlots)
+				{
+					Assert.AreEqual(default(ItemStack), remainder);
+				}
+				else
+				{
+					Assert.AreNotEqual(default(ItemStack), remainder);
+				}
+			}
+		}
+
+		[Test]
+		public void Iventory_Remove_OneItem([ValueSource(sizesSouce)] int size, [ValueSource(itemsSouce)] IItem item, [ValueSource(stackSizesSouce)] int stackSize)
+		{
+			Inventory inventory = new(size);
+			ItemStack stack = new(item, stackSize);
+			inventory.TryAdd(stack, out ItemStack remainder);
+
+			if (inventory.NumSlots == 0 || stack.Count == 0 || stack.Item == null)
+			{
+				Assert.IsFalse(inventory.TryRemove(item, stackSize, out ItemStack removed));
+				Assert.AreEqual(stack, remainder);
+			}
+			else
+			{
+
 			}
 		}
 	}
