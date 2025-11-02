@@ -10,7 +10,7 @@ namespace Kryz.RPG.Items.Interfaces
 
 		int NumSlots { get; set; }
 		int FreeSlots { get; }
-		int FullSlots { get; }
+		int FilledSlots { get; }
 
 		/// <summary>
 		/// Try to add an item stack any inventory slots that can receive it.

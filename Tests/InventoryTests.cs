@@ -43,7 +43,7 @@ namespace Kryz.RPG.Items.Tests
 			Assert.AreEqual(expectedSize, inventory.Count, 0);
 			Assert.AreEqual(expectedSize, inventory.NumSlots, 0);
 			Assert.AreEqual(expectedSize, inventory.FreeSlots, 0);
-			Assert.AreEqual(0, inventory.FullSlots, 0);
+			Assert.AreEqual(0, inventory.FilledSlots, 0);
 
 			if (expectedSize <= 0)
 			{

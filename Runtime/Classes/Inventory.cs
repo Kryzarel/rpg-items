@@ -2,6 +2,7 @@ using System;
 using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Kryz.RPG.Items.Interfaces;
 using Kryz.RPG.Items.Structs;
@@ -15,22 +16,22 @@ namespace Kryz.RPG.Items.Classes
 
 		private ItemStack[] slots;
 		private int numSlots;
-		private int fullSlots;
+		private int filledSlots;
 
 		public event Action<int> OnSlotChanged = delegate { };
 
 		public ItemStack this[int index] => slots[index];
 		public int Count => numSlots;
 		public int NumSlots { get => numSlots; set => SetNumSlots(value); }
-		public int FreeSlots => numSlots - fullSlots;
-		public int FullSlots => fullSlots;
+		public int FreeSlots => numSlots - filledSlots;
+		public int FilledSlots => filledSlots;
 
 		public Inventory(int numSlots, ArrayPool<ItemStack>? arrayPool = null)
 		{
 			this.arrayPool = arrayPool ?? ArrayPool<ItemStack>.Shared;
 			slots = null!;
 			SetNumSlots(numSlots);
-			fullSlots = 0;
+			filledSlots = 0;
 		}
 
 		public bool TryAdd(ItemStack stack, out ItemStack remainder)
@@ -76,7 +77,7 @@ namespace Kryz.RPG.Items.Classes
 				if (slot.TryAdd(stack, maxCount, out ItemStack result, out stack))
 				{
 					slot = result;
-					if (wasEmpty) fullSlots++;
+					if (wasEmpty) filledSlots++;
 					OnSlotChanged(index);
 				}
 
@@ -101,7 +102,7 @@ namespace Kryz.RPG.Items.Classes
 			}
 
 			// First we check if there's enough of the requested item
-			// We save the slot indexes where the item is found so that we can go back to them faster when removing
+			// We save the slot indexes that have the item so that we can go back to them faster when removing
 			using SpanScope<int> scope = numSlots > 1024 ? new SpanScope<int>(numSlots) : stackalloc int[numSlots];
 			ReadOnlySpan<int> slotsWithItem = GetSlotsWithItem(item, scope, out int availableCount, count);
 
@@ -119,10 +120,13 @@ namespace Kryz.RPG.Items.Classes
 
 				// How much to remove from this slot. We either remove the whole stack, or just enough to get what we need.
 				int toRemove = Math.Min(required, slot.Count);
-				slot = slot.Remove(toRemove, out _);
-				OnSlotChanged(index);
+				slot = slot.Remove(toRemove, out ItemStack removedStack);
+				if (slot.Count == 0) filledSlots--;
 
+				Debug.Assert(toRemove == removedStack.Count);
 				required -= toRemove;
+
+				OnSlotChanged(index);
 			}
 
 			removed = new ItemStack(item, count);
@@ -146,7 +150,7 @@ namespace Kryz.RPG.Items.Classes
 
 			removed = slot;
 			slot = default;
-			fullSlots--;
+			filledSlots--;
 			OnSlotChanged(index);
 			return true;
 		}
@@ -168,7 +172,7 @@ namespace Kryz.RPG.Items.Classes
 			{
 				slot = result;
 				remainder = stack;
-				if (wasEmpty) fullSlots++;
+				if (wasEmpty) filledSlots++;
 				OnSlotChanged(index);
 				return true;
 			}
@@ -230,7 +234,7 @@ namespace Kryz.RPG.Items.Classes
 					if (slot.TryAdd(stack, maxCount, out ItemStack result, out stack))
 					{
 						slot = result;
-						if (wasEmpty) fullSlots++;
+						if (wasEmpty) filledSlots++;
 						OnSlotChanged(i);
 					}
 
