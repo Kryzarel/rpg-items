@@ -130,7 +130,7 @@ namespace Kryz.RPG.Items.Classes
 			}
 
 			removed = new ItemStack(item, count);
-			return false;
+			return true;
 		}
 
 		public bool TryRemove(int index, out ItemStack removed)
