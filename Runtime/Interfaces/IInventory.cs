@@ -9,8 +9,8 @@ namespace Kryz.RPG.Items.Interfaces
 		event Action<int> OnSlotChanged;
 
 		int NumSlots { get; set; }
-		int FullSlots { get; }
 		int FreeSlots { get; }
+		int FullSlots { get; }
 
 		/// <summary>
 		/// Try to add an item stack to the first inventory slot that can receive it.

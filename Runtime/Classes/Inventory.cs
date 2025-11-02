@@ -20,17 +20,16 @@ namespace Kryz.RPG.Items.Classes
 		public event Action<int> OnSlotChanged = delegate { };
 
 		public ItemStack this[int index] => slots[index];
+		public int Count => numSlots;
 		public int NumSlots { get => numSlots; set => SetNumSlots(value); }
-		public int FullSlots => fullSlots;
 		public int FreeSlots => numSlots - fullSlots;
-
-		int IReadOnlyCollection<ItemStack>.Count => numSlots;
+		public int FullSlots => fullSlots;
 
 		public Inventory(int numSlots, ArrayPool<ItemStack>? arrayPool = null)
 		{
 			this.arrayPool = arrayPool ?? ArrayPool<ItemStack>.Shared;
-			this.numSlots = numSlots;
-			slots = this.numSlots > 0 ? this.arrayPool.Rent(numSlots) : Array.Empty<ItemStack>();
+			slots = null!;
+			SetNumSlots(numSlots);
 			fullSlots = 0;
 		}
 
@@ -227,11 +226,11 @@ namespace Kryz.RPG.Items.Classes
 
 				slots = Array.Empty<ItemStack>();
 			}
-			else if (value > slots.Length)
+			else if (slots == null || value > slots.Length)
 			{
 				ItemStack[] newSlots = arrayPool.Rent(value);
 
-				if (slots != null)
+				if (slots != null && slots.Length > 0)
 				{
 					Array.Copy(slots, newSlots, numSlots);
 					Array.Clear(slots, 0, numSlots);

@@ -8,7 +8,7 @@ namespace Kryz.RPG.Items.Tests
 {
 	public class ItemStackTests
 	{
-		public class TestItemDefinition : IItemDefinition
+		private class TestItemDefinition : IItemDefinition
 		{
 			public Sprite Icon => null!;
 			public string Name => "Test Item";
@@ -16,7 +16,7 @@ namespace Kryz.RPG.Items.Tests
 			public int MaxStacks => 20;
 		}
 
-		public class TestItem : IItem
+		private class TestItem : IItem
 		{
 			public IItemDefinition Definition { get; private set; }
 
