@@ -93,6 +93,32 @@ namespace Kryz.RPG.Items.Classes
 			return remainder.Count < startingCount; // Return true if we added at least 1 item
 		}
 
+		public bool TryAdd(int index, ItemStack stack, out ItemStack remainder)
+		{
+			if (stack.Item == null || stack.Count == 0)
+			{
+				remainder = stack;
+				return false;
+			}
+
+			int maxCount = stack.Item.Definition.MaxStacks;
+			ref ItemStack slot = ref slots[index];
+
+			bool wasEmpty = slot.Count == 0;
+
+			if (slot.TryAdd(stack, maxCount, out ItemStack result, out stack))
+			{
+				slot = result;
+				remainder = stack;
+				if (wasEmpty) filledSlots++;
+				OnSlotChanged(index);
+				return true;
+			}
+
+			remainder = stack;
+			return false;
+		}
+
 		public bool TryRemove(IItem item, int count, out ItemStack removed)
 		{
 			if (item == null || count <= 0)
@@ -121,11 +147,11 @@ namespace Kryz.RPG.Items.Classes
 				// How much to remove from this slot. We either remove the whole stack, or just enough to get what we need.
 				int toRemove = Math.Min(required, slot.Count);
 				slot = slot.Remove(toRemove, out ItemStack removedStack);
-				if (slot.Count == 0) filledSlots--;
 
 				Debug.Assert(toRemove == removedStack.Count);
 				required -= toRemove;
 
+				if (slot.Count == 0) filledSlots--;
 				OnSlotChanged(index);
 			}
 
@@ -133,82 +159,70 @@ namespace Kryz.RPG.Items.Classes
 			return true;
 		}
 
-		public bool TryRemove(int index, out ItemStack removed)
+		public bool TryRemove(int index, int count, out ItemStack removed)
 		{
-			if (index < 0 || index >= numSlots)
-			{
-				removed = default;
-				return false;
-			}
-
-			ref ItemStack slot = ref slots[index];
-			if (slot.Item == null || slot.Count == 0)
-			{
-				removed = default;
-				return false;
-			}
-
-			removed = slot;
-			slot = default;
-			filledSlots--;
-			OnSlotChanged(index);
-			return true;
-		}
-
-		public bool TryAdd(int index, ItemStack stack, out ItemStack remainder)
-		{
-			if (index < 0 || index >= numSlots || stack.Item == null || stack.Count == 0)
-			{
-				remainder = stack;
-				return false;
-			}
-
-			int maxCount = stack.Item.Definition.MaxStacks;
 			ref ItemStack slot = ref slots[index];
 
-			bool wasEmpty = slot.Count == 0;
-
-			if (slot.TryAdd(stack, maxCount, out ItemStack result, out stack))
+			if (slot.TryRemove(count, out ItemStack result, out removed))
 			{
 				slot = result;
-				remainder = stack;
-				if (wasEmpty) filledSlots++;
+				if (slot.Count == 0) filledSlots--;
 				OnSlotChanged(index);
 				return true;
 			}
 
-			remainder = stack;
 			return false;
 		}
 
-		public bool TryMove(int from, int to)
+		public bool TryRemove(int index, out ItemStack removed)
 		{
-			if (from < 0 || from >= numSlots || to < 0 || to >= numSlots)
+			return TryRemove(index, slots[index].Count, out removed);
+		}
+
+		public bool TryMove(int toIndex, int fromIndex, IInventory fromInventory)
+		{
+			if (toIndex == fromIndex && this == fromInventory || slots[toIndex] == fromInventory[fromIndex])
 			{
 				return false;
 			}
 
-			ref ItemStack fromSlot = ref slots[from];
+			if (fromInventory is not Inventory fromInv)
+			{
+				ItemStack toAdd = fromInventory[fromIndex];
+
+				if (TryAdd(toIndex, toAdd, out ItemStack remaining) && fromInventory.TryRemove(fromIndex, toAdd.Count - remaining.Count, out _))
+				{
+					return true;
+				}
+				else if (TryRemove(toIndex, out ItemStack removed1) && fromInventory.TryRemove(fromIndex, out ItemStack removed2))
+				{
+					return TryAdd(toIndex, removed2, out _) && fromInventory.TryAdd(fromIndex, removed1, out _);
+				}
+				return false;
+			}
+
+			ref ItemStack toSlot = ref slots[toIndex];
+			ref ItemStack fromSlot = ref fromInv.slots[fromIndex];
+
 			if (fromSlot.Item == null || fromSlot.Count == 0)
 			{
 				return false;
 			}
 
-			ref ItemStack toSlot = ref slots[to];
 			int maxCount = fromSlot.Item.Definition.MaxStacks;
 
 			if (toSlot.TryAdd(fromSlot, maxCount, out ItemStack result, out ItemStack remainder))
 			{
-				fromSlot = remainder;
 				toSlot = result;
-				OnSlotChanged(from);
-				OnSlotChanged(to);
+				fromSlot = remainder;
+				OnSlotChanged(toIndex);
+				fromInv.OnSlotChanged(fromIndex);
 				return true;
 			}
 
-			(fromSlot, toSlot) = (toSlot, fromSlot);
-			OnSlotChanged(from);
-			OnSlotChanged(to);
+			(toSlot, fromSlot) = (fromSlot, toSlot);
+			OnSlotChanged(toIndex);
+			fromInv.OnSlotChanged(fromIndex);
 			return true;
 		}
 
