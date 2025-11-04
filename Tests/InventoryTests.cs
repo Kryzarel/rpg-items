@@ -60,7 +60,7 @@ namespace Kryz.RPG.Items.Tests
 		}
 
 		[Test]
-		public void Iventory_Add_OneItem([ValueSource(sizesSouce)] int size, [ValueSource(itemsSouce)] IItem item, [ValueSource(stackSizesSouce)] int stackSize)
+		public void Iventory_Add_OneStack([ValueSource(sizesSouce)] int size, [ValueSource(itemsSouce)] IItem item, [ValueSource(stackSizesSouce)] int stackSize)
 		{
 			Inventory inventory = new(size);
 			ItemStack stack = new(item, stackSize);
@@ -76,6 +76,8 @@ namespace Kryz.RPG.Items.Tests
 				int requiredSlots = (int)Math.Ceiling(stack.Count / (float)stack.Item.Definition.MaxStacks);
 
 				Assert.IsTrue(inventory.TryAdd(stack, out ItemStack remainder));
+				Assert.AreEqual(Math.Max(0, freeSlots - requiredSlots), inventory.FreeSlots, 0);
+				Assert.AreEqual(Math.Min(inventory.NumSlots, requiredSlots), inventory.FilledSlots, 0);
 
 				if (requiredSlots <= freeSlots)
 				{
@@ -89,7 +91,7 @@ namespace Kryz.RPG.Items.Tests
 		}
 
 		[Test]
-		public void Iventory_Remove_OneItem([ValueSource(sizesSouce)] int size, [ValueSource(itemsSouce)] IItem item, [ValueSource(stackSizesSouce)] int stackSize)
+		public void Iventory_Remove_OneStack([ValueSource(sizesSouce)] int size, [ValueSource(itemsSouce)] IItem item, [ValueSource(stackSizesSouce)] int stackSize)
 		{
 			Inventory inventory = new(size);
 			ItemStack stack = new(item, stackSize);
