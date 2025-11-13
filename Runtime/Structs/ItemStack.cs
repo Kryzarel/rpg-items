@@ -25,7 +25,7 @@ namespace Kryz.RPG.Items.Structs
 			}
 		}
 
-		public ItemStack Add(ItemStack toAdd, int maxCount, out ItemStack remainder)
+		public ItemStack Add(in ItemStack toAdd, int maxCount, out ItemStack remainder)
 		{
 			TryAdd(toAdd, maxCount, out ItemStack stack, out remainder);
 			return stack;
@@ -37,7 +37,7 @@ namespace Kryz.RPG.Items.Structs
 			return stack;
 		}
 
-		public bool TryAdd(ItemStack toAdd, int maxCount, out ItemStack result, out ItemStack remainder)
+		public bool TryAdd(in ItemStack toAdd, int maxCount, out ItemStack result, out ItemStack remainder)
 		{
 			if (toAdd.Count > 0 && toAdd.Item != null && (toAdd.Item == Item || Item == null))
 			{
