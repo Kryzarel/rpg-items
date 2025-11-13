@@ -13,11 +13,24 @@ namespace Kryz.RPG.Items.Interfaces
 		int FilledSlots { get; }
 
 		/// <summary>
-		/// Try to add an item stack any inventory slots that can receive it.
+		/// <para>Get the maximum stack size for a particular item.</para>
+		/// <para>Even though <see cref="IItemDefinition"/> already specifies <see cref="IItemDefinition.MaxStacks"/>, an inventory may have a special multiplier for max stack size.</para>
+		/// </summary>
+		int GetMaxStackSize(IItem item);
+
+		/// <summary>
+		/// Set a slot to a specific <see cref="ItemStack"/>. This skips most checks other 'Try' methods do, like maximum stack size.
+		/// </summary>
+		/// <param name="index">The index of the slot to set.</param>
+		/// <param name="stack">The stack to set the slot to.</param>
+		void SetSlot(int index, in ItemStack stack);
+
+		/// <summary>
+		/// Try to add an item stack to any inventory slots that can receive it.
 		/// </summary>
 		/// <param name="stack">The item stack to add.</param>
 		/// <returns>True if the inventory had enough space and the item was added. False otherwise.</returns>
-		bool TryAdd(ItemStack stack, out ItemStack remainder);
+		bool TryAdd(in ItemStack stack, out ItemStack remainder);
 
 		/// <summary>
 		/// Try to add an item stack to a specific inventory slot.
@@ -25,7 +38,7 @@ namespace Kryz.RPG.Items.Interfaces
 		/// <param name="index">The slot index to add to.</param>
 		/// <param name="stack">The item stack to add.</param>
 		/// <returns>True if the slot had enough space and the item was added. False otherwise.</returns>
-		bool TryAdd(int index, ItemStack stack, out ItemStack remainder);
+		bool TryAdd(int index, in ItemStack stack, out ItemStack remainder);
 
 		/// <summary>
 		/// Try to remove a certain amount of a specific item from the inventory.
@@ -39,14 +52,14 @@ namespace Kryz.RPG.Items.Interfaces
 		/// <summary>
 		/// Try to remove a certain amount from a specific inventory slot.
 		/// </summary>
-		/// <param name="count">The amount of items to remove.</param>
 		/// <param name="index">The slot index to remove from.</param>
+		/// <param name="count">The amount of items to remove.</param>
 		/// <param name="removed">The item stack that was removed.</param>
 		/// <returns>True if the slot had a valid item stack and it was removed. False otherwise.</returns>
 		bool TryRemove(int index, int count, out ItemStack removed);
 
 		/// <summary>
-		/// Try to remove am item stack from a specific inventory slot.
+		/// Try to remove an entire item stack from a specific inventory slot.
 		/// </summary>
 		/// <param name="index">The slot index to remove from.</param>
 		/// <param name="removed">The item stack that was removed.</param>
@@ -55,13 +68,14 @@ namespace Kryz.RPG.Items.Interfaces
 
 		/// <summary>
 		/// <para>Try to move an item stack from a specific inventory slot to another.</para>
-		/// <para>If the '<paramref name="toIndex"/>' slot has enough space to the accept the item stack, it is simply moved.</para>
-		/// <para>Otherwise, the '<paramref name="toIndex"/>' and '<paramref name="fromIndex"/>' item stacks are swapped.</para>
+		/// <para>If the '<paramref name="toIndex"/>' slot can accept the item stack (same item and enough space), it is simply moved.</para>
+		/// <para>If '<paramref name="toIndex"/>' can't accept the item AND '<paramref name="allowSwap"/>' is true, the '<paramref name="toIndex"/>' and '<paramref name="fromIndex"/>' item stacks are swapped. Otherwise nothing happens.</para>
 		/// </summary>
 		/// <param name="toIndex">The slot index to move to.</param>
 		/// <param name="fromIndex">The slot index to move from.</param>
 		/// <param name="fromInventory">The inventory to move from.</param>
+		/// <param name="allowSwap">If we should swap the stacks when the target inventory doesn't have enough space.</param>
 		/// <returns>True if '<paramref name="fromIndex"/>' has a valid item stack and it was successfully moved to or swapped with '<paramref name="toIndex"/>'. False otherwise.</returns>
-		bool TryMove(int toIndex, int fromIndex, IInventory fromInventory);
+		bool TryMove(int toIndex, int fromIndex, IInventory fromInventory, bool allowSwap = false);
 	}
 }
