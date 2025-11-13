@@ -26,12 +26,14 @@ namespace Kryz.RPG.Items.Tests
 
 		private const string sizesSouce = nameof(sizes);
 		private const string itemsSouce = nameof(items);
+		private const string allStackSizesSouce = nameof(allStackSizes);
 		private const string stackSizesSouce = nameof(stackSizes);
 
 		private static readonly int[] sizes = { -1, 0, 1, 10, 100 };
 		private static readonly TestItemDefinition definition = new();
 		private static readonly IItem[] items = { null!, new TestItem(definition), new TestItem(definition) };
-		private static readonly int[] stackSizes = { -1, 0, 1, definition.MaxStacks / 2, definition.MaxStacks, definition.MaxStacks * 2 };
+		private static readonly int[] allStackSizes = { -1, 0, 1, definition.MaxStacks / 2, definition.MaxStacks, definition.MaxStacks * 2 };
+		private static readonly int[] stackSizes = { 1, definition.MaxStacks / 2, definition.MaxStacks, definition.MaxStacks * 2 };
 
 		[Test]
 		public void Iventory_Create([ValueSource(sizesSouce)] int size)
@@ -60,7 +62,7 @@ namespace Kryz.RPG.Items.Tests
 		}
 
 		[Test]
-		public void Iventory_Add_OneStack([ValueSource(sizesSouce)] int size, [ValueSource(itemsSouce)] IItem item, [ValueSource(stackSizesSouce)] int stackSize)
+		public void Iventory_Add_OneStack([ValueSource(sizesSouce)] int size, [ValueSource(itemsSouce)] IItem item, [ValueSource(allStackSizesSouce)] int stackSize)
 		{
 			Inventory inventory = new(size);
 			ItemStack stack = new(item, stackSize);
@@ -91,7 +93,7 @@ namespace Kryz.RPG.Items.Tests
 		}
 
 		[Test]
-		public void Iventory_Remove_OneStack([ValueSource(sizesSouce)] int size, [ValueSource(itemsSouce)] IItem item, [ValueSource(stackSizesSouce)] int stackSize)
+		public void Iventory_Remove_OneStack([ValueSource(sizesSouce)] int size, [ValueSource(itemsSouce)] IItem item, [ValueSource(allStackSizesSouce)] int stackSize)
 		{
 			Inventory inventory = new(size);
 			ItemStack stack = new(item, stackSize);
@@ -107,6 +109,92 @@ namespace Kryz.RPG.Items.Tests
 			{
 				Assert.IsTrue(inventory.TryRemove(item, addedCount, out ItemStack removed));
 				Assert.AreEqual(addedCount, removed.Count, 0);
+			}
+		}
+
+		[Test]
+		public void Iventory_Add_TwoStacks_SameItem([ValueSource(stackSizesSouce)] int stackSize1, [ValueSource(stackSizesSouce)] int stackSize2)
+		{
+			Inventory inventory = new(2);
+			ItemStack stack1 = new(items[1], stackSize1);
+			ItemStack stack2 = new(items[1], stackSize2);
+
+			Assert.IsTrue(inventory.TryAdd(stack1, out ItemStack remainder1));
+			Assert.AreEqual(default(ItemStack), remainder1); // The inventory should always have space to add the entire first item stack
+
+			if (inventory.FreeSlots > 0)
+			{
+				int freeSpaceForItem = 0;
+				for (int i = 0; i < inventory.NumSlots; i++)
+				{
+					ItemStack slot = inventory[i];
+					if (slot.Item == null || slot.Item == stack2.Item)
+					{
+						freeSpaceForItem += stack2.Item!.Definition.MaxStacks - slot.Count;
+					}
+				}
+
+				Assert.IsTrue(inventory.TryAdd(stack2, out ItemStack remainder2));
+				Assert.AreEqual(Math.Max(0, stack2.Count - freeSpaceForItem), remainder2.Count, 0);
+			}
+			else
+			{
+				Assert.IsFalse(inventory.TryAdd(stack2, out ItemStack remainder2));
+				Assert.AreEqual(stack2, remainder2);
+			}
+
+			Assert.IsTrue(inventory[0].Item == items[1]);
+
+			if (stack1.Count + stack2.Count > stack1.Item!.Definition.MaxStacks)
+			{
+				Assert.IsTrue(inventory[1].Item == items[1]);
+			}
+			else
+			{
+				Assert.IsTrue(inventory[1].Item == null);
+			}
+		}
+
+		[Test]
+		public void Iventory_Add_TwoStacks_DifferentItems([ValueSource(stackSizesSouce)] int stackSize1, [ValueSource(stackSizesSouce)] int stackSize2)
+		{
+			Inventory inventory = new(2);
+			ItemStack stack1 = new(items[1], stackSize1);
+			ItemStack stack2 = new(items[2], stackSize2);
+
+			Assert.IsTrue(inventory.TryAdd(stack1, out ItemStack remainder1));
+			Assert.AreEqual(default(ItemStack), remainder1); // The inventory should always have space to add the entire first item stack
+
+			if (inventory.FreeSlots > 0)
+			{
+				int freeSpaceForItem = 0;
+				for (int i = 0; i < inventory.NumSlots; i++)
+				{
+					ItemStack slot = inventory[i];
+					if (slot.Item == null || slot.Item == stack2.Item)
+					{
+						freeSpaceForItem += stack2.Item!.Definition.MaxStacks - slot.Count;
+					}
+				}
+
+				Assert.IsTrue(inventory.TryAdd(stack2, out ItemStack remainder2));
+				Assert.AreEqual(Math.Max(0, stack2.Count - freeSpaceForItem), remainder2.Count, 0);
+			}
+			else
+			{
+				Assert.IsFalse(inventory.TryAdd(stack2, out ItemStack remainder2));
+				Assert.AreEqual(stack2, remainder2);
+			}
+
+			Assert.IsTrue(inventory[0].Item == items[1]);
+
+			if (stack1.Count > stack1.Item!.Definition.MaxStacks)
+			{
+				Assert.IsTrue(inventory[1].Item == items[1]);
+			}
+			else
+			{
+				Assert.IsTrue(inventory[1].Item == items[2]);
 			}
 		}
 	}
