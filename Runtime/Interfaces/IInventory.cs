@@ -14,7 +14,7 @@ namespace Kryz.RPG.Items.Interfaces
 
 		/// <summary>
 		/// <para>Get the maximum stack size for a particular item.</para>
-		/// <para>Even though <see cref="IItemDefinition"/> already specifies <see cref="IItemDefinition.MaxStacks"/>, an inventory may have a special multiplier for max stack size.</para>
+		/// <para>Even though <see cref="IItemDefinition"/> already specifies <see cref="IItemDefinition.MaxStacks"/>, an inventory may have a special rules that allow larger stacks of certain items.</para>
 		/// </summary>
 		int GetMaxStackSize(IItem item);
 
@@ -29,6 +29,7 @@ namespace Kryz.RPG.Items.Interfaces
 		/// Try to add an item stack to any inventory slots that can receive it.
 		/// </summary>
 		/// <param name="stack">The item stack to add.</param>
+		/// <param name="remainder">If <paramref name="stack"/> could not be added in its entirety, this will contain how much remains of the original stack.</param>
 		/// <returns>True if the inventory had enough space and the item was added. False otherwise.</returns>
 		bool TryAdd(in ItemStack stack, out ItemStack remainder);
 
@@ -37,6 +38,7 @@ namespace Kryz.RPG.Items.Interfaces
 		/// </summary>
 		/// <param name="index">The slot index to add to.</param>
 		/// <param name="stack">The item stack to add.</param>
+		/// <param name="remainder">If <paramref name="stack"/> could not be added in its entirety, this will contain how much remains of the original stack.</param>
 		/// <returns>True if the slot had enough space and the item was added. False otherwise.</returns>
 		bool TryAdd(int index, in ItemStack stack, out ItemStack remainder);
 
