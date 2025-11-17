@@ -41,7 +41,12 @@ namespace Kryz.RPG.Items.Classes
 
 		public void SetSlot(int index, in ItemStack stack)
 		{
-			SetSlot(ref slots[index], index, stack);
+			ref ItemStack slot = ref slots[index];
+
+			if (slot != stack)
+			{
+				SetSlot(ref slot, index, stack);
+			}
 		}
 
 		public bool TryAdd(in ItemStack stack, out ItemStack remainder)
@@ -188,13 +193,10 @@ namespace Kryz.RPG.Items.Classes
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void SetSlot(ref ItemStack slot, int index, in ItemStack stack)
 		{
-			if (slot != stack)
-			{
-				if (slot.Count <= 0 && stack.Count > 0) filledSlots++;
-				if (slot.Count > 0 && stack.Count <= 0) filledSlots--;
-				slot = stack;
-				OnSlotChanged(index);
-			}
+			if (slot.Count <= 0 && stack.Count > 0) filledSlots++;
+			else if (slot.Count > 0 && stack.Count <= 0) filledSlots--;
+			slot = stack;
+			OnSlotChanged(index);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
