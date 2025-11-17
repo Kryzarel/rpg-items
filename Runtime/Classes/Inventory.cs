@@ -176,7 +176,7 @@ namespace Kryz.RPG.Items.Classes
 				SetSlot(ref toSlot, toIndex, result);
 				return true;
 			}
-			else if (allowSwap)
+			else if (allowSwap && toSlot != fromSlot)
 			{
 				fromInventory.SetSlot(fromIndex, toSlot); // Must be done first since 'toSlot' is changed by ref
 				SetSlot(ref toSlot, toIndex, fromSlot);
