@@ -25,36 +25,65 @@ namespace Kryz.RPG.Items.Structs
 			}
 		}
 
-		public ItemStack Add(in ItemStack toAdd, int maxCount, out ItemStack remainder)
+		/// <summary>
+		/// Try to add another item stack to this one.
+		/// </summary>
+		/// <param name="stack">The item stack to add.</param>
+		/// <param name="remainder">If <paramref name="stack"/> could not be added in its entirety, this will contain how much remains of the original stack.</param>
+		/// <returns>The <see cref="ItemStack"/> that resulted from merging the original stack with the '<paramref name="stack"/>' parameter.
+		/// If the total count is larger than '<paramref name="maxCount"/>', check the '<paramref name="remainder"/>' variable for the items that couldn't be added.</returns>
+		public ItemStack Add(in ItemStack stack, int maxCount, out ItemStack remainder)
 		{
-			TryAdd(toAdd, maxCount, out ItemStack stack, out remainder);
-			return stack;
+			TryAdd(stack, maxCount, out ItemStack result, out remainder);
+			return result;
 		}
 
+		/// <summary>
+		/// Try to remove a certain number of items from this stack.
+		/// </summary>
+		/// <param name="count">The number of items to remove.</param>
+		/// <param name="removedStack">The item stack that was removed, or an empty stack if it was not possible to remove the requested number of items.</param>
+		/// <returns>The <see cref="ItemStack"/> that resulted from removing '<paramref name="count"/>' items. If it was not possible to remove '<paramref name="count"/>' items, the original stack will be returned instead.</returns>
 		public ItemStack Remove(int count, out ItemStack removedStack)
 		{
-			TryRemove(count, out ItemStack stack, out removedStack);
-			return stack;
+			TryRemove(count, out ItemStack result, out removedStack);
+			return result;
 		}
 
-		public bool TryAdd(in ItemStack toAdd, int maxCount, out ItemStack result, out ItemStack remainder)
+		/// <summary>
+		/// Try to add another item stack to this one.
+		/// </summary>
+		/// <param name="stack">The item stack to add.</param>
+		/// <param name="maxCount">The maximum number of items each stack can hold.</param>
+		/// <param name="result">The <see cref="ItemStack"/> that resulted from merging the original stack with the '<paramref name="stack"/>' parameter.
+		/// If the total count is larger than '<paramref name="maxCount"/>', check the '<paramref name="remainder"/>' variable for the items that couldn't be added.</param>
+		/// <param name="remainder">If the <paramref name="stack"/> parameter could not be added in its entirety, this will contain how much remains of the original stack.</param>
+		/// <returns>True if one or more items in the <paramref name="stack"/> parameter were added. False otherwise.</returns>
+		public bool TryAdd(in ItemStack stack, int maxCount, out ItemStack result, out ItemStack remainder)
 		{
-			if (toAdd.Count > 0 && toAdd.Item != null && (toAdd.Item == Item || Item == null))
+			if (stack.Count > 0 && stack.Item != null && (Item == stack.Item || Item == null))
 			{
-				int newCount = Count + toAdd.Count;
+				int newCount = Count + stack.Count;
 				int remainingCount = newCount - maxCount;
 				int resultCount = remainingCount > 0 ? maxCount : newCount;
 
-				result = new ItemStack(toAdd.Item, resultCount);
-				remainder = new ItemStack(toAdd.Item, remainingCount);
+				result = new ItemStack(stack.Item, resultCount);
+				remainder = new ItemStack(stack.Item, remainingCount);
 				return true;
 			}
 
 			result = this;
-			remainder = toAdd;
+			remainder = stack;
 			return false;
 		}
 
+		/// <summary>
+		/// Try to remove a certain number of items from this stack.
+		/// </summary>
+		/// <param name="count">The number of items to remove.</param>
+		/// <param name="removedStack">The item stack that was removed, or an empty stack if it was not possible to remove the requested number of items.</param>
+		/// <param name="result">The <see cref="ItemStack"/> that resulted from removing '<paramref name="count"/>' items. If it was not possible to remove '<paramref name="count"/>' items, the original stack will be returned instead.</param>
+		/// <returns>True if the original <see cref="ItemStack"/> had '<paramref name="count"/>' or more items. False otherwise.</returns>
 		public bool TryRemove(int count, out ItemStack result, out ItemStack removedStack)
 		{
 			if (count > 0 && count <= Count && Item != null)
