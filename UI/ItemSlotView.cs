@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace Kryz.RPG.Items.UI
 {
-	public class ItemSlotUI : MonoBehaviour
+	public class ItemSlotView : MonoBehaviour
 	{
 		[SerializeField] Image image;
 		[SerializeField] Text countText;
