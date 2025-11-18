@@ -7,6 +7,7 @@ namespace Kryz.RPG.Items.Interfaces
 	public interface IInventory : IReadOnlyList<ItemStack>
 	{
 		event Action<int> OnSlotChanged;
+		event Action<int> OnNumSlotsChanged;
 
 		int NumSlots { get; set; }
 		int FreeSlots { get; }

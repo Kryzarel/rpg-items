@@ -18,6 +18,7 @@ namespace Kryz.RPG.Items.Classes
 		private int filledSlots;
 
 		public event Action<int> OnSlotChanged = delegate { };
+		public event Action<int> OnNumSlotsChanged = delegate { };
 
 		public ItemStack this[int index] => slots[index];
 		public int Count => numSlots;
@@ -260,6 +261,11 @@ namespace Kryz.RPG.Items.Classes
 
 		private void SetNumSlots(int value)
 		{
+			if (numSlots == value)
+			{
+				return;
+			}
+
 			if (value <= 0)
 			{
 				value = 0;
@@ -287,6 +293,7 @@ namespace Kryz.RPG.Items.Classes
 			}
 
 			numSlots = value;
+			OnNumSlotsChanged(value);
 		}
 	}
 }
