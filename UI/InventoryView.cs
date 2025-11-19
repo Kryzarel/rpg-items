@@ -28,6 +28,8 @@ namespace Kryz.RPG.Items.UI
 		private Action<int> onSlotChangedDelegate;
 		private Action<int> onNumSlotsChangedDelegate;
 
+		public IInventory? Inventory => inventory;
+
 		private void OnValidate()
 		{
 			if (itemSlotsParent == null) itemSlotsParent = (RectTransform)transform;
@@ -58,7 +60,9 @@ namespace Kryz.RPG.Items.UI
 
 			for (int i = 0; i < itemSlots.Count; i++)
 			{
-				itemSlots[i].gameObject.SetActive(i < numSlots);
+				ItemSlotView itemSlotView = itemSlots[i];
+				itemSlotView.Index = i;
+				itemSlotView.gameObject.SetActive(i < numSlots);
 			}
 		}
 
