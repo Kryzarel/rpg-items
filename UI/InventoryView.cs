@@ -16,7 +16,9 @@ namespace Kryz.RPG.Items.UI
 		[SerializeField]
 		private RectTransform itemSlotsParent;
 		[SerializeField]
-		private List<ItemSlotView> itemSlots;
+		private List<ItemSlotView> itemSlots = new();
+		[SerializeField]
+		private Serialize<IItemSlotInteraction> itemSlotInteraction;
 
 		[Header("Settings")]
 		[SerializeField, Tooltip("The minimum amount of slots to instantiate and display.")]
@@ -24,11 +26,12 @@ namespace Kryz.RPG.Items.UI
 		[SerializeField, Tooltip("The maximum amount of slots that can be displayed. A value of 0 or lower means infinite.")]
 		private int maxSlots;
 
-		private IInventory? inventory;
 		private Action<int> onSlotChangedDelegate;
 		private Action<int> onNumSlotsChangedDelegate;
+		private IInventory? inventory;
 
 		public IInventory? Inventory => inventory;
+		public IReadOnlyList<ItemSlotView> ItemSlots => itemSlots;
 
 		private void OnValidate()
 		{
@@ -39,31 +42,9 @@ namespace Kryz.RPG.Items.UI
 
 		private void Awake()
 		{
+			OnValidate(); // Call OnValidate to make sure everything is setup correctly
 			onSlotChangedDelegate = OnSlotChanged;
 			onNumSlotsChangedDelegate = OnNumSlotsChanged;
-		}
-
-		private void HandleSlotViews()
-		{
-			if (inventory != null && inventory.NumSlots > maxSlots && maxSlots > 0)
-			{
-				Debug.LogError($"Inventory has {inventory.NumSlots} slots, but the {nameof(InventoryView)} is configured to display a maximum of {maxSlots}.", this);
-			}
-
-			int inventorySlots = inventory != null ? inventory.NumSlots : 0;
-			int numSlots = Math.Clamp(inventorySlots, minSlots, maxSlots);
-
-			for (int i = itemSlots.Count; i < numSlots; i++)
-			{
-				itemSlots.Add(Instantiate(itemSlotPrefab));
-			}
-
-			for (int i = 0; i < itemSlots.Count; i++)
-			{
-				ItemSlotView itemSlotView = itemSlots[i];
-				itemSlotView.Index = i;
-				itemSlotView.gameObject.SetActive(i < numSlots);
-			}
 		}
 
 		public void SetInventory(IInventory? newInventory)
@@ -87,11 +68,44 @@ namespace Kryz.RPG.Items.UI
 			{
 				inventory.OnSlotChanged += onSlotChangedDelegate;
 				inventory.OnNumSlotsChanged += onNumSlotsChangedDelegate;
+			}
+		}
 
-				for (int i = 0; i < inventory.Count; i++)
-				{
-					itemSlots[i].SetItemStack(inventory[i]);
-				}
+		private void HandleSlotViews()
+		{
+			if (inventory != null && inventory.NumSlots > maxSlots && maxSlots > 0)
+			{
+				Debug.LogError($"Inventory has {inventory.NumSlots} slots, but the {nameof(InventoryView)} is configured to display a maximum of {maxSlots}.", this);
+			}
+
+			int inventorySlots = inventory != null ? inventory.NumSlots : 0;
+			int numSlots = Math.Clamp(inventorySlots, minSlots, maxSlots);
+
+			for (int i = 0; i < itemSlots.Count; i++)
+			{
+				SetupSlot(itemSlots[i], i, itemSlotInteraction.Value, i < numSlots);
+			}
+
+			if (itemSlots.Count < numSlots && itemSlotPrefab == null)
+			{
+				string msg = $"Failed to instantiate {nameof(ItemSlotView)}s because {nameof(itemSlotPrefab)} is null.";
+				if (Application.isPlaying) Debug.LogError(msg, this);
+				else Debug.LogWarning(msg, this);
+				return;
+			}
+
+			for (int i = itemSlots.Count; i < numSlots; i++)
+			{
+				ItemSlotView itemSlotView = Instantiate(itemSlotPrefab, itemSlotsParent);
+				itemSlots.Add(itemSlotView);
+				SetupSlot(itemSlotView, i, itemSlotInteraction.Value, true);
+			}
+
+			static void SetupSlot(ItemSlotView itemSlotView, int index, IItemSlotInteraction? interaction, bool enabled)
+			{
+				itemSlotView.Index = index;
+				itemSlotView.Interaction = interaction;
+				itemSlotView.gameObject.SetActive(enabled);
 			}
 		}
 

@@ -1,4 +1,3 @@
-using System;
 using Kryz.RPG.Items.Structs;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -6,7 +5,7 @@ using UnityEngine.UI;
 
 namespace Kryz.RPG.Items.UI
 {
-	public class ItemSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler, IBeginDragHandler, IEndDragHandler, IDragHandler, IDropHandler
+	public class ItemSlotView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IBeginDragHandler, IEndDragHandler, IDragHandler, IDropHandler
 	{
 		[SerializeField] Image image;
 		[SerializeField] Text countText;
@@ -14,17 +13,15 @@ namespace Kryz.RPG.Items.UI
 		private ItemStack itemStack;
 
 		public ItemStack ItemStack => itemStack;
+
 		public int Index;
+		public IItemSlotInteraction? Interaction;
 
-		public event Action<ItemSlotView, PointerEventData>? OnPointerEnterEvent;
-		public event Action<ItemSlotView, PointerEventData>? OnPointerExitEvent;
-		public event Action<ItemSlotView, PointerEventData>? OnPointerClickEvent;
-		public event Action<ItemSlotView, PointerEventData>? OnBeginDragEvent;
-		public event Action<ItemSlotView, PointerEventData>? OnEndDragEvent;
-		public event Action<ItemSlotView, PointerEventData>? OnDragEvent;
-		public event Action<ItemSlotView, PointerEventData>? OnDropEvent;
-
-		private void Awake() => SetItemStack(default);
+		private void Awake()
+		{
+			image.sprite = null!;
+			countText.text = string.Empty;
+		}
 
 		public void SetItemStack(ItemStack stack)
 		{
@@ -40,27 +37,18 @@ namespace Kryz.RPG.Items.UI
 
 			if (itemStack.Count != stack.Count)
 			{
-				if (stack.Count > 1)
-				{
-					countText.text = stack.Count.ToString();
-				}
-
-				bool enabled = stack.Count > 0;
-				if (countText.enabled != enabled)
-				{
-					countText.enabled = enabled;
-				}
+				countText.text = stack.Count > 1 ? stack.Count.ToString() : string.Empty;
 			}
 
 			itemStack = stack;
 		}
 
-		public void OnPointerEnter(PointerEventData eventData) => OnPointerEnterEvent?.Invoke(this, eventData);
-		public void OnPointerExit(PointerEventData eventData) => OnPointerExitEvent?.Invoke(this, eventData);
-		public void OnPointerClick(PointerEventData eventData) => OnPointerClickEvent?.Invoke(this, eventData);
-		public void OnBeginDrag(PointerEventData eventData) => OnBeginDragEvent?.Invoke(this, eventData);
-		public void OnEndDrag(PointerEventData eventData) => OnEndDragEvent?.Invoke(this, eventData);
-		public void OnDrag(PointerEventData eventData) => OnDragEvent?.Invoke(this, eventData);
-		public void OnDrop(PointerEventData eventData) => OnDropEvent?.Invoke(this, eventData);
+		public void OnPointerClick(PointerEventData eventData) => Interaction?.OnPointerClick(this, eventData);
+		public void OnPointerEnter(PointerEventData eventData) => Interaction?.OnPointerEnter(this, eventData);
+		public void OnPointerExit(PointerEventData eventData) => Interaction?.OnPointerExit(this, eventData);
+		public void OnBeginDrag(PointerEventData eventData) => Interaction?.OnBeginDrag(this, eventData);
+		public void OnEndDrag(PointerEventData eventData) => Interaction?.OnEndDrag(this, eventData);
+		public void OnDrag(PointerEventData eventData) => Interaction?.OnDrag(this, eventData);
+		public void OnDrop(PointerEventData eventData) => Interaction?.OnDrop(this, eventData);
 	}
 }
