@@ -20,7 +20,7 @@ namespace Kryz.RPG.Items.Interfaces
 		int GetMaxStackSize(IItem item);
 
 		/// <summary>
-		/// Set a slot to a specific <see cref="ItemStack"/>. This skips most checks other 'Try' methods do, like maximum stack size.
+		/// Set a slot to a specific <see cref="ItemStack"/>.
 		/// </summary>
 		/// <param name="index">The index of the slot to set.</param>
 		/// <param name="stack">The stack to set the slot to.</param>
@@ -53,7 +53,7 @@ namespace Kryz.RPG.Items.Interfaces
 		bool TryRemove(IItem item, int count, out ItemStack removed);
 
 		/// <summary>
-		/// Try to remove a certain amount from a specific inventory slot.
+		/// Try to remove a certain amount of items from a specific inventory slot.
 		/// </summary>
 		/// <param name="index">The slot index to remove from.</param>
 		/// <param name="count">The amount of items to remove.</param>
