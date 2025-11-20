@@ -83,7 +83,9 @@ namespace Kryz.RPG.Items.UI
 
 			for (int i = 0; i < itemSlots.Count; i++)
 			{
-				SetupSlot(itemSlots[i], i, itemSlotInteraction.Value, i < numSlots);
+				ItemSlotView itemSlotView = itemSlots[i];
+				itemSlotView.Setup(i, itemSlotInteraction.Value);
+				itemSlotView.gameObject.SetActive(i < numSlots);
 			}
 
 			if (itemSlots.Count < numSlots && itemSlotPrefab == null)
@@ -98,14 +100,8 @@ namespace Kryz.RPG.Items.UI
 			{
 				ItemSlotView itemSlotView = Instantiate(itemSlotPrefab, itemSlotsParent);
 				itemSlots.Add(itemSlotView);
-				SetupSlot(itemSlotView, i, itemSlotInteraction.Value, true);
-			}
-
-			static void SetupSlot(ItemSlotView itemSlotView, int index, IItemSlotInteraction? interaction, bool enabled)
-			{
-				itemSlotView.Index = index;
-				itemSlotView.Interaction = interaction;
-				itemSlotView.gameObject.SetActive(enabled);
+				itemSlotView.Setup(i, itemSlotInteraction.Value);
+				itemSlotView.gameObject.SetActive(true);
 			}
 		}
 
