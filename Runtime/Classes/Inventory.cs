@@ -298,7 +298,7 @@ namespace Kryz.RPG.Items.Classes
 
 		private void SetNumSlots(int value)
 		{
-			if (numSlots == value)
+			if (numSlots == value && slots != null)
 			{
 				return;
 			}

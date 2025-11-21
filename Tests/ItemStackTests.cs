@@ -56,7 +56,7 @@ namespace Kryz.RPG.Items.Tests
 
 			bool success = stack1.TryAdd(stack2, maxCount, out ItemStack result, out ItemStack remainder);
 
-			if (stack2 != default && (stack2.Item == stack1.Item || stack1 == default))
+			if (stack2 != default && (stack1.Item == stack2.Item && stack1.Count < maxCount || stack1 == default))
 			{
 				int resultCount = Math.Min(stack1.Count + stack2.Count, maxCount);
 				int remainderCount = Math.Max(stack1.Count + stack2.Count - maxCount, 0);

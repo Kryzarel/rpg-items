@@ -61,7 +61,7 @@ namespace Kryz.RPG.Items.Structs
 		/// <returns>True if one or more items in the <paramref name="stack"/> parameter were added. False otherwise.</returns>
 		public bool TryAdd(in ItemStack stack, int maxCount, out ItemStack result, out ItemStack remainder)
 		{
-			if (stack.Count > 0 && stack.Item != null && (Item == stack.Item || Item == null))
+			if (stack.Item != null && (Item == stack.Item && Count < maxCount || Item == null))
 			{
 				int newCount = Count + stack.Count;
 				int remainingCount = newCount - maxCount;
