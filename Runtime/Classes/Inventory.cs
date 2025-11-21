@@ -40,33 +40,66 @@ namespace Kryz.RPG.Items.Classes
 			return item.Definition.MaxStacks;
 		}
 
-		public void SetSlot(int index, in ItemStack stack)
-		{
-			ref ItemStack slot = ref slots[index];
-
-			if (slot != stack)
-			{
-				SetSlot(ref slot, index, stack);
-			}
-		}
-
 		public bool CanAdd(in ItemStack stack, out ItemStack remainder)
 		{
-			remainder = stack;
-
 			if (stack.Item == null || stack.Count == 0)
 			{
+				remainder = default;
 				return false;
 			}
 
+			remainder = stack;
 			int maxCount = GetMaxStackSize(stack.Item);
 
 			for (int i = 0; i < numSlots && remainder.Count > 0; i++)
 			{
+				// Call ItemStack.TryAdd() but don't assign the result to anything.
+				// This way we check what WOULD happen without actually changing the inventory.
 				slots[i].TryAdd(remainder, maxCount, out _, out remainder);
 			}
 
-			return remainder.Count > 0;
+			return remainder.Count < stack.Count;
+		}
+
+		public bool CanAdd(int index, in ItemStack stack, out ItemStack remainder)
+		{
+			if (stack.Item == null || stack.Count == 0)
+			{
+				remainder = default;
+				return false;
+			}
+
+			int maxCount = GetMaxStackSize(stack.Item);
+			return slots[index].TryAdd(stack, maxCount, out _, out remainder);
+		}
+
+		public bool CanRemove(IItem item, int count)
+		{
+			for (int i = 0; i < numSlots && count > 0; i++)
+			{
+				ItemStack slot = slots[i];
+				if (slot.Item == item)
+				{
+					count -= slot.Count;
+				}
+			}
+			return count <= 0;
+		}
+
+		public bool CanRemove(int index, int count)
+		{
+			return slots[index].Count >= count;
+		}
+
+		public bool CanRemove(int index)
+		{
+			return slots[index].Count > 0;
+		}
+
+		public bool CanSwap(int index, in ItemStack stack, out ItemStack removed)
+		{
+			removed = slots[index];
+			return stack.Item == null || default(ItemStack).TryAdd(stack, GetMaxStackSize(stack.Item), out _, out ItemStack remainder) && remainder.Count == 0;
 		}
 
 		public bool TryAdd(in ItemStack stack, out ItemStack remainder)
@@ -171,10 +204,7 @@ namespace Kryz.RPG.Items.Classes
 				int index = slotsWithItem[i];
 				ref ItemStack slot = ref slots[index];
 
-				// How much to remove from this slot. We either remove the whole stack, or just enough to get what we need.
-				int countToRemove = Math.Min(required, slot.Count);
-
-				if (slot.TryRemove(countToRemove, out ItemStack result, out ItemStack removedStack))
+				if (slot.TryRemove(Math.Min(required, slot.Count), out ItemStack result, out ItemStack removedStack))
 				{
 					SetSlot(ref slot, index, result);
 					required -= removedStack.Count;
@@ -196,6 +226,19 @@ namespace Kryz.RPG.Items.Classes
 			return TryRemove(ref slot, index, slot.Count, out removed);
 		}
 
+		public bool TrySwap(int index, in ItemStack stack, out ItemStack removed)
+		{
+			ref ItemStack slot = ref slots[index];
+			removed = slot;
+
+			if (stack.Item == null || default(ItemStack).TryAdd(stack, GetMaxStackSize(stack.Item), out _, out ItemStack remainder) && remainder.Count == 0)
+			{
+				SetSlot(ref slot, index, stack);
+				return true;
+			}
+			return false;
+		}
+
 		public bool TryMove(int toIndex, int fromIndex, IInventory fromInventory, bool allowSwap = false)
 		{
 			ItemStack fromSlot = fromInventory[fromIndex];
@@ -208,15 +251,15 @@ namespace Kryz.RPG.Items.Classes
 			ref ItemStack toSlot = ref slots[toIndex];
 			int maxCount = GetMaxStackSize(fromSlot.Item);
 
-			if (toSlot.TryAdd(fromSlot, maxCount, out ItemStack result, out ItemStack remainder))
+			if (toSlot.TryAdd(fromSlot, maxCount, out ItemStack result, out ItemStack remainder) && fromInventory.TryRemove(fromIndex, fromSlot.Count - remainder.Count, out _))
 			{
-				fromInventory.SetSlot(fromIndex, remainder);
 				SetSlot(ref toSlot, toIndex, result);
 				return true;
 			}
-			else if (allowSwap && toSlot != fromSlot)
+			else if (allowSwap && toSlot != fromSlot
+				&& default(ItemStack).TryAdd(fromSlot, maxCount, out _, out remainder) && remainder.Count == 0
+				&& fromInventory.TrySwap(fromIndex, toSlot, out _))
 			{
-				fromInventory.SetSlot(fromIndex, toSlot); // Must be done first since 'toSlot' is changed by ref
 				SetSlot(ref toSlot, toIndex, fromSlot);
 				return true;
 			}
@@ -259,7 +302,7 @@ namespace Kryz.RPG.Items.Classes
 				// Get the slot by reference so we can change it without having to reindex into the array
 				ref ItemStack slot = ref slots[i];
 
-				if (slot.Item == remainder.Item)
+				if (slot.Item == stack.Item)
 				{
 					if (slot.TryAdd(remainder, maxCount, out ItemStack result, out remainder))
 					{

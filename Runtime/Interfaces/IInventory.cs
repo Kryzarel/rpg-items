@@ -20,26 +20,59 @@ namespace Kryz.RPG.Items.Interfaces
 		int GetMaxStackSize(IItem item);
 
 		/// <summary>
-		/// Set a slot to a specific <see cref="ItemStack"/>.
-		/// </summary>
-		/// <param name="index">The index of the slot to set.</param>
-		/// <param name="stack">The stack to set the slot to.</param>
-		void SetSlot(int index, in ItemStack stack);
-
-		/// <summary>
-		/// Check if it's possible to add an item stack to the inventory.
+		/// Check if it's possible to add at least 1 item from an <see cref="ItemStack"/> to the inventory.
 		/// </summary>
 		/// <param name="stack">The item stack to add.</param>
-		/// <param name="remainder">If <paramref name="stack"/> cannot be added in its entirety, this will contain how will be leftover of the original stack.</param>
-		/// <returns>True if the inventory has enough space to add the item. False otherwise.</returns>
+		/// <param name="remainder">If <paramref name="stack"/> cannot be added in its entirety, this will contain how much will remain of the original stack.</param>
+		/// <returns>True if the inventory has enough space to add at least 1 item. False otherwise.</returns>
 		bool CanAdd(in ItemStack stack, out ItemStack remainder);
+
+		/// <summary>
+		/// Check if it's possible to add at least 1 item from an <see cref="ItemStack"/> to a specific inventory slot.
+		/// </summary>
+		/// <param name="stack">The item stack to add.</param>
+		/// <param name="remainder">If <paramref name="stack"/> cannot be added in its entirety, this will contain how much will remain of the original stack.</param>
+		/// <returns>True if the slot has enough space to add at least 1 item. False otherwise.</returns>
+		bool CanAdd(int index, in ItemStack stack, out ItemStack remainder);
+
+		/// <summary>
+		/// Check if it's possible to remove a certain amount of a specific item from the inventory.
+		/// </summary>
+		/// <param name="item">The item to remove.</param>
+		/// <param name="count">The amount to remove.</param>
+		/// <returns>True if the inventory has enough of the specified item and it can be removed. False otherwise.</returns>
+		bool CanRemove(IItem item, int count);
+
+		/// <summary>
+		/// Check if it's possible to remove a certain amount of items from a specific inventory slot.
+		/// </summary>
+		/// <param name="index">The slot index to remove from.</param>
+		/// <param name="count">The amount of items to remove.</param>
+		/// <returns>True if the slot has enough items and they can be removed. False otherwise.</returns>
+		bool CanRemove(int index, int count);
+
+		/// <summary>
+		/// Check if it's possible to remove an entire item stack from a specific inventory slot.
+		/// </summary>
+		/// <param name="index">The slot index to remove from.</param>
+		/// <returns>True if the slot has any items and they can be removed. False otherwise.</returns>
+		bool CanRemove(int index);
+
+		/// <summary>
+		/// Check if it's possible to swap a specific inventory slot with another item stack.
+		/// </summary>
+		/// <param name="index">The slot index to swap.</param>
+		/// <param name="stack">The stack to swap with.</param>
+		/// <param name="removed">The stack that will be removed from the slot after swapping.</param>
+		/// <returns>True if the slot can be swapped. False otherwise.</returns>
+		bool CanSwap(int index, in ItemStack stack, out ItemStack removed);
 
 		/// <summary>
 		/// Try to add an item stack to any inventory slots that can receive it.
 		/// </summary>
 		/// <param name="stack">The item stack to add.</param>
 		/// <param name="remainder">If <paramref name="stack"/> could not be added in its entirety, this will contain how much remains of the original stack.</param>
-		/// <returns>True if the inventory had enough space and the item was added. False otherwise.</returns>
+		/// <returns>True if the inventory had enough space to add at least 1 item. False otherwise.</returns>
 		bool TryAdd(in ItemStack stack, out ItemStack remainder);
 
 		/// <summary>
@@ -76,6 +109,15 @@ namespace Kryz.RPG.Items.Interfaces
 		/// <param name="removed">The item stack that was removed.</param>
 		/// <returns>True if the slot had a valid item stack and it was removed. False otherwise.</returns>
 		bool TryRemove(int index, out ItemStack removed);
+
+		/// <summary>
+		/// Try to swap a specific inventory slot with another item stack.
+		/// </summary>
+		/// <param name="index">The slot index to swap.</param>
+		/// <param name="stack">The stack to to swap with.</param>
+		/// <param name="removed">The stack that was originally in the slot.</param>
+		/// <returns>True if the slot was swapped. False otherwise.</returns>
+		bool TrySwap(int index, in ItemStack stack, out ItemStack removed);
 
 		/// <summary>
 		/// <para>Try to move an item stack from a specific inventory slot to another.</para>
