@@ -98,8 +98,10 @@ namespace Kryz.RPG.Items.Classes
 
 		public bool CanSwap(int index, in ItemStack stack, out ItemStack removed)
 		{
-			removed = slots[index];
-			return stack.Item == null || default(ItemStack).TryAdd(stack, GetMaxStackSize(stack.Item), out _, out ItemStack remainder) && remainder.Count == 0;
+			ItemStack slot = slots[index];
+			bool success = stack != slot && (stack.Item == null || stack.Count <= GetMaxStackSize(stack.Item));
+			removed = success ? slot : default;
+			return success;
 		}
 
 		public bool TryAdd(in ItemStack stack, out ItemStack remainder)
@@ -203,8 +205,9 @@ namespace Kryz.RPG.Items.Classes
 			{
 				int index = slotsWithItem[i];
 				ref ItemStack slot = ref slots[index];
+				int countToRemove = Math.Min(required, slot.Count);
 
-				if (slot.TryRemove(Math.Min(required, slot.Count), out ItemStack result, out ItemStack removedStack))
+				if (slot.TryRemove(countToRemove, out ItemStack result, out ItemStack removedStack))
 				{
 					SetSlot(ref slot, index, result);
 					required -= removedStack.Count;
@@ -229,13 +232,15 @@ namespace Kryz.RPG.Items.Classes
 		public bool TrySwap(int index, in ItemStack stack, out ItemStack removed)
 		{
 			ref ItemStack slot = ref slots[index];
-			removed = slot;
 
-			if (stack.Item == null || default(ItemStack).TryAdd(stack, GetMaxStackSize(stack.Item), out _, out ItemStack remainder) && remainder.Count == 0)
+			if (stack != slot && (stack.Item == null || stack.Count <= GetMaxStackSize(stack.Item)))
 			{
+				removed = slot;
 				SetSlot(ref slot, index, stack);
 				return true;
 			}
+
+			removed = default;
 			return false;
 		}
 
@@ -251,14 +256,12 @@ namespace Kryz.RPG.Items.Classes
 			ref ItemStack toSlot = ref slots[toIndex];
 			int maxCount = GetMaxStackSize(fromSlot.Item);
 
-			if (toSlot.TryAdd(fromSlot, maxCount, out ItemStack result, out ItemStack remainder) && fromInventory.TryRemove(fromIndex, fromSlot.Count - remainder.Count, out _))
+			if (toSlot.TryAdd(fromSlot, maxCount, out ItemStack result, out ItemStack remainder) && fromInventory.TrySwap(fromIndex, remainder, out _))
 			{
 				SetSlot(ref toSlot, toIndex, result);
 				return true;
 			}
-			else if (allowSwap && toSlot != fromSlot
-				&& default(ItemStack).TryAdd(fromSlot, maxCount, out _, out remainder) && remainder.Count == 0
-				&& fromInventory.TrySwap(fromIndex, toSlot, out _))
+			else if (allowSwap && fromSlot.Count <= maxCount && fromInventory.TrySwap(fromIndex, toSlot, out _))
 			{
 				SetSlot(ref toSlot, toIndex, fromSlot);
 				return true;
