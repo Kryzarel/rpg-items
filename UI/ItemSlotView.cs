@@ -1,3 +1,4 @@
+using Kryz.RPG.Items.Interfaces;
 using Kryz.RPG.Items.Structs;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -5,12 +6,13 @@ using UnityEngine.UI;
 
 namespace Kryz.RPG.Items.UI
 {
-	public class ItemSlotView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IBeginDragHandler, IEndDragHandler, IDragHandler, IDropHandler
+	public class ItemSlotView : MonoBehaviour, IItemSlotView, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IBeginDragHandler, IEndDragHandler, IDragHandler, IDropHandler
 	{
 		[SerializeField] Image image;
 		[SerializeField] Text countText;
 
 		public int Index { get; private set; }
+		public IInventory? Inventory { get; private set; }
 		public IItemSlotInteraction? Interaction { get; private set; }
 		public ItemStack ItemStack { get; private set; }
 
@@ -30,9 +32,10 @@ namespace Kryz.RPG.Items.UI
 			countText.text = string.Empty;
 		}
 
-		public void Setup(int index, IItemSlotInteraction? interaction)
+		public void Setup(int index, IInventory? inventory, IItemSlotInteraction? interaction)
 		{
 			Index = index;
+			Inventory = inventory;
 			Interaction = interaction;
 		}
 

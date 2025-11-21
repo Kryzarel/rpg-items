@@ -21,7 +21,7 @@ namespace Kryz.RPG.Items.UI
 			if (component != null && component is not T)
 			{
 				Debug.LogWarning($"Component '{component.GetType().Name}' is not of type '{typeof(T).Name}'.", component);
-				component = null!;
+				component = null;
 			}
 		}
 	}
