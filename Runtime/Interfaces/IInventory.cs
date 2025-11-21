@@ -27,6 +27,14 @@ namespace Kryz.RPG.Items.Interfaces
 		void SetSlot(int index, in ItemStack stack);
 
 		/// <summary>
+		/// Check if it's possible to add an item stack to the inventory.
+		/// </summary>
+		/// <param name="stack">The item stack to add.</param>
+		/// <param name="remainder">If <paramref name="stack"/> cannot be added in its entirety, this will contain how will be leftover of the original stack.</param>
+		/// <returns>True if the inventory has enough space to add the item. False otherwise.</returns>
+		bool CanAdd(in ItemStack stack, out ItemStack remainder);
+
+		/// <summary>
 		/// Try to add an item stack to any inventory slots that can receive it.
 		/// </summary>
 		/// <param name="stack">The item stack to add.</param>

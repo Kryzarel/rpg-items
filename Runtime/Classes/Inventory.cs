@@ -50,6 +50,25 @@ namespace Kryz.RPG.Items.Classes
 			}
 		}
 
+		public bool CanAdd(in ItemStack stack, out ItemStack remainder)
+		{
+			remainder = stack;
+
+			if (stack.Item == null || stack.Count == 0)
+			{
+				return false;
+			}
+
+			int maxCount = GetMaxStackSize(stack.Item);
+
+			for (int i = 0; i < numSlots && remainder.Count > 0; i++)
+			{
+				slots[i].TryAdd(remainder, maxCount, out _, out remainder);
+			}
+
+			return remainder.Count > 0;
+		}
+
 		public bool TryAdd(in ItemStack stack, out ItemStack remainder)
 		{
 			remainder = stack;
@@ -86,8 +105,26 @@ namespace Kryz.RPG.Items.Classes
 				}
 			}
 
+			// AddToSlotsWithItem(remainder, stack.Item, maxCount, out remainder);
+			// AddToSlotsWithItem(remainder, null, maxCount, out remainder);
+
 			return remainder.Count < stack.Count; // Return true if we added at least 1 item
 		}
+
+		// private void AddToSlotsWithItem(in ItemStack stack, IItem? item, int maxCount, out ItemStack remainder)
+		// {
+		// 	remainder = stack;
+
+		// 	for (int i = 0; i < numSlots && remainder.Count > 0; i++)
+		// 	{
+		// 		ref ItemStack slot = ref slots[i];
+
+		// 		if (slot.Item == item && slot.TryAdd(remainder, maxCount, out ItemStack result, out remainder))
+		// 		{
+		// 			SetSlot(ref slot, i, result);
+		// 		}
+		// 	}
+		// }
 
 		public bool TryAdd(int index, in ItemStack stack, out ItemStack remainder)
 		{
