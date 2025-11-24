@@ -37,7 +37,7 @@ namespace Kryz.RPG.Items.Classes
 		public int GetMaxStackSize(IItem item)
 		{
 			// If we have some modifier to the maximum stacks each inventory can hold, apply it here
-			return item.Definition.MaxStacks;
+			return item.MaxStacks;
 		}
 
 		public bool CanAdd(in ItemStack stack, out ItemStack remainder)

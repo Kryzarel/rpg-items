@@ -116,7 +116,7 @@ namespace Kryz.RPG.Items.Structs
 
 		public override string ToString()
 		{
-			return Item == null ? "Empty Stack" : $"{Item.Definition.Name} x {Count}";
+			return Item == null ? "Empty Stack" : $"{Item.Name} x {Count}";
 		}
 
 		public static bool operator ==(ItemStack a, ItemStack b) => a.Equals(b);

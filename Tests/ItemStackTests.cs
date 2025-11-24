@@ -8,27 +8,27 @@ namespace Kryz.RPG.Items.Tests
 {
 	public class ItemStackTests
 	{
-		private class TestItemDefinition : IItemDefinition
-		{
-			public Sprite Icon => null!;
-			public string Name => "Test Item";
-			public string Description => "An item just for testing";
-			public int MaxStacks => 20;
-		}
+		private class TestItemDefinition : IItemDefinition { }
 
 		private class TestItem : IItem
 		{
 			public IItemDefinition Definition { get; private set; }
+			public Sprite Icon => null!;
+			public string Name => "Test Item";
+			public string Description => "An item just for testing";
+			public int MaxStacks => maxStacks;
 
 			public TestItem(IItemDefinition itemDefinition) => Definition = itemDefinition;
 		}
+
+		private const int maxStacks = 20;
 
 		private const string itemsSouce = nameof(items);
 		private const string stackSizesSouce = nameof(stackSizes);
 
 		private static readonly TestItemDefinition definition = new();
 		private static readonly IItem[] items = { null!, new TestItem(definition), new TestItem(definition) };
-		private static readonly int[] stackSizes = { -1, 0, 1, definition.MaxStacks / 2, definition.MaxStacks, definition.MaxStacks * 2 };
+		private static readonly int[] stackSizes = { -1, 0, 1, maxStacks / 2, maxStacks, maxStacks * 2 };
 
 		[Test]
 		public void ItemStack_Create([ValueSource(itemsSouce)] IItem item, [ValueSource(stackSizesSouce)] int stackSize)
@@ -52,7 +52,7 @@ namespace Kryz.RPG.Items.Tests
 			ItemStack stack1 = new(item1, stackSize1);
 			ItemStack stack2 = new(item2, stackSize2);
 
-			int maxCount = item1?.Definition?.MaxStacks ?? 0;
+			int maxCount = item1?.MaxStacks ?? 0;
 
 			bool success = stack1.TryAdd(stack2, maxCount, out ItemStack result, out ItemStack remainder);
 

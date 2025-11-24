@@ -46,9 +46,9 @@ namespace Kryz.RPG.Items.UI
 				return;
 			}
 
-			if (image.sprite != stack.Item?.Definition.Icon)
+			if (image.sprite != stack.Item?.Icon)
 			{
-				image.sprite = stack.Item?.Definition.Icon!;
+				image.sprite = stack.Item?.Icon!;
 			}
 
 			if (ItemStack.Count != stack.Count)
