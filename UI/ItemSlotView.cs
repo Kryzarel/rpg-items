@@ -11,10 +11,15 @@ namespace Kryz.RPG.Items.UI
 		[SerializeField] Image image;
 		[SerializeField] Text countText;
 
-		public int Index { get; private set; }
-		public IInventory? Inventory { get; private set; }
-		public IItemSlotInteraction? Interaction { get; private set; }
-		public ItemStack ItemStack { get; private set; }
+		private int index;
+		private IInventory? inventory;
+		private IItemSlotInteraction? interaction;
+		private ItemStack itemStack;
+
+		public int Index => index;
+		public IInventory? Inventory => inventory;
+		public IItemSlotInteraction? Interaction => interaction;
+		public ItemStack ItemStack => itemStack;
 
 		private void OnValidate()
 		{
@@ -34,14 +39,14 @@ namespace Kryz.RPG.Items.UI
 
 		public void Setup(int index, IInventory? inventory, IItemSlotInteraction? interaction)
 		{
-			Index = index;
-			Inventory = inventory;
-			Interaction = interaction;
+			this.index = index;
+			this.inventory = inventory;
+			this.interaction = interaction;
 		}
 
 		public void SetItemStack(ItemStack stack)
 		{
-			if (ItemStack == stack)
+			if (itemStack == stack)
 			{
 				return;
 			}
@@ -51,12 +56,12 @@ namespace Kryz.RPG.Items.UI
 				image.sprite = stack.Item?.Icon!;
 			}
 
-			if (ItemStack.Count != stack.Count)
+			if (itemStack.Count != stack.Count)
 			{
 				countText.text = stack.Count > 1 ? stack.Count.ToString() : string.Empty;
 			}
 
-			ItemStack = stack;
+			itemStack = stack;
 		}
 
 		public void OnPointerClick(PointerEventData eventData) => Interaction?.OnPointerClick(this, eventData);

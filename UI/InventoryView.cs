@@ -62,13 +62,13 @@ namespace Kryz.RPG.Items.UI
 
 			inventory = newInventory;
 
-			HandleSlotViews();
-
 			if (inventory != null)
 			{
 				inventory.OnSlotChanged += onSlotChangedDelegate;
 				inventory.OnNumSlotsChanged += onNumSlotsChangedDelegate;
 			}
+
+			HandleSlotViews();
 		}
 
 		private void HandleSlotViews()
