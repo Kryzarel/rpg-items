@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Kryz.RPG.Items.Interfaces;
 using UnityEngine;
 
-namespace Kryz.RPG.Items.UI
+namespace Kryz.RPG.Items.Views
 {
 	[RequireComponent(typeof(RectTransform))]
 	public class InventoryView : MonoBehaviour

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Kryz.RPG.Items.UI
+namespace Kryz.RPG.Items.Views
 {
 	[Serializable]
 	public struct Serialize<T> : ISerializationCallbackReceiver where T : class

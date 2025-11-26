@@ -3,7 +3,7 @@ using Kryz.RPG.Items.Interfaces;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace Kryz.RPG.Items.UI
+namespace Kryz.RPG.Items.Views
 {
 	public class ItemSlotInteraction : MonoBehaviour, IItemSlotInteraction
 	{

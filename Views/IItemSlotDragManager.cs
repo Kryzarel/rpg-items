@@ -1,6 +1,6 @@
 using UnityEngine.EventSystems;
 
-namespace Kryz.RPG.Items.UI
+namespace Kryz.RPG.Items.Views
 {
 	public interface IItemSlotDragManager
 	{
