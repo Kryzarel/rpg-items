@@ -30,11 +30,12 @@ namespace Kryz.RPG.Items.Structs
 		/// </summary>
 		/// <param name="stack">The item stack to add.</param>
 		/// <param name="remainder">If <paramref name="stack"/> could not be added in its entirety, this will contain how much remains of the original stack.</param>
+		/// <param name="maxCount">The maximum amount of items the resulting stack can hold. Even though <see cref="IItem"/> already specifies <see cref="IItem.MaxStacks"/>, we may want to override that.</param>
 		/// <returns>The <see cref="ItemStack"/> that resulted from merging the original stack with the '<paramref name="stack"/>' parameter.
 		/// If the total count is larger than '<paramref name="maxCount"/>', check the '<paramref name="remainder"/>' variable for the items that couldn't be added.</returns>
-		public ItemStack Add(in ItemStack stack, int maxCount, out ItemStack remainder)
+		public ItemStack Add(in ItemStack stack, out ItemStack remainder, int maxCount = 0)
 		{
-			TryAdd(stack, maxCount, out ItemStack result, out remainder);
+			TryAdd(stack, out ItemStack result, out remainder, maxCount);
 			return result;
 		}
 
@@ -54,22 +55,30 @@ namespace Kryz.RPG.Items.Structs
 		/// Try to add another item stack to this one.
 		/// </summary>
 		/// <param name="stack">The item stack to add.</param>
-		/// <param name="maxCount">The maximum number of items each stack can hold.</param>
 		/// <param name="result">The <see cref="ItemStack"/> that resulted from merging the original stack with the '<paramref name="stack"/>' parameter.
 		/// If the total count is larger than '<paramref name="maxCount"/>', check the '<paramref name="remainder"/>' variable for the items that couldn't be added.</param>
 		/// <param name="remainder">If the <paramref name="stack"/> parameter could not be added in its entirety, this will contain how much remains of the original stack.</param>
+		/// <param name="maxCount">The maximum amount of items the resulting stack can hold. Even though <see cref="IItem"/> already specifies <see cref="IItem.MaxStacks"/>, we may want to override that.</param>
 		/// <returns>True if one or more items in the <paramref name="stack"/> parameter were added. False otherwise.</returns>
-		public bool TryAdd(in ItemStack stack, int maxCount, out ItemStack result, out ItemStack remainder)
+		public bool TryAdd(in ItemStack stack, out ItemStack result, out ItemStack remainder, int maxCount = 0)
 		{
-			if (stack.Item != null && (Item == stack.Item && Count < maxCount || Item == null))
+			if (stack.Item != null && (Item == null || stack.Item == Item))
 			{
-				int newCount = Count + stack.Count;
-				int remainingCount = newCount - maxCount;
-				int resultCount = remainingCount > 0 ? maxCount : newCount;
+				if (maxCount <= 0)
+				{
+					maxCount = stack.Item.MaxStacks;
+				}
 
-				result = new ItemStack(stack.Item, resultCount);
-				remainder = new ItemStack(stack.Item, remainingCount);
-				return true;
+				if (Count < maxCount)
+				{
+					int newCount = Count + stack.Count;
+					int remainingCount = newCount - maxCount;
+					int resultCount = remainingCount > 0 ? maxCount : newCount;
+
+					result = new ItemStack(stack.Item, resultCount);
+					remainder = new ItemStack(stack.Item, remainingCount);
+					return true;
+				}
 			}
 
 			result = this;
@@ -116,7 +125,7 @@ namespace Kryz.RPG.Items.Structs
 
 		public override string ToString()
 		{
-			return Item == null ? "Empty Stack" : $"{Item.Name} x {Count}";
+			return Item == null ? "Empty Stack" : $"{Item.Name} x{Count}";
 		}
 
 		public static bool operator ==(ItemStack a, ItemStack b) => a.Equals(b);

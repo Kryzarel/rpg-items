@@ -52,9 +52,9 @@ namespace Kryz.RPG.Items.Tests
 			ItemStack stack1 = new(item1, stackSize1);
 			ItemStack stack2 = new(item2, stackSize2);
 
-			int maxCount = item1?.MaxStacks ?? 0;
+			int maxCount = item2?.MaxStacks ?? 0;
 
-			bool success = stack1.TryAdd(stack2, maxCount, out ItemStack result, out ItemStack remainder);
+			bool success = stack1.TryAdd(stack2, out ItemStack result, out ItemStack remainder);
 
 			if (stack2 != default && (stack1.Item == stack2.Item && stack1.Count < maxCount || stack1 == default))
 			{
@@ -71,7 +71,7 @@ namespace Kryz.RPG.Items.Tests
 				Assert.IsTrue(stack2 == remainder);
 			}
 
-			ItemStack result2 = stack1.Add(stack2, maxCount, out ItemStack remainder2);
+			ItemStack result2 = stack1.Add(stack2, out ItemStack remainder2);
 			Assert.IsTrue(result2 == result);
 			Assert.IsTrue(remainder2 == remainder);
 		}

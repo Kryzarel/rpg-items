@@ -14,10 +14,12 @@ namespace Kryz.RPG.Items.Interfaces
 		int FilledSlots { get; }
 
 		/// <summary>
-		/// <para>Get the maximum stack size for a particular item.</para>
-		/// <para>Even though <see cref="IItemDefinition"/> already specifies <see cref="IItemDefinition.MaxStacks"/>, an inventory may have a special rules that allow larger stacks of certain items.</para>
+		/// Check if an item slot can be set to the specified <see cref="ItemStack"/>.
 		/// </summary>
-		int GetMaxStackSize(IItem item);
+		/// <param name="index">The slot index to set.</param>
+		/// <param name="stack">The <see cref="ItemStack"/> to assign to the slot.</param>
+		/// <returns>True if the inventory slot can be set to the specified <see cref="ItemStack"/>. False otherwise.</returns>
+		bool CanSet(int index, in ItemStack stack);
 
 		/// <summary>
 		/// Check if it's possible to add at least 1 item from an <see cref="ItemStack"/> to the inventory.
@@ -59,13 +61,13 @@ namespace Kryz.RPG.Items.Interfaces
 		bool CanRemove(int index);
 
 		/// <summary>
-		/// Check if it's possible to swap a specific inventory slot with another item stack.
+		/// Try to set an item slot to the specified <see cref="ItemStack"/>, overwriting any <see cref="ItemStack"/> that may already be in that slot.
 		/// </summary>
-		/// <param name="index">The slot index to swap.</param>
-		/// <param name="stack">The stack to swap with.</param>
-		/// <param name="removed">The stack that will be removed from the slot after swapping.</param>
-		/// <returns>True if the slot can be swapped. False otherwise.</returns>
-		bool CanSwap(int index, in ItemStack stack, out ItemStack removed);
+		/// <param name="index">The slot index to set.</param>
+		/// <param name="stack">The <see cref="ItemStack"/> to assign to the slot.</param>
+		/// <param name="forceSet">Force sets the slot, even if under normal conditions it wouldn't be allowed. Useful for deserialization.</param>
+		/// <returns>Flase if the slot is already equal to '<paramref name="stack"/>' or if it can't be set to the specified <see cref="ItemStack"/>. True otherwise.</returns>
+		bool TrySet(int index, in ItemStack stack, bool forceSet = false);
 
 		/// <summary>
 		/// Try to add an item stack to any inventory slots that can receive it.
@@ -109,15 +111,6 @@ namespace Kryz.RPG.Items.Interfaces
 		/// <param name="removed">The item stack that was removed.</param>
 		/// <returns>True if the slot had a valid item stack and it was removed. False otherwise.</returns>
 		bool TryRemove(int index, out ItemStack removed);
-
-		/// <summary>
-		/// Try to swap a specific inventory slot with another item stack.
-		/// </summary>
-		/// <param name="index">The slot index to swap.</param>
-		/// <param name="stack">The stack to to swap with.</param>
-		/// <param name="removed">The stack that was originally in the slot.</param>
-		/// <returns>True if the slot was swapped. False otherwise.</returns>
-		bool TrySwap(int index, in ItemStack stack, out ItemStack removed);
 
 		/// <summary>
 		/// <para>Try to move an item stack from a specific inventory slot to another.</para>

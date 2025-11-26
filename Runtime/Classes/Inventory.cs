@@ -34,28 +34,26 @@ namespace Kryz.RPG.Items.Classes
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public int GetMaxStackSize(IItem item)
+		public bool CanSet(int index, in ItemStack stack)
 		{
-			// If we have some modifier to the maximum stacks each inventory can hold, apply it here
-			return item.MaxStacks;
+			return stack.Item == null || stack.Count <= stack.Item.MaxStacks;
 		}
 
 		public bool CanAdd(in ItemStack stack, out ItemStack remainder)
 		{
-			if (stack.Item == null || stack.Count == 0)
+			if (stack.Item == null)
 			{
 				remainder = default;
 				return false;
 			}
 
 			remainder = stack;
-			int maxCount = GetMaxStackSize(stack.Item);
 
 			for (int i = 0; i < numSlots && remainder.Count > 0; i++)
 			{
 				// Call ItemStack.TryAdd() but don't assign the result to anything.
 				// This way we check what WOULD happen without actually changing the inventory.
-				slots[i].TryAdd(remainder, maxCount, out _, out remainder);
+				slots[i].TryAdd(remainder, out _, out remainder);
 			}
 
 			return remainder.Count < stack.Count;
@@ -63,14 +61,13 @@ namespace Kryz.RPG.Items.Classes
 
 		public bool CanAdd(int index, in ItemStack stack, out ItemStack remainder)
 		{
-			if (stack.Item == null || stack.Count == 0)
+			if (stack.Item == null)
 			{
 				remainder = default;
 				return false;
 			}
 
-			int maxCount = GetMaxStackSize(stack.Item);
-			return slots[index].TryAdd(stack, maxCount, out _, out remainder);
+			return slots[index].TryAdd(stack, out _, out remainder);
 		}
 
 		public bool CanRemove(IItem item, int count)
@@ -96,24 +93,29 @@ namespace Kryz.RPG.Items.Classes
 			return slots[index].Count > 0;
 		}
 
-		public bool CanSwap(int index, in ItemStack stack, out ItemStack removed)
+		public bool TrySet(int index, in ItemStack stack, bool forceSet = false)
 		{
-			ItemStack slot = slots[index];
-			bool success = stack != slot && (stack.Item == null || stack.Count <= GetMaxStackSize(stack.Item));
-			removed = success ? slot : default;
-			return success;
+			ref ItemStack slot = ref slots[index];
+
+			if (forceSet || slot != stack && CanSet(index, stack))
+			{
+				SetSlot(ref slot, index, stack);
+				return true;
+			}
+
+			return false;
 		}
 
 		public bool TryAdd(in ItemStack stack, out ItemStack remainder)
 		{
 			remainder = stack;
 
-			if (stack.Item == null || stack.Count == 0)
+			if (stack.Item == null)
 			{
 				return false;
 			}
 
-			int maxCount = GetMaxStackSize(stack.Item);
+			int maxCount = stack.Item.MaxStacks;
 			// If the stack has more items than 1 free slot can take, we need multiple free slots
 			// Fast integer division that always rounds up: https://stackoverflow.com/a/4175152
 			int freeSlotsNeeded = (stack.Count + maxCount - 1) / maxCount;
@@ -134,7 +136,7 @@ namespace Kryz.RPG.Items.Classes
 				int index = freeSlots[i];
 				ref ItemStack slot = ref slots[index]; // Get the slot by reference so we can change it without having to reindex into the array
 
-				if (slot.TryAdd(remainder, maxCount, out ItemStack result, out remainder))
+				if (slot.TryAdd(remainder, out ItemStack result, out remainder, maxCount))
 				{
 					SetSlot(ref slot, index, result);
 				}
@@ -163,16 +165,15 @@ namespace Kryz.RPG.Items.Classes
 
 		public bool TryAdd(int index, in ItemStack stack, out ItemStack remainder)
 		{
-			if (stack.Item == null || stack.Count == 0)
+			if (stack.Item == null)
 			{
 				remainder = stack;
 				return false;
 			}
 
 			ref ItemStack slot = ref slots[index];
-			int maxCount = GetMaxStackSize(stack.Item);
 
-			if (slot.TryAdd(stack, maxCount, out ItemStack result, out remainder))
+			if (slot.TryAdd(stack, out ItemStack result, out remainder))
 			{
 				SetSlot(ref slot, index, result);
 				return true;
@@ -229,39 +230,23 @@ namespace Kryz.RPG.Items.Classes
 			return TryRemove(ref slot, index, slot.Count, out removed);
 		}
 
-		public bool TrySwap(int index, in ItemStack stack, out ItemStack removed)
+		public bool TryMove(int toIndex, int fromIndex, IInventory fromInv, bool allowSwap = false)
 		{
-			ref ItemStack slot = ref slots[index];
+			ItemStack fromSlot = fromInv[fromIndex];
 
-			if (stack != slot && (stack.Item == null || stack.Count <= GetMaxStackSize(stack.Item)))
-			{
-				removed = slot;
-				SetSlot(ref slot, index, stack);
-				return true;
-			}
-
-			removed = default;
-			return false;
-		}
-
-		public bool TryMove(int toIndex, int fromIndex, IInventory fromInventory, bool allowSwap = false)
-		{
-			ItemStack fromSlot = fromInventory[fromIndex];
-
-			if (toIndex == fromIndex && this == fromInventory || fromSlot.Item == null)
+			if (fromSlot.Item == null || toIndex == fromIndex && this == fromInv)
 			{
 				return false;
 			}
 
 			ref ItemStack toSlot = ref slots[toIndex];
-			int maxCount = GetMaxStackSize(fromSlot.Item);
 
-			if (toSlot.TryAdd(fromSlot, maxCount, out ItemStack result, out ItemStack remainder) && fromInventory.TrySwap(fromIndex, remainder, out _))
+			if (toSlot.TryAdd(fromSlot, out ItemStack result, out ItemStack remainder) && fromInv.TrySet(fromIndex, remainder))
 			{
 				SetSlot(ref toSlot, toIndex, result);
 				return true;
 			}
-			else if (allowSwap && fromSlot.Count <= maxCount && fromInventory.TrySwap(fromIndex, toSlot, out _))
+			else if (allowSwap && CanSet(toIndex, fromSlot) && fromInv.TrySet(fromIndex, toSlot))
 			{
 				SetSlot(ref toSlot, toIndex, fromSlot);
 				return true;
@@ -307,7 +292,7 @@ namespace Kryz.RPG.Items.Classes
 
 				if (slot.Item == stack.Item)
 				{
-					if (slot.TryAdd(remainder, maxCount, out ItemStack result, out remainder))
+					if (slot.TryAdd(remainder, out ItemStack result, out remainder, maxCount))
 					{
 						SetSlot(ref slot, i, result);
 					}
