@@ -123,5 +123,7 @@ namespace Kryz.RPG.Items.Interfaces
 		/// <param name="allowSwap">If we should swap the stacks when the target inventory doesn't have enough space.</param>
 		/// <returns>True if '<paramref name="fromIndex"/>' has a valid item stack and it was successfully moved to or swapped with '<paramref name="toIndex"/>'. False otherwise.</returns>
 		bool TryMove(int toIndex, int fromIndex, IInventory fromInventory, bool allowSwap = false);
+
+		void Sort(IComparer<ItemStack>? comparer = null);
 	}
 }

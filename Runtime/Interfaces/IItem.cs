@@ -1,8 +1,9 @@
+using System;
 using UnityEngine;
 
 namespace Kryz.RPG.Items.Interfaces
 {
-	public interface IItem
+	public interface IItem : IComparable<IItem>
 	{
 		public Sprite Icon { get; }
 		public string Name { get; }

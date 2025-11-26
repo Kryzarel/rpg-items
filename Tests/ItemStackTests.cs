@@ -19,6 +19,8 @@ namespace Kryz.RPG.Items.Tests
 			public int MaxStacks => maxStacks;
 
 			public TestItem(IItemDefinition itemDefinition) => Definition = itemDefinition;
+
+			public int CompareTo(IItem other) => Name.CompareTo(other.Name);
 		}
 
 		private const int maxStacks = 20;

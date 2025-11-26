@@ -254,6 +254,25 @@ namespace Kryz.RPG.Items.Classes
 			return false;
 		}
 
+		public void Sort(IComparer<ItemStack>? comparer = null)
+		{
+			ItemStack[] temp = arrayPool.Rent(numSlots);
+			Array.Copy(slots, 0, temp, 0, numSlots);
+
+			Array.Sort(slots, 0, numSlots, comparer ?? Comparer<ItemStack>.Default);
+
+			for (int i = 0; i < numSlots; i++)
+			{
+				if (slots[i] != temp[i])
+				{
+					OnSlotChanged(i);
+				}
+			}
+
+			Array.Clear(temp, 0, numSlots);
+			arrayPool.Return(temp);
+		}
+
 		public ArrayEnumerator<ItemStack> GetEnumerator() => new(slots, numSlots);
 
 		IEnumerator<ItemStack> IEnumerable<ItemStack>.GetEnumerator() => GetEnumerator();

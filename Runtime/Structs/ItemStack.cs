@@ -4,7 +4,7 @@ using Kryz.RPG.Items.Interfaces;
 
 namespace Kryz.RPG.Items.Structs
 {
-	public readonly struct ItemStack : IEquatable<ItemStack>
+	public readonly struct ItemStack : IComparable<ItemStack>, IEquatable<ItemStack>
 	{
 		public readonly IItem? Item;
 		public readonly int Count;
@@ -105,6 +105,19 @@ namespace Kryz.RPG.Items.Structs
 			result = this;
 			removedStack = default;
 			return false;
+		}
+
+		public int CompareTo(ItemStack other)
+		{
+			if (Item != null)
+			{
+				return other.Item != null ? Item.CompareTo(other.Item) : -1;
+			}
+			else if (other.Item != null)
+			{
+				return 1;
+			}
+			return 0;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
