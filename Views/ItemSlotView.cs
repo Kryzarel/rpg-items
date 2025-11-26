@@ -8,8 +8,8 @@ namespace Kryz.RPG.Items.Views
 {
 	public class ItemSlotView : MonoBehaviour, IItemSlotView, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IBeginDragHandler, IEndDragHandler, IDragHandler, IDropHandler
 	{
-		[SerializeField] Image image;
-		[SerializeField] Text countText;
+		[SerializeField] Image? image;
+		[SerializeField] Text? countText;
 
 		private int index;
 		private IInventory? inventory;
@@ -33,8 +33,8 @@ namespace Kryz.RPG.Items.Views
 		private void Awake()
 		{
 			OnValidate();
-			image.sprite = null!;
-			countText.text = string.Empty;
+			image!.sprite = null!;
+			countText!.text = string.Empty;
 		}
 
 		public void Setup(int index, IInventory? inventory, IItemSlotInteraction? interaction)
@@ -51,12 +51,12 @@ namespace Kryz.RPG.Items.Views
 				return;
 			}
 
-			if (image.sprite != stack.Item?.Icon)
+			if (image != null && image.sprite != stack.Item?.Icon)
 			{
 				image.sprite = stack.Item?.Icon!;
 			}
 
-			if (itemStack.Count != stack.Count)
+			if (countText != null && itemStack.Count != stack.Count)
 			{
 				countText.text = stack.Count > 1 ? stack.Count.ToString() : string.Empty;
 			}

@@ -10,11 +10,11 @@ namespace Kryz.RPG.Items.Views
 	{
 		[Header("Project References")]
 		[SerializeField]
-		private ItemSlotView itemSlotPrefab;
+		private ItemSlotView? itemSlotPrefab;
 
 		[Header("Child/Self References")]
 		[SerializeField]
-		private RectTransform itemSlotsParent;
+		private RectTransform? itemSlotsParent;
 		[SerializeField]
 		private List<ItemSlotView> itemSlots = new();
 		[SerializeField]
@@ -26,8 +26,8 @@ namespace Kryz.RPG.Items.Views
 		[SerializeField, Tooltip("The maximum amount of slots that can be displayed. A value of 0 or lower means infinite.")]
 		private int maxSlots;
 
-		private Action<int> onSlotChangedDelegate;
-		private Action<int> onNumSlotsChangedDelegate;
+		private Action<int>? onSlotChangedDelegate;
+		private Action<int>? onNumSlotsChangedDelegate;
 		private IInventory? inventory;
 
 		public IInventory? Inventory => inventory;
@@ -88,20 +88,23 @@ namespace Kryz.RPG.Items.Views
 				itemSlotView.gameObject.SetActive(i < numSlots);
 			}
 
-			if (itemSlots.Count < numSlots && itemSlotPrefab == null)
+			if (itemSlots.Count < numSlots)
 			{
-				string msg = $"Failed to instantiate {nameof(ItemSlotView)}s because {nameof(itemSlotPrefab)} is null.";
-				if (Application.isPlaying) Debug.LogError(msg, this);
-				else Debug.LogWarning(msg, this);
-				return;
-			}
+				if (itemSlotPrefab == null)
+				{
+					const string msg = "Failed to instantiate " + nameof(ItemSlotView) + "s because " + nameof(itemSlotPrefab) + " is null.";
+					if (Application.isPlaying) Debug.LogError(msg, this);
+					else Debug.LogWarning(msg, this);
+					return;
+				}
 
-			for (int i = itemSlots.Count; i < numSlots; i++)
-			{
-				ItemSlotView itemSlotView = Instantiate(itemSlotPrefab, itemSlotsParent);
-				itemSlots.Add(itemSlotView);
-				itemSlotView.Setup(i, inventory, itemSlotInteraction.Value);
-				itemSlotView.gameObject.SetActive(true);
+				for (int i = itemSlots.Count; i < numSlots; i++)
+				{
+					ItemSlotView itemSlotView = Instantiate(itemSlotPrefab, itemSlotsParent);
+					itemSlots.Add(itemSlotView);
+					itemSlotView.Setup(i, inventory, itemSlotInteraction.Value);
+					itemSlotView.gameObject.SetActive(true);
+				}
 			}
 		}
 
