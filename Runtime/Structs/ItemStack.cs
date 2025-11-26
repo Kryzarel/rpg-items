@@ -109,15 +109,12 @@ namespace Kryz.RPG.Items.Structs
 
 		public int CompareTo(ItemStack other)
 		{
-			if (Item != null)
-			{
-				return other.Item != null ? Item.CompareTo(other.Item) : -1;
-			}
-			else if (other.Item != null)
-			{
-				return 1;
-			}
-			return 0;
+			if (Item == null) return other.Item == null ? 0 : 1;
+			if (other.Item == null) return -1;
+
+			int result = Item.CompareTo(other.Item);
+			if (result == 0) result = Count.CompareTo(other.Count);
+			return result;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
