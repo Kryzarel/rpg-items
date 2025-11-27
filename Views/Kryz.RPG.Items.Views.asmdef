@@ -3,7 +3,8 @@
     "rootNamespace": "Kryz.RPG.Items.Views",
     "references": [
         "Kryz.RPG.Items",
-        "UnityEngine.UI"
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

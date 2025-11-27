@@ -78,7 +78,7 @@ namespace Kryz.RPG.Items.Views
 		{
 			index = itemSlotView.Index;
 			inventory = itemSlotView.Inventory;
-			return inventory != null && index > 0 && index < inventory.NumSlots;
+			return inventory != null && index >= 0 && index < inventory.NumSlots;
 		}
 	}
 }

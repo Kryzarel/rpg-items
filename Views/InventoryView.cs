@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using Kryz.RPG.Items.Interfaces;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace Kryz.RPG.Items.Views
 {
@@ -22,9 +25,9 @@ namespace Kryz.RPG.Items.Views
 
 		[Header("Settings")]
 		[SerializeField, Tooltip("The minimum amount of slots to instantiate and display.")]
-		private int minSlots;
+		private int minSlots = 10;
 		[SerializeField, Tooltip("The maximum amount of slots that can be displayed. A value of 0 or lower means infinite.")]
-		private int maxSlots;
+		private int maxSlots = 0;
 
 		private Action<int>? onSlotChangedDelegate;
 		private Action<int>? onNumSlotsChangedDelegate;
@@ -37,12 +40,15 @@ namespace Kryz.RPG.Items.Views
 		{
 			if (itemSlotsParent == null) itemSlotsParent = (RectTransform)transform;
 			itemSlotsParent.GetComponentsInChildren(includeInactive: true, itemSlots);
-			HandleSlotViews();
+#if UNITY_EDITOR
+			if (!EditorApplication.isPlayingOrWillChangePlaymode) EditorApplication.delayCall += HandleSlotViews;
+#endif
 		}
 
 		private void Awake()
 		{
 			OnValidate(); // Call OnValidate to make sure everything is setup correctly
+			HandleSlotViews();
 			onSlotChangedDelegate = OnSlotChanged;
 			onNumSlotsChangedDelegate = OnNumSlotsChanged;
 		}
@@ -75,11 +81,11 @@ namespace Kryz.RPG.Items.Views
 		{
 			if (inventory != null && inventory.NumSlots > maxSlots && maxSlots > 0)
 			{
-				Debug.LogError($"Inventory has {inventory.NumSlots} slots, but the {nameof(InventoryView)} is configured to display a maximum of {maxSlots}.", this);
+				Debug.LogError("Inventory has " + inventory.NumSlots + " slots, but the " + nameof(InventoryView) + " is configured to display a maximum of " + maxSlots, this);
 			}
 
 			int inventorySlots = inventory != null ? inventory.NumSlots : 0;
-			int numSlots = Math.Clamp(inventorySlots, minSlots, maxSlots);
+			int numSlots = Math.Min(Math.Max(inventorySlots, minSlots), maxSlots <= 0 ? int.MaxValue : maxSlots);
 
 			for (int i = 0; i < itemSlots.Count; i++)
 			{
@@ -92,9 +98,7 @@ namespace Kryz.RPG.Items.Views
 			{
 				if (itemSlotPrefab == null)
 				{
-					const string msg = "Failed to instantiate " + nameof(ItemSlotView) + "s because " + nameof(itemSlotPrefab) + " is null.";
-					if (Application.isPlaying) Debug.LogError(msg, this);
-					else Debug.LogWarning(msg, this);
+					Debug.LogError("Failed to instantiate " + nameof(ItemSlotView) + "s because " + nameof(itemSlotPrefab) + " is null", this);
 					return;
 				}
 
