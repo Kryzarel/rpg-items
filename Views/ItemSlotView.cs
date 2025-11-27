@@ -7,92 +7,93 @@ using UnityEngine.UI;
 
 namespace Kryz.RPG.Items.Views
 {
-	public class ItemSlotView : MonoBehaviour, IItemSlotView, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IBeginDragHandler, IEndDragHandler, IDragHandler, IDropHandler
+	public class ItemSlotView : BaseItemSlotView, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IBeginDragHandler, IEndDragHandler, IDragHandler, IDropHandler
 	{
 		[Header("References")]
-		[SerializeField] Image? raycastImage;
-		[SerializeField] Image? itemImage;
+		[SerializeField] Image? image;
 		[SerializeField] TextMeshProUGUI? text;
 		[Header("Settings")]
 		[SerializeField] string textFormatString = string.Empty;
+		[SerializeField] Color emptyColor = Color.clear;
+		[SerializeField] Color nonEmptyColor = Color.white;
 
 		private int index;
 		private IInventory? inventory;
 		private IItemSlotInteraction? interaction;
 		private ItemStack itemStack;
 
-		public Image RaycastImage => raycastImage!;
-		public Image ItemImage => itemImage!;
-		public TextMeshProUGUI Text => text!;
-
-		public int Index => index;
-		public IInventory? Inventory => inventory;
+		public override int Index => index;
+		public override IInventory? Inventory => inventory;
 		public IItemSlotInteraction? Interaction => interaction;
-		public ItemStack ItemStack => itemStack;
+		public override ItemStack ItemStack => itemStack;
 
 		private void OnValidate()
 		{
-			if (raycastImage == null || itemImage == null)
-			{
-				Image[] images = GetComponentsInChildren<Image>(includeInactive: true);
-				if (images.Length > 0) raycastImage = images[0];
-				if (images.Length > 1) itemImage = images[1];
-			}
-
+			if (image == null) image = GetComponentInChildren<Image>(includeInactive: true);
 			if (text == null) text = GetComponentInChildren<TextMeshProUGUI>(includeInactive: true);
 
-			if (raycastImage != null) raycastImage.raycastTarget = false;
-			if (itemImage != null) itemImage.raycastTarget = false;
+			if (image != null) image.raycastTarget = true;
 			if (text != null) text.raycastTarget = false;
 		}
 
 		private void Awake()
 		{
 			OnValidate();
-			raycastImage!.sprite = null!;
-			itemImage!.sprite = null!;
-			text!.text = string.Empty;
+			SetItemStack(default, forceSet: true);
 		}
 
-		public void Setup(int index, IInventory? inventory, IItemSlotInteraction? interaction)
+		public override void Setup(int index, IInventory? inventory, IItemSlotInteraction? interaction)
 		{
 			this.index = index;
 			this.inventory = inventory;
 			this.interaction = interaction;
+
+			if (image != null)
+			{
+				image.raycastTarget = inventory != null && index >= 0 && index < inventory.NumSlots;
+			}
 		}
 
-		public void SetItemStack(ItemStack stack)
+		public override void SetItemStack(ItemStack stack)
 		{
-			if (itemStack == stack)
-			{
-				return;
-			}
-
-			if (itemImage != null && itemImage.sprite != stack.Item?.Icon)
-			{
-				itemImage.sprite = stack.Item?.Icon!;
-				itemImage.enabled = stack.Item != null;
-			}
-
-			if (text != null && itemStack.Count != stack.Count)
-			{
-				bool enabled = stack.Count > 1;
-				if (enabled)
-				{
-					text.text = string.Format(textFormatString, stack.Count);
-				}
-				text.enabled = enabled;
-			}
-
-			itemStack = stack;
+			SetItemStack(stack, forceSet: false);
 		}
 
-		public void OnPointerClick(PointerEventData eventData) => Interaction?.OnPointerClick(this, eventData);
-		public void OnPointerEnter(PointerEventData eventData) => Interaction?.OnPointerEnter(this, eventData);
-		public void OnPointerExit(PointerEventData eventData) => Interaction?.OnPointerExit(this, eventData);
-		public void OnBeginDrag(PointerEventData eventData) => Interaction?.OnBeginDrag(this, eventData);
-		public void OnEndDrag(PointerEventData eventData) => Interaction?.OnEndDrag(this, eventData);
-		public void OnDrag(PointerEventData eventData) => Interaction?.OnDrag(this, eventData);
-		public void OnDrop(PointerEventData eventData) => Interaction?.OnDrop(this, eventData);
+		private void SetItemStack(ItemStack stack, bool forceSet)
+		{
+			if (itemStack != stack || forceSet)
+			{
+				if (image != null)
+				{
+					image.sprite = stack.Item?.Icon!;
+					image.color = stack.Item == null ? emptyColor : nonEmptyColor;
+				}
+
+				if (text != null && itemStack.Count != stack.Count)
+				{
+					bool enabled = stack.Count > 1;
+
+					if (enabled)
+					{
+						text.text = string.Format(textFormatString, stack.Count);
+					}
+
+					if (text.enabled != enabled)
+					{
+						text.enabled = enabled;
+					}
+				}
+
+				itemStack = stack;
+			}
+		}
+
+		public void OnPointerClick(PointerEventData eventData) => interaction?.OnPointerClick(this, eventData);
+		public void OnPointerEnter(PointerEventData eventData) => interaction?.OnPointerEnter(this, eventData);
+		public void OnPointerExit(PointerEventData eventData) => interaction?.OnPointerExit(this, eventData);
+		public void OnBeginDrag(PointerEventData eventData) => interaction?.OnBeginDrag(this, eventData);
+		public void OnEndDrag(PointerEventData eventData) => interaction?.OnEndDrag(this, eventData);
+		public void OnDrag(PointerEventData eventData) => interaction?.OnDrag(this, eventData);
+		public void OnDrop(PointerEventData eventData) => interaction?.OnDrop(this, eventData);
 	}
 }

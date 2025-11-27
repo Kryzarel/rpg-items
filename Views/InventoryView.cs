@@ -13,28 +13,28 @@ namespace Kryz.RPG.Items.Views
 	{
 		[Header("Project References")]
 		[SerializeField]
-		private ItemSlotView? itemSlotPrefab;
+		private BaseItemSlotView? itemSlotPrefab;
 
 		[Header("Child/Self References")]
 		[SerializeField]
 		private RectTransform? itemSlotsParent;
 		[SerializeField]
-		private List<ItemSlotView> itemSlots = new();
+		private List<BaseItemSlotView> itemSlots = new();
 		[SerializeField]
 		private Serialize<IItemSlotInteraction> itemSlotInteraction;
 
 		[Header("Settings")]
 		[SerializeField, Tooltip("The minimum amount of slots to instantiate and display.")]
-		private int minSlots = 10;
+		private int minSlots;
 		[SerializeField, Tooltip("The maximum amount of slots that can be displayed. A value of 0 or lower means infinite.")]
-		private int maxSlots = 0;
+		private int maxSlots;
 
 		private Action<int>? onSlotChangedDelegate;
 		private Action<int>? onNumSlotsChangedDelegate;
 		private IInventory? inventory;
 
 		public IInventory? Inventory => inventory;
-		public IReadOnlyList<ItemSlotView> ItemSlots => itemSlots;
+		public IReadOnlyList<BaseItemSlotView> ItemSlots => itemSlots;
 
 		private void OnValidate()
 		{
@@ -89,7 +89,7 @@ namespace Kryz.RPG.Items.Views
 
 			for (int i = 0; i < itemSlots.Count; i++)
 			{
-				ItemSlotView itemSlotView = itemSlots[i];
+				BaseItemSlotView itemSlotView = itemSlots[i];
 				itemSlotView.Setup(i, inventory, itemSlotInteraction.Value);
 				itemSlotView.gameObject.SetActive(i < numSlots);
 			}
@@ -104,7 +104,7 @@ namespace Kryz.RPG.Items.Views
 
 				for (int i = itemSlots.Count; i < numSlots; i++)
 				{
-					ItemSlotView itemSlotView = Instantiate(itemSlotPrefab, itemSlotsParent);
+					BaseItemSlotView itemSlotView = Instantiate(itemSlotPrefab, itemSlotsParent);
 					itemSlots.Add(itemSlotView);
 					itemSlotView.Setup(i, inventory, itemSlotInteraction.Value);
 					itemSlotView.gameObject.SetActive(true);
