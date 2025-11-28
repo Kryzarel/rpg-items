@@ -20,7 +20,17 @@ namespace Kryz.RPG.Items.Classes
 		public event Action<int> OnSlotChanged = delegate { };
 		public event Action<int> OnNumSlotsChanged = delegate { };
 
-		public ItemStack this[int index] => slots[index];
+		public ItemStack this[int index]
+		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			get
+			{
+				if (index < 0 || index >= numSlots)
+					throw new IndexOutOfRangeException();
+				return slots[index];
+			}
+		}
+
 		public int Count => numSlots;
 		public int NumSlots { get => numSlots; set => SetNumSlots(value); }
 		public int FreeSlots => numSlots - filledSlots;
@@ -36,7 +46,7 @@ namespace Kryz.RPG.Items.Classes
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public bool CanSet(int index, in ItemStack stack)
 		{
-			return stack.Item == null || stack.Count <= stack.Item.MaxStacks;
+			return index < 0 || index >= numSlots || stack.Item == null || stack.Count <= stack.Item.MaxStacks;
 		}
 
 		public bool CanAdd(in ItemStack stack, out ItemStack remainder)
@@ -61,7 +71,7 @@ namespace Kryz.RPG.Items.Classes
 
 		public bool CanAdd(int index, in ItemStack stack, out ItemStack remainder)
 		{
-			if (stack.Item == null)
+			if (stack.Item == null || index < 0 || index >= numSlots)
 			{
 				remainder = default;
 				return false;
@@ -85,16 +95,21 @@ namespace Kryz.RPG.Items.Classes
 
 		public bool CanRemove(int index, int count)
 		{
-			return slots[index].Count >= count;
+			return index >= 0 && index < numSlots && slots[index].Count >= count;
 		}
 
 		public bool CanRemove(int index)
 		{
-			return slots[index].Count > 0;
+			return index >= 0 && index < numSlots && slots[index].Count > 0;
 		}
 
 		public bool TrySet(int index, in ItemStack stack, bool forceSet = false)
 		{
+			if (index < 0 || index >= numSlots)
+			{
+				return false;
+			}
+
 			ref ItemStack slot = ref slots[index];
 
 			if (forceSet || slot != stack && CanSet(index, stack))
@@ -165,7 +180,7 @@ namespace Kryz.RPG.Items.Classes
 
 		public bool TryAdd(int index, in ItemStack stack, out ItemStack remainder)
 		{
-			if (stack.Item == null)
+			if (stack.Item == null || index < 0 || index >= numSlots)
 			{
 				remainder = stack;
 				return false;
@@ -221,17 +236,32 @@ namespace Kryz.RPG.Items.Classes
 
 		public bool TryRemove(int index, int count, out ItemStack removed)
 		{
+			if (index < 0 || index >= numSlots)
+			{
+				removed = default;
+				return false;
+			}
 			return TryRemove(ref slots[index], index, count, out removed);
 		}
 
 		public bool TryRemove(int index, out ItemStack removed)
 		{
+			if (index < 0 || index >= numSlots)
+			{
+				removed = default;
+				return false;
+			}
 			ref ItemStack slot = ref slots[index];
 			return TryRemove(ref slot, index, slot.Count, out removed);
 		}
 
 		public bool TryMove(int toIndex, int fromIndex, IInventory fromInv, bool allowSwap = false)
 		{
+			if (toIndex < 0 || toIndex >= numSlots || fromIndex < 0 || fromIndex >= fromInv.NumSlots)
+			{
+				return false;
+			}
+
 			ItemStack fromSlot = fromInv[fromIndex];
 
 			if (fromSlot.Item == null || toIndex == fromIndex && this == fromInv)
