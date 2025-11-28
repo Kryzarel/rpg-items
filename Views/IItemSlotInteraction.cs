@@ -4,12 +4,12 @@ namespace Kryz.RPG.Items.Views
 {
 	public interface IItemSlotInteraction
 	{
-		void OnPointerClick(IItemSlotView itemSlotView, PointerEventData eventData);
-		void OnPointerEnter(IItemSlotView itemSlotView, PointerEventData eventData);
-		void OnPointerExit(IItemSlotView itemSlotView, PointerEventData eventData);
-		void OnBeginDrag(IItemSlotView itemSlotView, PointerEventData eventData);
-		void OnEndDrag(IItemSlotView itemSlotView, PointerEventData eventData);
-		void OnDrag(IItemSlotView itemSlotView, PointerEventData eventData);
-		void OnDrop(IItemSlotView itemSlotView, PointerEventData eventData);
+		bool OnPointerClick(IItemSlotView itemSlotView, PointerEventData eventData);
+		bool OnPointerEnter(IItemSlotView itemSlotView, PointerEventData eventData);
+		bool OnPointerExit(IItemSlotView itemSlotView, PointerEventData eventData);
+		bool OnBeginDrag(IItemSlotView itemSlotView, PointerEventData eventData);
+		bool OnEndDrag(IItemSlotView itemSlotView, PointerEventData eventData);
+		bool OnDrag(IItemSlotView itemSlotView, PointerEventData eventData);
+		bool OnDrop(IItemSlotView itemSlotView, PointerEventData eventData);
 	}
 }

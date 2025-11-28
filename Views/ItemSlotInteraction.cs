@@ -10,11 +10,11 @@ namespace Kryz.RPG.Items.Views
 		[SerializeField] Serialize<IItemTooltip> itemTooltip;
 		[SerializeField] Serialize<IItemSlotDragManager> dragManager;
 
-		public void OnPointerClick(IItemSlotView itemSlotView, PointerEventData eventData)
+		public bool OnPointerClick(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
 			if (ValidateSlot(itemSlotView, out int index, out IInventory? inventory))
 			{
-				if ((Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKeyDown(KeyCode.RightShift)) && eventData.button == PointerEventData.InputButton.Left)
+				if (eventData.button == PointerEventData.InputButton.Left)
 				{
 				}
 				else if (eventData.button == PointerEventData.InputButton.Right)
@@ -23,55 +23,66 @@ namespace Kryz.RPG.Items.Views
 				else if (eventData.button == PointerEventData.InputButton.Middle)
 				{
 				}
+				return true;
 			}
+			return false;
 		}
 
-		public void OnPointerEnter(IItemSlotView itemSlotView, PointerEventData eventData)
+		public bool OnPointerEnter(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
 			if (ValidateSlot(itemSlotView, out _, out _))
 			{
 				itemTooltip.Value?.Show(itemSlotView.ItemStack, eventData);
+				return true;
 			}
+			return false;
 		}
 
-		public void OnPointerExit(IItemSlotView itemSlotView, PointerEventData eventData)
+		public bool OnPointerExit(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
 			itemTooltip.Value?.Hide();
+			return true;
 		}
 
-		public void OnBeginDrag(IItemSlotView itemSlotView, PointerEventData eventData)
+		public bool OnBeginDrag(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
 			if (ValidateSlot(itemSlotView, out _, out _))
 			{
 				dragManager.Value?.StartDrag(itemSlotView, eventData);
+				return true;
 			}
+			return false;
 		}
 
-		public void OnEndDrag(IItemSlotView itemSlotView, PointerEventData eventData)
+		public bool OnEndDrag(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
 			dragManager.Value?.StopDrag(itemSlotView, eventData);
+			return true;
 		}
 
-		public void OnDrag(IItemSlotView itemSlotView, PointerEventData eventData)
+		public bool OnDrag(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
 			if (ValidateSlot(itemSlotView, out _, out _))
 			{
 				dragManager.Value?.OnDrag(itemSlotView, eventData);
+				return true;
 			}
+			return false;
 		}
 
-		public void OnDrop(IItemSlotView itemSlotView, PointerEventData eventData)
+		public bool OnDrop(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
 			if (!ValidateSlot(itemSlotView, out int dropIndex, out IInventory? dropInventory))
-				return;
+				return false;
 
 			if (!eventData.pointerDrag.TryGetComponent(out IItemSlotView dragView))
-				return;
+				return false;
 
 			if (!ValidateSlot(dragView, out int dragIndex, out IInventory? dragInventory))
-				return;
+				return false;
 
 			dropInventory.TryMove(dropIndex, dragIndex, dragInventory, allowSwap: true);
+			return true;
 		}
 
 		private static bool ValidateSlot(IItemSlotView itemSlotView, out int index, [MaybeNullWhen(returnValue: false)] out IInventory inventory)
