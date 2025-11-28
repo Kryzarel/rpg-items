@@ -10,12 +10,17 @@ namespace Kryz.RPG.Items.Views
 	public class ItemSlotView : BaseItemSlotView, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IBeginDragHandler, IEndDragHandler, IDragHandler, IDropHandler
 	{
 		[Header("References")]
-		[SerializeField] Image? image;
+		[SerializeField] Image? raycastImage;
+		[SerializeField] Image? itemImage;
 		[SerializeField] TextMeshProUGUI? text;
 		[Header("Settings")]
 		[SerializeField] string textFormatString = string.Empty;
 		[SerializeField] Color emptyColor = Color.clear;
 		[SerializeField] Color nonEmptyColor = Color.white;
+		[SerializeField] Color disabledColor = Color.gray;
+		[SerializeField] Sprite? disabledSprite;
+
+		private int lastCount = -1;
 
 		private int index;
 		private IInventory? inventory;
@@ -29,17 +34,25 @@ namespace Kryz.RPG.Items.Views
 
 		private void OnValidate()
 		{
-			if (image == null) image = GetComponentInChildren<Image>(includeInactive: true);
+			if (raycastImage == null) raycastImage = GetComponentInChildren<Image>(includeInactive: true);
+			if (itemImage == null) itemImage = GetComponentInChildren<Image>(includeInactive: true);
 			if (text == null) text = GetComponentInChildren<TextMeshProUGUI>(includeInactive: true);
 
-			if (image != null) image.raycastTarget = true;
+			if (raycastImage != null) raycastImage.raycastTarget = true;
+			if (itemImage != null && itemImage != raycastImage) itemImage.raycastTarget = false;
 			if (text != null) text.raycastTarget = false;
+
+			RefreshVisuals();
 		}
 
-		private void Awake()
+		private void OnEnable()
 		{
-			OnValidate();
-			SetItemStack(default, forceSet: true);
+			RefreshVisuals();
+		}
+
+		private void OnDisable()
+		{
+			RefreshVisuals();
 		}
 
 		public override void Setup(int index, IInventory? inventory, IItemSlotInteraction? interaction)
@@ -48,43 +61,62 @@ namespace Kryz.RPG.Items.Views
 			this.inventory = inventory;
 			this.interaction = interaction;
 
-			if (image != null)
+			if (inventory != null && index >= 0 && index < inventory.NumSlots)
 			{
-				image.raycastTarget = inventory != null && index >= 0 && index < inventory.NumSlots;
+				SetItemStack(inventory[index]);
+				enabled = true;
+			}
+			else
+			{
+				enabled = false;
 			}
 		}
 
 		public override void SetItemStack(ItemStack stack)
 		{
-			SetItemStack(stack, forceSet: false);
+			if (itemStack != stack)
+			{
+				itemStack = stack;
+				RefreshVisuals();
+			}
 		}
 
-		private void SetItemStack(ItemStack stack, bool forceSet)
+		private void RefreshVisuals()
 		{
-			if (itemStack != stack || forceSet)
+			if (enabled) RefreshItemStack();
+			else RefreshDisabled();
+		}
+
+		private void RefreshItemStack()
+		{
+			if (itemImage != null)
 			{
-				if (image != null)
+				itemImage.sprite = itemStack.Item?.Icon!;
+				itemImage.color = itemStack.Item == null ? emptyColor : nonEmptyColor;
+			}
+
+			if (text != null)
+			{
+				if (itemStack.Count > 1 && itemStack.Count != lastCount)
 				{
-					image.sprite = stack.Item?.Icon!;
-					image.color = stack.Item == null ? emptyColor : nonEmptyColor;
+					lastCount = itemStack.Count;
+					text.text = string.Format(textFormatString, itemStack.Count);
 				}
+				text.enabled = itemStack.Count > 1;
+			}
+		}
 
-				if (text != null && itemStack.Count != stack.Count)
-				{
-					bool enabled = stack.Count > 1;
+		private void RefreshDisabled()
+		{
+			if (itemImage != null)
+			{
+				itemImage.sprite = disabledSprite!;
+				itemImage.color = disabledColor;
+			}
 
-					if (enabled)
-					{
-						text.text = string.Format(textFormatString, stack.Count);
-					}
-
-					if (text.enabled != enabled)
-					{
-						text.enabled = enabled;
-					}
-				}
-
-				itemStack = stack;
+			if (text != null)
+			{
+				text.enabled = false;
 			}
 		}
 
