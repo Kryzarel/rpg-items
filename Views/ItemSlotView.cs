@@ -83,12 +83,17 @@ namespace Kryz.RPG.Items.Views
 
 		private void RefreshVisuals()
 		{
-			if (enabled) RefreshItemStack();
+			if (enabled) RefreshEnabled();
 			else RefreshDisabled();
 		}
 
-		private void RefreshItemStack()
+		private void RefreshEnabled()
 		{
+			if (raycastImage != null)
+			{
+				raycastImage.raycastTarget = true;
+			}
+
 			if (itemImage != null)
 			{
 				itemImage.sprite = itemStack.Item?.Icon!;
@@ -108,6 +113,11 @@ namespace Kryz.RPG.Items.Views
 
 		private void RefreshDisabled()
 		{
+			if (raycastImage != null)
+			{
+				raycastImage.raycastTarget = false;
+			}
+
 			if (itemImage != null)
 			{
 				itemImage.sprite = disabledSprite!;

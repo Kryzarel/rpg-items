@@ -2,9 +2,6 @@ using System;
 using System.Collections.Generic;
 using Kryz.RPG.Items.Interfaces;
 using UnityEngine;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace Kryz.RPG.Items.Views
 {
@@ -40,8 +37,12 @@ namespace Kryz.RPG.Items.Views
 		{
 			if (itemSlotsParent == null) itemSlotsParent = (RectTransform)transform;
 			itemSlotsParent.GetComponentsInChildren(includeInactive: true, itemSlots);
+
 #if UNITY_EDITOR
-			if (!EditorApplication.isPlayingOrWillChangePlaymode) EditorApplication.delayCall += HandleSlotViews;
+			if (!UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
+			{
+				UnityEditor.EditorApplication.delayCall += HandleSlotViews;
+			}
 #endif
 		}
 
@@ -114,9 +115,9 @@ namespace Kryz.RPG.Items.Views
 
 		private void OnSlotChanged(int index)
 		{
-			if (inventory == null || index < 0 || index >= inventory.Count)
+			if (inventory == null || index < 0 || index >= inventory.NumSlots)
 			{
-				Debug.LogError($"Error handling {nameof(IInventory.OnSlotChanged)} event. Inventory Size: {inventory?.NumSlots} | Slot Index: {index}", this);
+				Debug.LogError($"Error handling {nameof(IInventory.OnSlotChanged)} event. Slot Index: {index} | Inventory Size: {inventory?.NumSlots}", this);
 				return;
 			}
 
