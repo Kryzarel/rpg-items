@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Kryz.RPG.Items.Interfaces;
+using Kryz.RPG.Items.Structs;
 using UnityEngine;
 
 namespace Kryz.RPG.Items.Views
@@ -26,8 +27,8 @@ namespace Kryz.RPG.Items.Views
 		[SerializeField, Tooltip("The maximum amount of slots that can be displayed. A value of 0 or lower means infinite.")]
 		private int maxSlots;
 
-		private Action<int>? onSlotChangedDelegate;
-		private Action<int>? onNumSlotsChangedDelegate;
+		private IInventory.OnSlotChangedDelegate? onSlotChangedAction;
+		private IInventory.OnNumSlotsChangedDelegate? onNumSlotsChangedAction;
 		private IInventory? inventory;
 
 		public IInventory? Inventory => inventory;
@@ -50,8 +51,8 @@ namespace Kryz.RPG.Items.Views
 		{
 			OnValidate(); // Call OnValidate to make sure everything is setup correctly
 			HandleSlotViews();
-			onSlotChangedDelegate = OnSlotChanged;
-			onNumSlotsChangedDelegate = OnNumSlotsChanged;
+			onSlotChangedAction = OnSlotChanged;
+			onNumSlotsChangedAction = OnNumSlotsChanged;
 		}
 
 		public void SetInventory(IInventory? newInventory)
@@ -63,16 +64,16 @@ namespace Kryz.RPG.Items.Views
 
 			if (inventory != null)
 			{
-				inventory.OnSlotChanged -= onSlotChangedDelegate;
-				inventory.OnNumSlotsChanged -= onNumSlotsChangedDelegate;
+				inventory.OnSlotChanged -= onSlotChangedAction;
+				inventory.OnNumSlotsChanged -= onNumSlotsChangedAction;
 			}
 
 			inventory = newInventory;
 
 			if (inventory != null)
 			{
-				inventory.OnSlotChanged += onSlotChangedDelegate;
-				inventory.OnNumSlotsChanged += onNumSlotsChangedDelegate;
+				inventory.OnSlotChanged += onSlotChangedAction;
+				inventory.OnNumSlotsChanged += onNumSlotsChangedAction;
 			}
 
 			HandleSlotViews();
@@ -113,7 +114,7 @@ namespace Kryz.RPG.Items.Views
 			}
 		}
 
-		private void OnSlotChanged(int index)
+		private void OnSlotChanged(int index, ItemStack newStack, ItemStack previousStack)
 		{
 			if (inventory == null || index < 0 || index >= inventory.NumSlots)
 			{
@@ -121,10 +122,10 @@ namespace Kryz.RPG.Items.Views
 				return;
 			}
 
-			itemSlots[index].SetItemStack(inventory[index]);
+			itemSlots[index].SetItemStack(newStack);
 		}
 
-		private void OnNumSlotsChanged(int numSlots)
+		private void OnNumSlotsChanged(int newValue, int previousValue)
 		{
 			HandleSlotViews();
 		}

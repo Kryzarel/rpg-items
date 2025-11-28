@@ -100,17 +100,17 @@ namespace Kryz.RPG.Items.Tests
 			Inventory inventory = new(size);
 			ItemStack stack = new(item, stackSize);
 			inventory.TryAdd(stack, out ItemStack remainder);
+
 			int addedCount = stack.Count - remainder.Count;
+			ItemStack toRemove = new(item, addedCount);
 
 			if (inventory.NumSlots == 0 || stack.Count == 0 || stack.Item == null)
 			{
-				Assert.IsFalse(inventory.TryRemove(item, stackSize, out ItemStack removed));
-				Assert.AreEqual(default(ItemStack), removed);
+				Assert.IsFalse(inventory.TryRemove(toRemove));
 			}
 			else
 			{
-				Assert.IsTrue(inventory.TryRemove(item, addedCount, out ItemStack removed));
-				Assert.AreEqual(addedCount, removed.Count, 0);
+				Assert.IsTrue(inventory.TryRemove(toRemove));
 			}
 		}
 

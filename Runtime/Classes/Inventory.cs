@@ -17,8 +17,8 @@ namespace Kryz.RPG.Items.Classes
 		private int numSlots;
 		private int filledSlots;
 
-		public event Action<int> OnSlotChanged = delegate { };
-		public event Action<int> OnNumSlotsChanged = delegate { };
+		public event IInventory.OnSlotChangedDelegate OnSlotChanged = delegate { };
+		public event IInventory.OnNumSlotsChangedDelegate OnNumSlotsChanged = delegate { };
 
 		public ItemStack this[int index]
 		{
@@ -49,7 +49,12 @@ namespace Kryz.RPG.Items.Classes
 			return index < 0 || index >= numSlots || stack.Item == null || stack.Count <= stack.Item.MaxStacks;
 		}
 
-		public bool CanAdd(in ItemStack stack, out ItemStack remainder)
+		public bool CanAdd(in ItemStack stack)
+		{
+			return CanAddPartial(stack, out ItemStack remainder) && remainder.Count == 0;
+		}
+
+		public bool CanAddPartial(in ItemStack stack, out ItemStack remainder)
 		{
 			if (stack.Item == null)
 			{
@@ -69,7 +74,12 @@ namespace Kryz.RPG.Items.Classes
 			return remainder.Count < stack.Count;
 		}
 
-		public bool CanAdd(int index, in ItemStack stack, out ItemStack remainder)
+		public bool CanAdd(int index, in ItemStack stack)
+		{
+			return CanAddPartial(index, stack, out ItemStack remainder) && remainder.Count == 0;
+		}
+
+		public bool CanAddPartial(int index, in ItemStack stack, out ItemStack remainder)
 		{
 			if (stack.Item == null || index < 0 || index >= numSlots)
 			{
@@ -80,27 +90,48 @@ namespace Kryz.RPG.Items.Classes
 			return slots[index].TryAdd(stack, out _, out remainder);
 		}
 
-		public bool CanRemove(IItem item, int count)
+		public bool CanAdd(IReadOnlyList<ItemStack> stacks)
 		{
+			ItemStack[] tempSlots = arrayPool.Rent(numSlots);
+			Array.Copy(slots, 0, tempSlots, 0, numSlots);
+
+			bool success = TryAdd(stacks, tempSlots);
+
+			Array.Clear(tempSlots, 0, numSlots);
+			arrayPool.Return(tempSlots);
+			return success;
+		}
+
+		public bool TryAdd(IReadOnlyList<ItemStack> stacks)
+		{
+			ItemStack[] tempSlots = arrayPool.Rent(numSlots);
+			Array.Copy(slots, 0, tempSlots, 0, numSlots);
+
+			bool success = TryAdd(stacks, tempSlots);
+
+			if (success)
+			{
+				(slots, tempSlots) = (tempSlots, slots);
+			}
+
+			Array.Clear(tempSlots, 0, numSlots);
+			arrayPool.Return(tempSlots);
+			return success;
+		}
+
+		public bool Contains(in ItemStack stack)
+		{
+			int count = stack.Count;
+
 			for (int i = 0; i < numSlots && count > 0; i++)
 			{
 				ItemStack slot = slots[i];
-				if (slot.Item == item)
+				if (slot.Item == stack.Item)
 				{
 					count -= slot.Count;
 				}
 			}
 			return count <= 0;
-		}
-
-		public bool CanRemove(int index, int count)
-		{
-			return index >= 0 && index < numSlots && slots[index].Count >= count;
-		}
-
-		public bool CanRemove(int index)
-		{
-			return index >= 0 && index < numSlots && slots[index].Count > 0;
 		}
 
 		public bool TrySet(int index, in ItemStack stack, bool forceSet = false)
@@ -197,40 +228,37 @@ namespace Kryz.RPG.Items.Classes
 			return false;
 		}
 
-		public bool TryRemove(IItem item, int count, out ItemStack removed)
+		public bool TryRemove(in ItemStack stack)
 		{
-			if (item == null || count <= 0)
+			if (stack.Item == null)
 			{
-				removed = default;
 				return false;
 			}
 
 			// First we check if there's enough of the requested item
 			// We save the slot indexes that have the item so that we can go back to them faster when removing
 			using SpanScope<int> scope = numSlots > 1024 ? new SpanScope<int>(numSlots) : stackalloc int[numSlots];
-			ReadOnlySpan<int> slotsWithItem = GetSlotsWithItem(item, scope, out int availableCount, count);
+			ReadOnlySpan<int> slotsWithItem = GetSlotsWithItem(stack.Item, scope, out int availableCount, stack.Count);
 
 			// We don't have enough of the requested item
-			if (availableCount < count)
+			if (availableCount < stack.Count)
 			{
-				removed = default;
 				return false;
 			}
 
-			for (int i = 0, required = count; i < slotsWithItem.Length && required > 0; i++)
+			for (int i = 0, required = stack.Count; i < slotsWithItem.Length && required > 0; i++)
 			{
 				int index = slotsWithItem[i];
 				ref ItemStack slot = ref slots[index];
 				int countToRemove = Math.Min(required, slot.Count);
 
-				if (slot.TryRemove(countToRemove, out ItemStack result, out ItemStack removedStack))
+				if (slot.TryRemove(countToRemove, out ItemStack result, out _))
 				{
 					SetSlot(ref slot, index, result);
-					required -= removedStack.Count;
+					required -= countToRemove;
 				}
 			}
 
-			removed = new ItemStack(item, count);
 			return true;
 		}
 
@@ -286,21 +314,24 @@ namespace Kryz.RPG.Items.Classes
 
 		public void Sort(IComparer<ItemStack>? comparer = null)
 		{
-			ItemStack[] temp = arrayPool.Rent(numSlots);
-			Array.Copy(slots, 0, temp, 0, numSlots);
+			ItemStack[] original = arrayPool.Rent(numSlots);
+			Array.Copy(slots, 0, original, 0, numSlots);
 
 			Array.Sort(slots, 0, numSlots, comparer ?? Comparer<ItemStack>.Default);
 
 			for (int i = 0; i < numSlots; i++)
 			{
-				if (slots[i] != temp[i])
+				ItemStack slot = slots[i];
+				ItemStack previousSlot = slots[i];
+
+				if (slot != previousSlot)
 				{
-					OnSlotChanged(i);
+					OnSlotChanged(i, slot, previousSlot);
 				}
 			}
 
-			Array.Clear(temp, 0, numSlots);
-			arrayPool.Return(temp);
+			Array.Clear(original, 0, numSlots);
+			arrayPool.Return(original);
 		}
 
 		public ArrayEnumerator<ItemStack> GetEnumerator() => new(slots, numSlots);
@@ -313,8 +344,9 @@ namespace Kryz.RPG.Items.Classes
 		{
 			if (slot.Count <= 0 && stack.Count > 0) filledSlots++;
 			else if (slot.Count > 0 && stack.Count <= 0) filledSlots--;
+			ItemStack previous = slot;
 			slot = stack;
-			OnSlotChanged(index);
+			OnSlotChanged(index, slot, previous);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -326,6 +358,38 @@ namespace Kryz.RPG.Items.Classes
 				return true;
 			}
 			return false;
+		}
+
+		private static bool TryAdd(IReadOnlyList<ItemStack> stacksToAdd, Span<ItemStack> slots)
+		{
+			for (int i = 0; i < stacksToAdd.Count; i++)
+			{
+				ItemStack stack = stacksToAdd[i];
+
+				for (int j = 0; j < slots.Length && stack.Count > 0; j++)
+				{
+					ref ItemStack slot = ref slots[j];
+					if (slot.Item == stack.Item) // First add to slots that already have the item
+					{
+						slot.TryAdd(stack, out slot, out stack);
+					}
+				}
+
+				for (int j = 0; j < slots.Length && stack.Count > 0; j++)
+				{
+					ref ItemStack slot = ref slots[j];
+					if (slot.Item == null) // Add to empty slots
+					{
+						slot.TryAdd(stack, out slot, out stack);
+					}
+				}
+
+				if (stack.Count > 0)
+				{
+					return false;
+				}
+			}
+			return true;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -409,8 +473,9 @@ namespace Kryz.RPG.Items.Classes
 				slots = newSlots;
 			}
 
+			int previous = numSlots;
 			numSlots = value;
-			OnNumSlotsChanged(value);
+			OnNumSlotsChanged(numSlots, previous);
 		}
 	}
 }
