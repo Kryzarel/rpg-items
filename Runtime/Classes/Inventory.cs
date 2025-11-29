@@ -334,6 +334,11 @@ namespace Kryz.RPG.Items.Classes
 			arrayPool.Return(original);
 		}
 
+		public void Clear()
+		{
+			Array.Clear(slots, 0, numSlots);
+		}
+
 		public ArrayEnumerator<ItemStack> GetEnumerator() => new(slots, numSlots);
 
 		IEnumerator<ItemStack> IEnumerable<ItemStack>.GetEnumerator() => GetEnumerator();

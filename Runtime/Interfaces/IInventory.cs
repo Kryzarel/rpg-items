@@ -138,5 +138,6 @@ namespace Kryz.RPG.Items.Interfaces
 		bool TryMove(int toIndex, int fromIndex, IInventory fromInventory, bool allowSwap = false);
 
 		void Sort(IComparer<ItemStack>? comparer = null);
+		void Clear();
 	}
 }
