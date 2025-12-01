@@ -46,7 +46,7 @@ namespace Kryz.RPG.Items.Classes
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public bool CanSet(int index, in ItemStack stack)
 		{
-			return index < 0 || index >= numSlots || stack.Item == null || stack.Count <= stack.Item.MaxStacks;
+			return index >= 0 && index < numSlots && stack.Item != null && stack.Count <= stack.Item.MaxStacks;
 		}
 
 		public bool CanAdd(in ItemStack stack)
@@ -162,52 +162,31 @@ namespace Kryz.RPG.Items.Classes
 			}
 
 			int maxCount = stack.Item.MaxStacks;
-			// If the stack has more items than 1 free slot can take, we need multiple free slots
-			// Fast integer division that always rounds up: https://stackoverflow.com/a/4175152
-			int freeSlotsNeeded = (stack.Count + maxCount - 1) / maxCount;
-			// There's no point requesting more free slots than the inventory has available
-			freeSlotsNeeded = Math.Min(freeSlotsNeeded, FreeSlots);
 
-			// If we need less than 1024 slots, we stackalloc an array of ints, otherwise we get an array from the pool to prevent a stack overflow
-			// Using 'SpanScope' shortens this process to a single line, rather than having to manually manage pooled arrays
-			// The likelyhood that we'll ever need more than 1024 slots for a single item stack is pretty small, but you never know
-			using SpanScope<int> scope = freeSlotsNeeded > 1024 ? new SpanScope<int>(freeSlotsNeeded) : stackalloc int[freeSlotsNeeded];
-
-			// First we try to add to slots that already have this item
-			ReadOnlySpan<int> freeSlots = AddOrGetFreeSlots(remainder, maxCount, scope, out remainder);
-
-			// If we still haven't added the whole stack, we try to add to free slots
-			for (int i = 0; i < freeSlots.Length && remainder.Count > 0; i++)
+			// First, try adding to slots that already have the same item
+			for (int i = 0; i < numSlots && remainder.Count > 0; i++)
 			{
-				int index = freeSlots[i];
-				ref ItemStack slot = ref slots[index]; // Get the slot by reference so we can change it without having to reindex into the array
+				ref ItemStack slot = ref slots[i];
 
-				if (slot.TryAdd(remainder, out ItemStack result, out remainder, maxCount))
+				if (slot.Item == stack.Item && slot.TryAdd(remainder, out ItemStack result, out remainder, maxCount))
 				{
-					SetSlot(ref slot, index, result);
+					SetSlot(ref slot, i, result);
 				}
 			}
 
-			// AddToSlotsWithItem(remainder, stack.Item, maxCount, out remainder);
-			// AddToSlotsWithItem(remainder, null, maxCount, out remainder);
+			// If we still haven't added everything, try adding to empty slots
+			for (int i = 0; i < numSlots && remainder.Count > 0; i++)
+			{
+				ref ItemStack slot = ref slots[i];
+
+				if (slot.Item == null && slot.TryAdd(remainder, out ItemStack result, out remainder, maxCount))
+				{
+					SetSlot(ref slot, i, result);
+				}
+			}
 
 			return remainder.Count < stack.Count; // Return true if we added at least 1 item
 		}
-
-		// private void AddToSlotsWithItem(in ItemStack stack, IItem? item, int maxCount, out ItemStack remainder)
-		// {
-		// 	remainder = stack;
-
-		// 	for (int i = 0; i < numSlots && remainder.Count > 0; i++)
-		// 	{
-		// 		ref ItemStack slot = ref slots[i];
-
-		// 		if (slot.Item == item && slot.TryAdd(remainder, maxCount, out ItemStack result, out remainder))
-		// 		{
-		// 			SetSlot(ref slot, i, result);
-		// 		}
-		// 	}
-		// }
 
 		public bool TryAdd(int index, in ItemStack stack, out ItemStack remainder)
 		{
@@ -235,31 +214,37 @@ namespace Kryz.RPG.Items.Classes
 				return false;
 			}
 
-			// First we check if there's enough of the requested item
-			// We save the slot indexes that have the item so that we can go back to them faster when removing
-			using SpanScope<int> scope = numSlots > 1024 ? new SpanScope<int>(numSlots) : stackalloc int[numSlots];
-			ReadOnlySpan<int> slotsWithItem = GetSlotsWithItem(stack.Item, scope, out int availableCount, stack.Count);
+			(int, ItemStack)[] changes = ArrayPool<(int, ItemStack)>.Shared.Rent(numSlots);
+			int changesCount = 0;
+			int required = stack.Count;
 
-			// We don't have enough of the requested item
-			if (availableCount < stack.Count)
+			for (int i = 0; i < numSlots && required > 0; i++)
 			{
-				return false;
-			}
-
-			for (int i = 0, required = stack.Count; i < slotsWithItem.Length && required > 0; i++)
-			{
-				int index = slotsWithItem[i];
-				ref ItemStack slot = ref slots[index];
+				ref ItemStack slot = ref slots[i];
 				int countToRemove = Math.Min(required, slot.Count);
 
 				if (slot.TryRemove(countToRemove, out ItemStack result, out _))
 				{
-					SetSlot(ref slot, index, result);
 					required -= countToRemove;
+					changes[changesCount++] = (i, result);
 				}
 			}
 
-			return true;
+			bool success = required <= 0;
+
+			if (success)
+			{
+				for (int i = 0; i < changesCount; i++)
+				{
+					(int index, ItemStack result) = changes[i];
+					ref ItemStack slot = ref slots[index];
+					SetSlot(ref slot, index, result);
+				}
+			}
+
+			Array.Clear(changes, 0, changesCount);
+			ArrayPool<(int, ItemStack)>.Shared.Return(changes);
+			return success;
 		}
 
 		public bool TryRemove(int index, int count, out ItemStack removed)
@@ -285,14 +270,14 @@ namespace Kryz.RPG.Items.Classes
 
 		public bool TryMove(int toIndex, int fromIndex, IInventory fromInv, bool allowSwap = false)
 		{
-			if (toIndex < 0 || toIndex >= numSlots || fromIndex < 0 || fromIndex >= fromInv.NumSlots)
+			if (toIndex < 0 || toIndex >= numSlots || fromIndex < 0 || fromIndex >= fromInv.NumSlots || (toIndex == fromIndex && this == fromInv))
 			{
 				return false;
 			}
 
 			ItemStack fromSlot = fromInv[fromIndex];
 
-			if (fromSlot.Item == null || toIndex == fromIndex && this == fromInv)
+			if (fromSlot.Item == null)
 			{
 				return false;
 			}
@@ -336,7 +321,15 @@ namespace Kryz.RPG.Items.Classes
 
 		public void Clear()
 		{
-			Array.Clear(slots, 0, numSlots);
+			for (int i = 0; i < numSlots; i++)
+			{
+				ref ItemStack slot = ref slots[i];
+
+				if (slot != default)
+				{
+					SetSlot(ref slot, i, default);
+				}
+			}
 		}
 
 		public ArrayEnumerator<ItemStack> GetEnumerator() => new(slots, numSlots);
@@ -363,86 +356,6 @@ namespace Kryz.RPG.Items.Classes
 				return true;
 			}
 			return false;
-		}
-
-		private static bool TryAdd(IReadOnlyList<ItemStack> stacksToAdd, Span<ItemStack> slots)
-		{
-			for (int i = 0; i < stacksToAdd.Count; i++)
-			{
-				ItemStack stack = stacksToAdd[i];
-
-				for (int j = 0; j < slots.Length && stack.Count > 0; j++)
-				{
-					ref ItemStack slot = ref slots[j];
-					if (slot.Item == stack.Item) // First add to slots that already have the item
-					{
-						slot.TryAdd(stack, out slot, out stack);
-					}
-				}
-
-				for (int j = 0; j < slots.Length && stack.Count > 0; j++)
-				{
-					ref ItemStack slot = ref slots[j];
-					if (slot.Item == null) // Add to empty slots
-					{
-						slot.TryAdd(stack, out slot, out stack);
-					}
-				}
-
-				if (stack.Count > 0)
-				{
-					return false;
-				}
-			}
-			return true;
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private ReadOnlySpan<int> AddOrGetFreeSlots(in ItemStack stack, int maxCount, Span<int> freeSlots, out ItemStack remainder)
-		{
-			int freeCount = 0;
-			remainder = stack;
-
-			for (int i = 0; i < numSlots && remainder.Count > 0; i++)
-			{
-				// Get the slot by reference so we can change it without having to reindex into the array
-				ref ItemStack slot = ref slots[i];
-
-				if (slot.Item == stack.Item)
-				{
-					if (slot.TryAdd(remainder, out ItemStack result, out remainder, maxCount))
-					{
-						SetSlot(ref slot, i, result);
-					}
-				}
-				else if (slot.Item == null && freeCount < freeSlots.Length)
-				{
-					freeSlots[freeCount++] = i;
-				}
-			}
-
-			// Return free slots or an empty span if we managed to add the whole stack
-			return remainder.Count > 0 ? freeSlots[..freeCount] : default;
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private ReadOnlySpan<int> GetSlotsWithItem(IItem item, Span<int> slotIndexes, out int availableCount, int requiredCount = int.MaxValue)
-		{
-			availableCount = 0;
-			int slotCount = 0;
-
-			for (int i = 0; i < numSlots && availableCount < requiredCount; i++)
-			{
-				ItemStack slot = slots[i];
-
-				if (slot.Item == item)
-				{
-					availableCount += slot.Count;
-					slotIndexes[slotCount++] = i;
-				}
-			}
-
-			return slotIndexes[..slotCount];
 		}
 
 		private void SetNumSlots(int value)
