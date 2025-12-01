@@ -103,8 +103,7 @@ namespace Kryz.RPG.Items.Interfaces
 		/// <summary>
 		/// Try to remove a certain amount of a specific item from the inventory.
 		/// </summary>
-		/// <param name="item">The item to remove.</param>
-		/// <param name="count">The amount to remove.</param>
+		/// <param name="stack">The item stack to remove.</param>
 		/// <returns>True if the inventory had enough of the specified item and it was removed. False otherwise.</returns>
 		bool TryRemove(in ItemStack stack);
 
