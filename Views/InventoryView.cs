@@ -28,7 +28,7 @@ namespace Kryz.RPG.Items.Views
 		private int maxSlots;
 
 		private IInventory.OnSlotChangedDelegate? onSlotChangedAction;
-		private IInventory.OnNumSlotsChangedDelegate? onNumSlotsChangedAction;
+		private IInventory.OnSizeChangedDelegate? onSizeChangedAction;
 		private IInventory? inventory;
 
 		public IInventory? Inventory => inventory;
@@ -52,7 +52,7 @@ namespace Kryz.RPG.Items.Views
 			OnValidate(); // Call OnValidate to make sure everything is setup correctly
 			HandleSlotViews();
 			onSlotChangedAction = OnSlotChanged;
-			onNumSlotsChangedAction = OnNumSlotsChanged;
+			onSizeChangedAction = OnSizeChanged;
 		}
 
 		public void SetInventory(IInventory? newInventory)
@@ -65,7 +65,7 @@ namespace Kryz.RPG.Items.Views
 			if (inventory != null)
 			{
 				inventory.OnSlotChanged -= onSlotChangedAction;
-				inventory.OnNumSlotsChanged -= onNumSlotsChangedAction;
+				inventory.OnSizeChanged -= onSizeChangedAction;
 			}
 
 			inventory = newInventory;
@@ -73,7 +73,7 @@ namespace Kryz.RPG.Items.Views
 			if (inventory != null)
 			{
 				inventory.OnSlotChanged += onSlotChangedAction;
-				inventory.OnNumSlotsChanged += onNumSlotsChangedAction;
+				inventory.OnSizeChanged += onSizeChangedAction;
 			}
 
 			HandleSlotViews();
@@ -81,12 +81,12 @@ namespace Kryz.RPG.Items.Views
 
 		private void HandleSlotViews()
 		{
-			if (inventory != null && inventory.NumSlots > maxSlots && maxSlots > 0)
+			if (inventory != null && inventory.Size > maxSlots && maxSlots > 0)
 			{
-				Debug.LogError("Inventory has " + inventory.NumSlots + " slots, but the " + nameof(InventoryView) + " is configured to display a maximum of " + maxSlots, this);
+				Debug.LogError("Inventory has " + inventory.Size + " slots, but the " + nameof(InventoryView) + " is configured to display a maximum of " + maxSlots, this);
 			}
 
-			int inventorySlots = inventory != null ? inventory.NumSlots : 0;
+			int inventorySlots = inventory != null ? inventory.Size : 0;
 			int numSlots = Math.Min(Math.Max(inventorySlots, minSlots), maxSlots <= 0 ? int.MaxValue : maxSlots);
 
 			for (int i = 0; i < itemSlots.Count; i++)
@@ -114,18 +114,18 @@ namespace Kryz.RPG.Items.Views
 			}
 		}
 
-		private void OnSlotChanged(int index, ItemStack newStack, ItemStack previousStack)
+		private void OnSlotChanged(int index, ItemStack previousStack, ItemStack newStack)
 		{
-			if (inventory == null || index < 0 || index >= inventory.NumSlots)
+			if (inventory == null || index < 0 || index >= inventory.Size)
 			{
-				Debug.LogError($"Error handling {nameof(IInventory.OnSlotChanged)} event. Slot Index: {index} | Inventory Size: {inventory?.NumSlots}", this);
+				Debug.LogError($"Error handling {nameof(IInventory.OnSlotChanged)} event. Slot Index: {index} | Inventory Size: {inventory?.Size}", this);
 				return;
 			}
 
 			itemSlots[index].SetItemStack(newStack);
 		}
 
-		private void OnNumSlotsChanged(int newValue, int previousValue)
+		private void OnSizeChanged(int previousValue, int newValue)
 		{
 			HandleSlotViews();
 		}

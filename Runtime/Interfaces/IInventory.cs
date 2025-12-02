@@ -5,13 +5,13 @@ namespace Kryz.RPG.Items.Interfaces
 {
 	public interface IInventory : IReadOnlyList<ItemStack>
 	{
-		public delegate void OnSlotChangedDelegate(int index, ItemStack newStack, ItemStack previousStack);
-		public delegate void OnNumSlotsChangedDelegate(int newValue, int previousValue);
+		public delegate void OnSlotChangedDelegate(int index, ItemStack previousStack, ItemStack newStack);
+		public delegate void OnSizeChangedDelegate(int previousValue, int newValue);
 
 		event OnSlotChangedDelegate OnSlotChanged;
-		event OnNumSlotsChangedDelegate OnNumSlotsChanged;
+		event OnSizeChangedDelegate OnSizeChanged;
 
-		int NumSlots { get; set; }
+		int Size { get; set; }
 		int FreeSlots { get; }
 		int FilledSlots { get; }
 
@@ -47,14 +47,6 @@ namespace Kryz.RPG.Items.Interfaces
 		/// <param name="stack">The <see cref="ItemStack"/> to check.</param>
 		/// <returns>True if the inventory has enough of the specified item. False otherwise.</returns>
 		bool Contains(in ItemStack stack);
-
-		/// <summary>
-		/// Check if it's possible to remove multiple <see cref="ItemStack"/>s and then add multiple <see cref="ItemStack"/>s to the inventory. Useful for crafting, trading, etc.
-		/// </summary>
-		/// <param name="remove">The <see cref="ItemStack"/>s to remove.</param>
-		/// <param name="add">The <see cref="ItemStack"/>s to add.</param>
-		/// <returns>True if the inventory has at least '<paramref name="remove"/>' stacks and enough space to add all the '<paramref name="add"/>' stacks afterwards. False otherwise.</returns>
-		bool CanRemoveThenAdd(IReadOnlyList<ItemStack> remove, IReadOnlyList<ItemStack> add);
 
 		/// <summary>
 		/// Try to set an item slot to the specified <see cref="ItemStack"/>, overwriting any <see cref="ItemStack"/> that may already be in that slot.
@@ -101,14 +93,6 @@ namespace Kryz.RPG.Items.Interfaces
 		bool TryRemove(int index, int count, out ItemStack removed);
 
 		/// <summary>
-		/// Try to remove multiple <see cref="ItemStack"/>s and then add multiple <see cref="ItemStack"/>s to the inventory. Useful for crafting, trading, etc.
-		/// </summary>
-		/// <param name="remove">The <see cref="ItemStack"/>s to remove.</param>
-		/// <param name="add">The <see cref="ItemStack"/>s to add.</param>
-		/// <returns>True if the inventory had at least '<paramref name="remove"/>' stacks and enough space to add all the '<paramref name="add"/>' stacks afterwards. False otherwise.</returns>
-		bool TryRemoveThenAdd(IReadOnlyList<ItemStack> remove, IReadOnlyList<ItemStack> add);
-
-		/// <summary>
 		/// Try to remove an entire item stack from a specific inventory slot.
 		/// </summary>
 		/// <param name="index">The slot index to remove from.</param>
@@ -129,6 +113,9 @@ namespace Kryz.RPG.Items.Interfaces
 		bool TryMove(int toIndex, int fromIndex, IInventory fromInventory, bool allowSwap = false);
 
 		void Sort(IComparer<ItemStack>? comparer = null);
+
 		void Clear();
+
+		void CopyFrom(IReadOnlyList<ItemStack> stacks);
 	}
 }

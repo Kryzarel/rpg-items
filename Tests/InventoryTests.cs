@@ -45,7 +45,7 @@ namespace Kryz.RPG.Items.Tests
 			int expectedSize = Math.Max(0, size);
 
 			Assert.AreEqual(expectedSize, inventory.Count, 0);
-			Assert.AreEqual(expectedSize, inventory.NumSlots, 0);
+			Assert.AreEqual(expectedSize, inventory.Size, 0);
 			Assert.AreEqual(expectedSize, inventory.FreeSlots, 0);
 			Assert.AreEqual(0, inventory.FilledSlots, 0);
 
@@ -69,7 +69,7 @@ namespace Kryz.RPG.Items.Tests
 			Inventory inventory = new(size);
 			ItemStack stack = new(item, stackSize);
 
-			if (inventory.NumSlots == 0 || stack.Count == 0 || stack.Item == null)
+			if (inventory.Size == 0 || stack.Count == 0 || stack.Item == null)
 			{
 				Assert.IsFalse(inventory.TryAdd(stack, out ItemStack remainder));
 				Assert.AreEqual(stack, remainder);
@@ -81,7 +81,7 @@ namespace Kryz.RPG.Items.Tests
 
 				Assert.IsTrue(inventory.TryAdd(stack, out ItemStack remainder));
 				Assert.AreEqual(Math.Max(0, freeSlots - requiredSlots), inventory.FreeSlots, 0);
-				Assert.AreEqual(Math.Min(inventory.NumSlots, requiredSlots), inventory.FilledSlots, 0);
+				Assert.AreEqual(Math.Min(inventory.Size, requiredSlots), inventory.FilledSlots, 0);
 
 				if (requiredSlots <= freeSlots)
 				{
@@ -104,7 +104,7 @@ namespace Kryz.RPG.Items.Tests
 			int addedCount = stack.Count - remainder.Count;
 			ItemStack toRemove = new(item, addedCount);
 
-			if (inventory.NumSlots == 0 || stack.Count == 0 || stack.Item == null)
+			if (inventory.Size == 0 || stack.Count == 0 || stack.Item == null)
 			{
 				Assert.IsFalse(inventory.TryRemove(toRemove));
 			}
@@ -127,7 +127,7 @@ namespace Kryz.RPG.Items.Tests
 			if (inventory.FreeSlots > 0)
 			{
 				int freeSpaceForItem = 0;
-				for (int i = 0; i < inventory.NumSlots; i++)
+				for (int i = 0; i < inventory.Size; i++)
 				{
 					ItemStack slot = inventory[i];
 					if (slot.Item == null || slot.Item == stack2.Item)
@@ -170,7 +170,7 @@ namespace Kryz.RPG.Items.Tests
 			if (inventory.FreeSlots > 0)
 			{
 				int freeSpaceForItem = 0;
-				for (int i = 0; i < inventory.NumSlots; i++)
+				for (int i = 0; i < inventory.Size; i++)
 				{
 					ItemStack slot = inventory[i];
 					if (slot.Item == null || slot.Item == stack2.Item)

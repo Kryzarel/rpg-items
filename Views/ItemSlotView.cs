@@ -61,7 +61,7 @@ namespace Kryz.RPG.Items.Views
 			this.inventory = inventory;
 			this.interaction = interaction;
 
-			if (inventory != null && index >= 0 && index < inventory.NumSlots)
+			if (inventory != null && index >= 0 && index < inventory.Size)
 			{
 				SetItemStack(inventory[index]);
 				enabled = true;
