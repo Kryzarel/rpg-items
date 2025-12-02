@@ -30,7 +30,7 @@ namespace Kryz.RPG.Items.Tests
 		private static readonly int[] stackSizes = { 1, maxStacks / 2, maxStacks, maxStacks * 2 };
 
 		[Test]
-		public void Iventory_Create([ValueSource(inventorySizesSrc)] int size)
+		public void Create([ValueSource(inventorySizesSrc)] int size)
 		{
 			Inventory inventory = new(size);
 
@@ -56,7 +56,7 @@ namespace Kryz.RPG.Items.Tests
 		}
 
 		[Test]
-		public void Inventory_Add_OneStack_Full([ValueSource(inventorySizesSrc)] int size, [ValueSource(itemsSrc)] IItem item, [ValueSource(stackSizesSrc)] int stackSize)
+		public void Add_OneStack_Full([ValueSource(inventorySizesSrc)] int size, [ValueSource(itemsSrc)] IItem item, [ValueSource(stackSizesSrc)] int stackSize)
 		{
 			Inventory inventory = new(size);
 			ItemStack stack = new(item, stackSize);
@@ -94,7 +94,7 @@ namespace Kryz.RPG.Items.Tests
 		}
 
 		[Test]
-		public void Iventory_Add_OneStack_Partial([ValueSource(inventorySizesSrc)] int size, [ValueSource(itemsSrc)] IItem item, [ValueSource(stackSizesSrc)] int stackSize)
+		public void Add_OneStack_Partial([ValueSource(inventorySizesSrc)] int size, [ValueSource(itemsSrc)] IItem item, [ValueSource(stackSizesSrc)] int stackSize)
 		{
 			Inventory inventory = new(size);
 			ItemStack stack = new(item, stackSize);
@@ -128,7 +128,7 @@ namespace Kryz.RPG.Items.Tests
 		}
 
 		[Test]
-		public void Iventory_Remove_OneStack([ValueSource(inventorySizesSrc)] int size, [ValueSource(itemsSrc)] IItem item, [ValueSource(stackSizesSrc)] int stackSize)
+		public void Remove_OneStack([ValueSource(inventorySizesSrc)] int size, [ValueSource(itemsSrc)] IItem item, [ValueSource(stackSizesSrc)] int stackSize)
 		{
 			Inventory inventory = new(size);
 			ItemStack stack = new(item, stackSize);
@@ -149,7 +149,7 @@ namespace Kryz.RPG.Items.Tests
 		}
 
 		[Test]
-		public void Iventory_Add_TwoStacks_SameItem([ValueSource(stackSizesSrc)] int stackSize1, [ValueSource(stackSizesSrc)] int stackSize2)
+		public void Add_TwoStacks_SameItem([ValueSource(stackSizesSrc)] int stackSize1, [ValueSource(stackSizesSrc)] int stackSize2)
 		{
 			Inventory inventory = new(2);
 			ItemStack stack1 = new(items[1], stackSize1);
@@ -192,7 +192,7 @@ namespace Kryz.RPG.Items.Tests
 		}
 
 		[Test]
-		public void Iventory_Add_TwoStacks_DifferentItems([ValueSource(stackSizesSrc)] int stackSize1, [ValueSource(stackSizesSrc)] int stackSize2)
+		public void Add_TwoStacks_DifferentItems([ValueSource(stackSizesSrc)] int stackSize1, [ValueSource(stackSizesSrc)] int stackSize2)
 		{
 			Inventory inventory = new(2);
 			ItemStack stack1 = new(items[1], stackSize1);

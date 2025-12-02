@@ -27,7 +27,7 @@ namespace Kryz.RPG.Items.Tests
 		private static readonly int[] stackSizes = { -1, 0, 1, maxStacks / 2, maxStacks, maxStacks * 2 };
 
 		[Test]
-		public void ItemStack_Create([ValueSource(itemsSouce)] IItem item, [ValueSource(stackSizesSouce)] int stackSize)
+		public void Create([ValueSource(itemsSouce)] IItem item, [ValueSource(stackSizesSouce)] int stackSize)
 		{
 			ItemStack stack = new(item, stackSize);
 
@@ -43,7 +43,7 @@ namespace Kryz.RPG.Items.Tests
 		}
 
 		[Test]
-		public void ItemStack_Add([ValueSource(itemsSouce)] IItem item1, [ValueSource(itemsSouce)] IItem item2, [ValueSource(stackSizesSouce)] int stackSize1, [ValueSource(stackSizesSouce)] int stackSize2)
+		public void Add([ValueSource(itemsSouce)] IItem item1, [ValueSource(itemsSouce)] IItem item2, [ValueSource(stackSizesSouce)] int stackSize1, [ValueSource(stackSizesSouce)] int stackSize2)
 		{
 			ItemStack stack1 = new(item1, stackSize1);
 			ItemStack stack2 = new(item2, stackSize2);
@@ -73,7 +73,7 @@ namespace Kryz.RPG.Items.Tests
 		}
 
 		[Test]
-		public void ItemStack_Remove([ValueSource(itemsSouce)] IItem item, [ValueSource(stackSizesSouce)] int stackSize, [ValueSource(stackSizesSouce)] int amountToRemove)
+		public void Remove([ValueSource(itemsSouce)] IItem item, [ValueSource(stackSizesSouce)] int stackSize, [ValueSource(stackSizesSouce)] int amountToRemove)
 		{
 			ItemStack stack = new(item, stackSize);
 
