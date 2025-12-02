@@ -322,5 +322,32 @@ namespace Kryz.RPG.Items.Tests
 				Assert.IsFalse(inventory.TryRemove(stack));
 			}
 		}
+
+		[Test]
+		public void Remove_Slot([ValueSource(stackSizesSrc)] int stackSize)
+		{
+			Inventory inventory = new(3);
+
+			for (int i = 0; i < inventory.Size; i++)
+			{
+				inventory.TrySet(i, new ItemStack(items[i]), forceSet: true);
+			}
+
+			for (int i = 0; i < inventory.Size; i++)
+			{
+				ItemStack slot = inventory[i];
+
+				if (slot.Item != null && slot.Count >= stackSize)
+				{
+					Assert.IsTrue(inventory.TryRemove(i, stackSize, out ItemStack removed));
+					Assert.AreEqual(new ItemStack(slot.Item, stackSize), removed);
+				}
+				else
+				{
+					Assert.IsFalse(inventory.TryRemove(i, stackSize, out ItemStack removed));
+					Assert.AreEqual(default(ItemStack), removed);
+				}
+			}
+		}
 	}
 }
