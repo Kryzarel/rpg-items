@@ -1,9 +1,8 @@
 using System;
 using System.Buffers;
 using System.Runtime.CompilerServices;
-using Kryz.RPG.Items.Structs;
 
-namespace Kryz.RPG.Items
+namespace Kryz.RPG.Items.Structs
 {
 	public ref struct InventoryChanges
 	{
