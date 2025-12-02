@@ -9,36 +9,28 @@ namespace Kryz.RPG.Items.Tests
 {
 	public class InventoryTests
 	{
-		private class TestItemDefinition : IItemDefinition { }
-
 		private class TestItem : IItem
 		{
-			public IItemDefinition Definition { get; private set; }
 			public Sprite Icon => null!;
 			public string Name => "Test Item";
 			public string Description => "An item just for testing";
 			public int MaxStacks => maxStacks;
-
-			public TestItem(IItemDefinition itemDefinition) => Definition = itemDefinition;
 
 			public int CompareTo(IItem other) => Name.CompareTo(other.Name);
 		}
 
 		private const int maxStacks = 20;
 
-		private const string sizesSouce = nameof(sizes);
-		private const string itemsSouce = nameof(items);
-		private const string allStackSizesSouce = nameof(allStackSizes);
-		private const string stackSizesSouce = nameof(stackSizes);
+		private const string inventorySizesSrc = nameof(inventorySizes);
+		private const string itemsSrc = nameof(items);
+		private const string stackSizesSrc = nameof(stackSizes);
 
-		private static readonly int[] sizes = { -1, 0, 1, 10, 100 };
-		private static readonly TestItemDefinition definition = new();
-		private static readonly IItem[] items = { null!, new TestItem(definition), new TestItem(definition) };
-		private static readonly int[] allStackSizes = { -1, 0, 1, maxStacks / 2, maxStacks, maxStacks * 2 };
+		private static readonly int[] inventorySizes = { -1, 0, 1, 10, 100 };
+		private static readonly IItem[] items = { null!, new TestItem(), new TestItem() };
 		private static readonly int[] stackSizes = { 1, maxStacks / 2, maxStacks, maxStacks * 2 };
 
 		[Test]
-		public void Iventory_Create([ValueSource(sizesSouce)] int size)
+		public void Iventory_Create([ValueSource(inventorySizesSrc)] int size)
 		{
 			Inventory inventory = new(size);
 
@@ -64,13 +56,52 @@ namespace Kryz.RPG.Items.Tests
 		}
 
 		[Test]
-		public void Iventory_Add_OneStack([ValueSource(sizesSouce)] int size, [ValueSource(itemsSouce)] IItem item, [ValueSource(allStackSizesSouce)] int stackSize)
+		public void Inventory_Add_OneStack_Full([ValueSource(inventorySizesSrc)] int size, [ValueSource(itemsSrc)] IItem item, [ValueSource(stackSizesSrc)] int stackSize)
 		{
 			Inventory inventory = new(size);
 			ItemStack stack = new(item, stackSize);
 
 			if (inventory.Size == 0 || stack.Count == 0 || stack.Item == null)
 			{
+				Assert.IsFalse(inventory.CanAdd(stack, out _, allowPartial: false));
+				Assert.IsFalse(inventory.TryAdd(stack, out ItemStack remainder, allowPartial: false));
+				Assert.AreEqual(stack, remainder);
+			}
+			else
+			{
+				int freeSlots = inventory.FreeSlots;
+				int requiredSlots = (int)Math.Ceiling(stack.Count / (float)stack.Item.MaxStacks);
+				bool canAdd = requiredSlots <= freeSlots;
+
+				Assert.AreEqual(canAdd, inventory.CanAdd(stack, out _, allowPartial: false));
+
+				bool success = inventory.TryAdd(stack, out ItemStack remainder, allowPartial: false);
+
+				if (canAdd)
+				{
+					Assert.IsTrue(success);
+					Assert.AreEqual(default(ItemStack), remainder);
+				}
+				else
+				{
+					Assert.IsFalse(success);
+					Assert.AreEqual(stack, remainder);
+				}
+
+				Assert.AreEqual(canAdd ? freeSlots - requiredSlots : freeSlots, inventory.FreeSlots, 0);
+				Assert.AreEqual(canAdd ? requiredSlots : 0, inventory.OccupiedSlots, 0);
+			}
+		}
+
+		[Test]
+		public void Iventory_Add_OneStack_Partial([ValueSource(inventorySizesSrc)] int size, [ValueSource(itemsSrc)] IItem item, [ValueSource(stackSizesSrc)] int stackSize)
+		{
+			Inventory inventory = new(size);
+			ItemStack stack = new(item, stackSize);
+
+			if (inventory.Size == 0 || stack.Count == 0 || stack.Item == null)
+			{
+				Assert.IsFalse(inventory.CanAdd(stack, out _, allowPartial: true));
 				Assert.IsFalse(inventory.TryAdd(stack, out ItemStack remainder, allowPartial: true));
 				Assert.AreEqual(stack, remainder);
 			}
@@ -79,9 +110,8 @@ namespace Kryz.RPG.Items.Tests
 				int freeSlots = inventory.FreeSlots;
 				int requiredSlots = (int)Math.Ceiling(stack.Count / (float)stack.Item.MaxStacks);
 
+				Assert.IsTrue(inventory.CanAdd(stack, out _, allowPartial: true));
 				Assert.IsTrue(inventory.TryAdd(stack, out ItemStack remainder, allowPartial: true));
-				Assert.AreEqual(Math.Max(0, freeSlots - requiredSlots), inventory.FreeSlots, 0);
-				Assert.AreEqual(Math.Min(inventory.Size, requiredSlots), inventory.OccupiedSlots, 0);
 
 				if (requiredSlots <= freeSlots)
 				{
@@ -91,31 +121,35 @@ namespace Kryz.RPG.Items.Tests
 				{
 					Assert.AreNotEqual(default(ItemStack), remainder);
 				}
+
+				Assert.AreEqual(Math.Max(0, freeSlots - requiredSlots), inventory.FreeSlots, 0);
+				Assert.AreEqual(Math.Min(inventory.Size, requiredSlots), inventory.OccupiedSlots, 0);
 			}
 		}
 
 		[Test]
-		public void Iventory_Remove_OneStack([ValueSource(sizesSouce)] int size, [ValueSource(itemsSouce)] IItem item, [ValueSource(allStackSizesSouce)] int stackSize)
+		public void Iventory_Remove_OneStack([ValueSource(inventorySizesSrc)] int size, [ValueSource(itemsSrc)] IItem item, [ValueSource(stackSizesSrc)] int stackSize)
 		{
 			Inventory inventory = new(size);
 			ItemStack stack = new(item, stackSize);
 			inventory.TryAdd(stack, out ItemStack remainder, allowPartial: true);
 
-			int addedCount = stack.Count - remainder.Count;
-			ItemStack toRemove = new(item, addedCount);
-
 			if (inventory.Size == 0 || stack.Count == 0 || stack.Item == null)
 			{
-				Assert.IsFalse(inventory.TryRemove(toRemove));
+				Assert.IsFalse(inventory.TryRemove(stack));
+			}
+			else if (remainder.Count <= 0)
+			{
+				Assert.IsTrue(inventory.TryRemove(stack));
 			}
 			else
 			{
-				Assert.IsTrue(inventory.TryRemove(toRemove));
+				Assert.IsFalse(inventory.TryRemove(stack));
 			}
 		}
 
 		[Test]
-		public void Iventory_Add_TwoStacks_SameItem([ValueSource(stackSizesSouce)] int stackSize1, [ValueSource(stackSizesSouce)] int stackSize2)
+		public void Iventory_Add_TwoStacks_SameItem([ValueSource(stackSizesSrc)] int stackSize1, [ValueSource(stackSizesSrc)] int stackSize2)
 		{
 			Inventory inventory = new(2);
 			ItemStack stack1 = new(items[1], stackSize1);
@@ -158,7 +192,7 @@ namespace Kryz.RPG.Items.Tests
 		}
 
 		[Test]
-		public void Iventory_Add_TwoStacks_DifferentItems([ValueSource(stackSizesSouce)] int stackSize1, [ValueSource(stackSizesSouce)] int stackSize2)
+		public void Iventory_Add_TwoStacks_DifferentItems([ValueSource(stackSizesSrc)] int stackSize1, [ValueSource(stackSizesSrc)] int stackSize2)
 		{
 			Inventory inventory = new(2);
 			ItemStack stack1 = new(items[1], stackSize1);
