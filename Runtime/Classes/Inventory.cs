@@ -49,20 +49,13 @@ namespace Kryz.RPG.Items.Classes
 			return index >= 0 && index < numSlots && stack.Item != null && stack.Count <= stack.Item.MaxStacks;
 		}
 
-		public bool CanAdd(in ItemStack stack)
+		public bool CanAdd(in ItemStack stack, out ItemStack remainder, bool allowPartial = false)
 		{
-			return CanAddPartial(stack, out ItemStack remainder) && remainder.Count == 0;
-		}
-
-		public bool CanAddPartial(in ItemStack stack, out ItemStack remainder)
-		{
+			remainder = stack;
 			if (stack.Item == null)
 			{
-				remainder = default;
 				return false;
 			}
-
-			remainder = stack;
 
 			for (int i = 0; i < numSlots && remainder.Count > 0; i++)
 			{
@@ -71,67 +64,65 @@ namespace Kryz.RPG.Items.Classes
 				slots[i].TryAdd(remainder, out _, out remainder);
 			}
 
-			return remainder.Count < stack.Count;
+			if (remainder.Count < stack.Count && (remainder.Count == 0 || allowPartial))
+			{
+				return true;
+			}
+
+			remainder = stack;
+			return false;
 		}
 
-		public bool CanAdd(int index, in ItemStack stack)
-		{
-			return CanAddPartial(index, stack, out ItemStack remainder) && remainder.Count == 0;
-		}
-
-		public bool CanAddPartial(int index, in ItemStack stack, out ItemStack remainder)
+		public bool CanAdd(int index, in ItemStack stack, out ItemStack remainder, bool allowPartial = false)
 		{
 			if (stack.Item == null || index < 0 || index >= numSlots)
 			{
-				remainder = default;
+				remainder = stack;
 				return false;
 			}
 
-			return slots[index].TryAdd(stack, out _, out remainder);
-		}
-
-		public bool CanAdd(IReadOnlyList<ItemStack> stacks)
-		{
-			ItemStack[] tempSlots = arrayPool.Rent(numSlots);
-			Array.Copy(slots, 0, tempSlots, 0, numSlots);
-
-			bool success = TryAdd(stacks, tempSlots);
-
-			Array.Clear(tempSlots, 0, numSlots);
-			arrayPool.Return(tempSlots);
-			return success;
-		}
-
-		public bool TryAdd(IReadOnlyList<ItemStack> stacks)
-		{
-			ItemStack[] tempSlots = arrayPool.Rent(numSlots);
-			Array.Copy(slots, 0, tempSlots, 0, numSlots);
-
-			bool success = TryAdd(stacks, tempSlots);
-
-			if (success)
+			if (slots[index].TryAdd(stack, out _, out remainder) && (remainder.Count == 0 || allowPartial))
 			{
-				(slots, tempSlots) = (tempSlots, slots);
+				return true;
 			}
 
-			Array.Clear(tempSlots, 0, numSlots);
-			arrayPool.Return(tempSlots);
+			remainder = stack;
+			return false;
+		}
+
+		public bool CanRemoveThenAdd(IReadOnlyList<ItemStack> remove, IReadOnlyList<ItemStack> add)
+		{
+			InventoryChanges changes = new(slots[..numSlots], stackalloc int[numSlots], arrayPool);
+
+			bool success = TryRemoveThenAdd(remove, add, ref changes);
+
+			changes.Dispose();
 			return success;
 		}
 
 		public bool Contains(in ItemStack stack)
 		{
-			int count = stack.Count;
+			if (stack.Item == null)
+			{
+				return false;
+			}
 
-			for (int i = 0; i < numSlots && count > 0; i++)
+			for (int i = 0, count = stack.Count; i < numSlots; i++)
 			{
 				ItemStack slot = slots[i];
+
 				if (slot.Item == stack.Item)
 				{
 					count -= slot.Count;
+
+					if (count <= 0)
+					{
+						return true;
+					}
 				}
 			}
-			return count <= 0;
+
+			return false;
 		}
 
 		public bool TrySet(int index, in ItemStack stack, bool forceSet = false)
@@ -152,43 +143,31 @@ namespace Kryz.RPG.Items.Classes
 			return false;
 		}
 
-		public bool TryAdd(in ItemStack stack, out ItemStack remainder)
+		public bool TryAdd(in ItemStack stack, out ItemStack remainder, bool allowPartial = false)
 		{
 			remainder = stack;
-
 			if (stack.Item == null)
 			{
 				return false;
 			}
 
-			int maxCount = stack.Item.MaxStacks;
+			InventoryChanges changes = new(slots[..numSlots], stackalloc int[numSlots], arrayPool);
+			bool success = TryAdd(stack, out remainder, ref changes);
 
-			// First, try adding to slots that already have the same item
-			for (int i = 0; i < numSlots && remainder.Count > 0; i++)
+			if (success && (remainder.Count == 0 || allowPartial))
 			{
-				ref ItemStack slot = ref slots[i];
-
-				if (slot.Item == stack.Item && slot.TryAdd(remainder, out ItemStack result, out remainder, maxCount))
-				{
-					SetSlot(ref slot, i, result);
-				}
+				ApplyChanges(changes);
+			}
+			else
+			{
+				remainder = stack;
 			}
 
-			// If we still haven't added everything, try adding to empty slots
-			for (int i = 0; i < numSlots && remainder.Count > 0; i++)
-			{
-				ref ItemStack slot = ref slots[i];
-
-				if (slot.Item == null && slot.TryAdd(remainder, out ItemStack result, out remainder, maxCount))
-				{
-					SetSlot(ref slot, i, result);
-				}
-			}
-
-			return remainder.Count < stack.Count; // Return true if we added at least 1 item
+			changes.Dispose();
+			return success;
 		}
 
-		public bool TryAdd(int index, in ItemStack stack, out ItemStack remainder)
+		public bool TryAdd(int index, in ItemStack stack, out ItemStack remainder, bool allowPartial = false)
 		{
 			if (stack.Item == null || index < 0 || index >= numSlots)
 			{
@@ -198,12 +177,13 @@ namespace Kryz.RPG.Items.Classes
 
 			ref ItemStack slot = ref slots[index];
 
-			if (slot.TryAdd(stack, out ItemStack result, out remainder))
+			if (slot.TryAdd(stack, out ItemStack result, out remainder) && (remainder.Count == 0 || allowPartial))
 			{
 				SetSlot(ref slot, index, result);
 				return true;
 			}
 
+			remainder = stack;
 			return false;
 		}
 
@@ -214,36 +194,15 @@ namespace Kryz.RPG.Items.Classes
 				return false;
 			}
 
-			(int, ItemStack)[] changes = ArrayPool<(int, ItemStack)>.Shared.Rent(numSlots);
-			int changesCount = 0;
-			int required = stack.Count;
-
-			for (int i = 0; i < numSlots && required > 0; i++)
-			{
-				ref ItemStack slot = ref slots[i];
-				int countToRemove = Math.Min(required, slot.Count);
-
-				if (slot.TryRemove(countToRemove, out ItemStack result, out _))
-				{
-					required -= countToRemove;
-					changes[changesCount++] = (i, result);
-				}
-			}
-
-			bool success = required <= 0;
+			InventoryChanges changes = new(slots[..numSlots], stackalloc int[numSlots], arrayPool);
+			bool success = TryRemove(stack, ref changes);
 
 			if (success)
 			{
-				for (int i = 0; i < changesCount; i++)
-				{
-					(int index, ItemStack result) = changes[i];
-					ref ItemStack slot = ref slots[index];
-					SetSlot(ref slot, index, result);
-				}
+				ApplyChanges(changes);
 			}
 
-			Array.Clear(changes, 0, changesCount);
-			ArrayPool<(int, ItemStack)>.Shared.Return(changes);
+			changes.Dispose();
 			return success;
 		}
 
@@ -266,6 +225,21 @@ namespace Kryz.RPG.Items.Classes
 			}
 			ref ItemStack slot = ref slots[index];
 			return TryRemove(ref slot, index, slot.Count, out removed);
+		}
+
+		public bool TryRemoveThenAdd(IReadOnlyList<ItemStack> remove, IReadOnlyList<ItemStack> add)
+		{
+			InventoryChanges changes = new(slots[..numSlots], stackalloc int[numSlots], arrayPool);
+
+			bool success = TryRemoveThenAdd(remove, add, ref changes);
+
+			if (success)
+			{
+				ApplyChanges(changes);
+			}
+
+			changes.Dispose();
+			return success;
 		}
 
 		public bool TryMove(int toIndex, int fromIndex, IInventory fromInv, bool allowSwap = false)
@@ -307,11 +281,11 @@ namespace Kryz.RPG.Items.Classes
 			for (int i = 0; i < numSlots; i++)
 			{
 				ItemStack slot = slots[i];
-				ItemStack previousSlot = slots[i];
+				ItemStack originalSlot = original[i];
 
-				if (slot != previousSlot)
+				if (slot != originalSlot)
 				{
-					OnSlotChanged(i, slot, previousSlot);
+					OnSlotChanged(i, slot, originalSlot);
 				}
 			}
 
@@ -356,6 +330,95 @@ namespace Kryz.RPG.Items.Classes
 				return true;
 			}
 			return false;
+		}
+
+		private bool TryRemove(ItemStack stack, ref InventoryChanges changes)
+		{
+			int required = stack.Count;
+
+			for (int i = 0; i < numSlots && required > 0; i++)
+			{
+				ref ItemStack slot = ref slots[i];
+
+				if (slot.Item == stack.Item && slot.TryRemove(Math.Min(required, slot.Count), out ItemStack result, out ItemStack removed))
+				{
+					required -= removed.Count;
+					changes.StoreChange(i, result);
+				}
+			}
+
+			return required <= 0;
+		}
+
+		private bool TryAdd(in ItemStack stack, out ItemStack remainder, ref InventoryChanges changes)
+		{
+			remainder = stack;
+
+			if (stack.Item == null)
+			{
+				return false;
+			}
+
+			int maxCount = stack.Item.MaxStacks;
+
+			// First, try adding to slots that already have the same item
+			for (int i = 0; i < numSlots && remainder.Count > 0; i++)
+			{
+				ref ItemStack slot = ref slots[i];
+
+				if (slot.Item == stack.Item && slot.TryAdd(remainder, out ItemStack result, out remainder, maxCount))
+				{
+					changes.StoreChange(i, result);
+				}
+			}
+
+			// Then, try adding to empty slots
+			for (int i = 0; i < numSlots && remainder.Count > 0; i++)
+			{
+				ref ItemStack slot = ref slots[i];
+
+				if (slot.Item == null && slot.TryAdd(remainder, out ItemStack result, out remainder, maxCount))
+				{
+					changes.StoreChange(i, result);
+				}
+			}
+
+			return remainder.Count < stack.Count; // Return true if we added at least 1 item
+		}
+
+		private bool TryRemoveThenAdd(IReadOnlyList<ItemStack> remove, IReadOnlyList<ItemStack> add, ref InventoryChanges changes)
+		{
+			for (int i = 0; i < remove.Count; i++)
+			{
+				if (!TryRemove(remove[i], ref changes))
+				{
+					return false;
+				}
+			}
+
+			for (int i = 0; i < add.Count; i++)
+			{
+				if (!TryAdd(add[i], out ItemStack remainder, ref changes) || remainder.Count > 0)
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		private void ApplyChanges(InventoryChanges changes)
+		{
+			foreach (int i in changes.Indexes)
+			{
+				ref ItemStack slot = ref slots[i];
+				ItemStack newSlot = changes.NewSlots[i];
+
+				if (slot != newSlot)
+				{
+					SetSlot(ref slot, i, newSlot);
+				}
+			}
 		}
 
 		private void SetNumSlots(int value)

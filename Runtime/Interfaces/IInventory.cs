@@ -24,41 +24,22 @@ namespace Kryz.RPG.Items.Interfaces
 		bool CanSet(int index, in ItemStack stack);
 
 		/// <summary>
-		/// Check if it's possible to add an <see cref="ItemStack"/> to the inventory.
-		/// </summary>
-		/// <param name="stack">The item stack to add.</param>
-		/// <returns>True if the inventory has enough space to add the entire stack. False otherwise.</returns>
-		bool CanAdd(in ItemStack stack);
-
-		/// <summary>
 		/// Check if it's possible to add at least 1 item from an <see cref="ItemStack"/> to the inventory.
 		/// </summary>
 		/// <param name="stack">The item stack to add.</param>
 		/// <param name="remainder">If <paramref name="stack"/> cannot be added in its entirety, this will contain how much will remain of the original stack.</param>
-		/// <returns>True if the inventory has enough space to add at least 1 item. False otherwise.</returns>
-		bool CanAddPartial(in ItemStack stack, out ItemStack remainder);
-
-		/// <summary>
-		/// Check if it's possible to add an <see cref="ItemStack"/> to a specific inventory slot.
-		/// </summary>
-		/// <param name="stack">The item stack to add.</param>
-		/// <returns>True if the slot has enough space to add the entire stack. False otherwise.</returns>
-		bool CanAdd(int index, in ItemStack stack);
+		/// <param name="allowPartial">Whether to allow only a portion of the stack to be added.</param>
+		/// <returns>True if the inventory has enough space for the whole stack, or at least 1 item, if '<paramref name="allowPartial"/>' is true. False otherwise.</returns>
+		bool CanAdd(in ItemStack stack, out ItemStack remainder, bool allowPartial = false);
 
 		/// <summary>
 		/// Check if it's possible to add at least 1 item from an <see cref="ItemStack"/> to a specific inventory slot.
 		/// </summary>
 		/// <param name="stack">The item stack to add.</param>
 		/// <param name="remainder">If <paramref name="stack"/> cannot be added in its entirety, this will contain how much will remain of the original stack.</param>
-		/// <returns>True if the slot has enough space to add at least 1 item. False otherwise.</returns>
-		bool CanAddPartial(int index, in ItemStack stack, out ItemStack remainder);
-
-		/// <summary>
-		/// Check if it's possible to add multiple <see cref="ItemStack"/>s to the inventory.
-		/// </summary>
-		/// <param name="stacks">The <see cref="ItemStack"/>s to add.</param>
-		/// <returns>True if the inventory has enough space to add all the stacks in their entirety. False otherwise.</returns>
-		bool CanAdd(IReadOnlyList<ItemStack> stacks);
+		/// <param name="allowPartial">Whether to allow only a portion of the stack to be added.</param>
+		/// <returns>True if the slot has enough space for the whole stack, or at least 1 item, if '<paramref name="allowPartial"/>' is true. False otherwise.</returns>
+		bool CanAdd(int index, in ItemStack stack, out ItemStack remainder, bool allowPartial = false);
 
 		/// <summary>
 		/// Check if the inventory contains a certain amount of a specific item.
@@ -66,6 +47,14 @@ namespace Kryz.RPG.Items.Interfaces
 		/// <param name="stack">The <see cref="ItemStack"/> to check.</param>
 		/// <returns>True if the inventory has enough of the specified item. False otherwise.</returns>
 		bool Contains(in ItemStack stack);
+
+		/// <summary>
+		/// Check if it's possible to remove multiple <see cref="ItemStack"/>s and then add multiple <see cref="ItemStack"/>s to the inventory. Useful for crafting, trading, etc.
+		/// </summary>
+		/// <param name="remove">The <see cref="ItemStack"/>s to remove.</param>
+		/// <param name="add">The <see cref="ItemStack"/>s to add.</param>
+		/// <returns>True if the inventory has at least '<paramref name="remove"/>' stacks and enough space to add all the '<paramref name="add"/>' stacks afterwards. False otherwise.</returns>
+		bool CanRemoveThenAdd(IReadOnlyList<ItemStack> remove, IReadOnlyList<ItemStack> add);
 
 		/// <summary>
 		/// Try to set an item slot to the specified <see cref="ItemStack"/>, overwriting any <see cref="ItemStack"/> that may already be in that slot.
@@ -81,8 +70,9 @@ namespace Kryz.RPG.Items.Interfaces
 		/// </summary>
 		/// <param name="stack">The item stack to add.</param>
 		/// <param name="remainder">If <paramref name="stack"/> could not be added in its entirety, this will contain how much remains of the original stack.</param>
-		/// <returns>True if the inventory had enough space to add at least 1 item. False otherwise.</returns>
-		bool TryAdd(in ItemStack stack, out ItemStack remainder);
+		/// <param name="allowPartial">Whether to allow only a portion of the stack to be added.</param>
+		/// <returns>True if the inventory had enough space for the whole stack, or at least 1 item, if '<paramref name="allowPartial"/>' is true. False otherwise.</returns>
+		bool TryAdd(in ItemStack stack, out ItemStack remainder, bool allowPartial = false);
 
 		/// <summary>
 		/// Try to add an item stack to a specific inventory slot.
@@ -90,15 +80,9 @@ namespace Kryz.RPG.Items.Interfaces
 		/// <param name="index">The slot index to add to.</param>
 		/// <param name="stack">The item stack to add.</param>
 		/// <param name="remainder">If <paramref name="stack"/> could not be added in its entirety, this will contain how much remains of the original stack.</param>
-		/// <returns>True if the slot had enough space and the item was added. False otherwise.</returns>
-		bool TryAdd(int index, in ItemStack stack, out ItemStack remainder);
-
-		/// <summary>
-		/// Try to add multiple <see cref="ItemStack"/>s to the inventory.
-		/// </summary>
-		/// <param name="stacks">The <see cref="ItemStack"/>s to add.</param>
-		/// <returns>True if the inventory had enough space to add all the stacks in their entirety. False otherwise.</returns>
-		bool TryAdd(IReadOnlyList<ItemStack> stacks);
+		/// <param name="allowPartial">Whether to allow only a portion of the stack to be added.</param>
+		/// <returns>True if the slot had enough space for the whole stack, or at least 1 item, if '<paramref name="allowPartial"/>' is true. False otherwise.</returns>
+		bool TryAdd(int index, in ItemStack stack, out ItemStack remainder, bool allowPartial = false);
 
 		/// <summary>
 		/// Try to remove a certain amount of a specific item from the inventory.
@@ -115,6 +99,14 @@ namespace Kryz.RPG.Items.Interfaces
 		/// <param name="removed">The item stack that was removed.</param>
 		/// <returns>True if the slot had a valid item stack and it was removed. False otherwise.</returns>
 		bool TryRemove(int index, int count, out ItemStack removed);
+
+		/// <summary>
+		/// Try to remove multiple <see cref="ItemStack"/>s and then add multiple <see cref="ItemStack"/>s to the inventory. Useful for crafting, trading, etc.
+		/// </summary>
+		/// <param name="remove">The <see cref="ItemStack"/>s to remove.</param>
+		/// <param name="add">The <see cref="ItemStack"/>s to add.</param>
+		/// <returns>True if the inventory had at least '<paramref name="remove"/>' stacks and enough space to add all the '<paramref name="add"/>' stacks afterwards. False otherwise.</returns>
+		bool TryRemoveThenAdd(IReadOnlyList<ItemStack> remove, IReadOnlyList<ItemStack> add);
 
 		/// <summary>
 		/// Try to remove an entire item stack from a specific inventory slot.
