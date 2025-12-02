@@ -71,7 +71,7 @@ namespace Kryz.RPG.Items.Tests
 
 			if (inventory.Size == 0 || stack.Count == 0 || stack.Item == null)
 			{
-				Assert.IsFalse(inventory.TryAdd(stack, out ItemStack remainder));
+				Assert.IsFalse(inventory.TryAdd(stack, out ItemStack remainder, allowPartial: true));
 				Assert.AreEqual(stack, remainder);
 			}
 			else
@@ -79,7 +79,7 @@ namespace Kryz.RPG.Items.Tests
 				int freeSlots = inventory.FreeSlots;
 				int requiredSlots = (int)Math.Ceiling(stack.Count / (float)stack.Item.MaxStacks);
 
-				Assert.IsTrue(inventory.TryAdd(stack, out ItemStack remainder));
+				Assert.IsTrue(inventory.TryAdd(stack, out ItemStack remainder, allowPartial: true));
 				Assert.AreEqual(Math.Max(0, freeSlots - requiredSlots), inventory.FreeSlots, 0);
 				Assert.AreEqual(Math.Min(inventory.Size, requiredSlots), inventory.FilledSlots, 0);
 
@@ -99,7 +99,7 @@ namespace Kryz.RPG.Items.Tests
 		{
 			Inventory inventory = new(size);
 			ItemStack stack = new(item, stackSize);
-			inventory.TryAdd(stack, out ItemStack remainder);
+			inventory.TryAdd(stack, out ItemStack remainder, allowPartial: true);
 
 			int addedCount = stack.Count - remainder.Count;
 			ItemStack toRemove = new(item, addedCount);
@@ -121,7 +121,7 @@ namespace Kryz.RPG.Items.Tests
 			ItemStack stack1 = new(items[1], stackSize1);
 			ItemStack stack2 = new(items[1], stackSize2);
 
-			Assert.IsTrue(inventory.TryAdd(stack1, out ItemStack remainder1));
+			Assert.IsTrue(inventory.TryAdd(stack1, out ItemStack remainder1, allowPartial: true));
 			Assert.AreEqual(default(ItemStack), remainder1); // The inventory should always have space to add the entire first item stack
 
 			if (inventory.FreeSlots > 0)
@@ -136,12 +136,12 @@ namespace Kryz.RPG.Items.Tests
 					}
 				}
 
-				Assert.IsTrue(inventory.TryAdd(stack2, out ItemStack remainder2));
+				Assert.IsTrue(inventory.TryAdd(stack2, out ItemStack remainder2, allowPartial: true));
 				Assert.AreEqual(Math.Max(0, stack2.Count - freeSpaceForItem), remainder2.Count, 0);
 			}
 			else
 			{
-				Assert.IsFalse(inventory.TryAdd(stack2, out ItemStack remainder2));
+				Assert.IsFalse(inventory.TryAdd(stack2, out ItemStack remainder2, allowPartial: true));
 				Assert.AreEqual(stack2, remainder2);
 			}
 
@@ -164,7 +164,7 @@ namespace Kryz.RPG.Items.Tests
 			ItemStack stack1 = new(items[1], stackSize1);
 			ItemStack stack2 = new(items[2], stackSize2);
 
-			Assert.IsTrue(inventory.TryAdd(stack1, out ItemStack remainder1));
+			Assert.IsTrue(inventory.TryAdd(stack1, out ItemStack remainder1, allowPartial: true));
 			Assert.AreEqual(default(ItemStack), remainder1); // The inventory should always have space to add the entire first item stack
 
 			if (inventory.FreeSlots > 0)
@@ -179,12 +179,12 @@ namespace Kryz.RPG.Items.Tests
 					}
 				}
 
-				Assert.IsTrue(inventory.TryAdd(stack2, out ItemStack remainder2));
+				Assert.IsTrue(inventory.TryAdd(stack2, out ItemStack remainder2, allowPartial: true));
 				Assert.AreEqual(Math.Max(0, stack2.Count - freeSpaceForItem), remainder2.Count, 0);
 			}
 			else
 			{
-				Assert.IsFalse(inventory.TryAdd(stack2, out ItemStack remainder2));
+				Assert.IsFalse(inventory.TryAdd(stack2, out ItemStack remainder2, allowPartial: true));
 				Assert.AreEqual(stack2, remainder2);
 			}
 
