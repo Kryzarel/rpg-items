@@ -15,7 +15,7 @@ namespace Kryz.RPG.Items.Classes
 
 		private ItemStack[] slots;
 		private int size;
-		private int filledSlots;
+		private int occupiedSlots;
 
 		public event IInventory.OnSlotChangedDelegate OnSlotChanged = delegate { };
 		public event IInventory.OnSizeChangedDelegate OnSizeChanged = delegate { };
@@ -33,8 +33,8 @@ namespace Kryz.RPG.Items.Classes
 
 		public int Count => size;
 		public int Size { get => size; set => SetSize(value); }
-		public int FreeSlots => size - filledSlots;
-		public int FilledSlots => filledSlots;
+		public int FreeSlots => size - occupiedSlots;
+		public int OccupiedSlots => occupiedSlots;
 
 		public Inventory(int numSlots, ArrayPool<ItemStack>? arrayPool = null)
 		{
@@ -303,7 +303,7 @@ namespace Kryz.RPG.Items.Classes
 				SetSize(stacks.Count);
 			}
 
-			for (int i = 0; i < size; i++)
+			for (int i = 0; i < stacks.Count; i++)
 			{
 				ref ItemStack slot = ref slots[i];
 				ItemStack stack = stacks[i];
@@ -311,6 +311,16 @@ namespace Kryz.RPG.Items.Classes
 				if (slot != stack)
 				{
 					SetSlot(ref slot, i, stack);
+				}
+			}
+
+			for (int i = stacks.Count; i < size; i++)
+			{
+				ref ItemStack slot = ref slots[i];
+
+				if (slot != default)
+				{
+					SetSlot(ref slot, i, default);
 				}
 			}
 		}
@@ -329,8 +339,8 @@ namespace Kryz.RPG.Items.Classes
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void SetSlot(ref ItemStack slot, int index, in ItemStack stack)
 		{
-			if (slot.Count <= 0 && stack.Count > 0) filledSlots++;
-			else if (slot.Count > 0 && stack.Count <= 0) filledSlots--;
+			if (slot.Count <= 0 && stack.Count > 0) occupiedSlots++;
+			else if (slot.Count > 0 && stack.Count <= 0) occupiedSlots--;
 			ItemStack previous = slot;
 			slot = stack;
 			OnSlotChanged(index, previous, slot);

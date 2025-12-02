@@ -13,7 +13,7 @@ namespace Kryz.RPG.Items.Interfaces
 
 		int Size { get; set; }
 		int FreeSlots { get; }
-		int FilledSlots { get; }
+		int OccupiedSlots { get; }
 
 		/// <summary>
 		/// Check if an item slot can be set to the specified <see cref="ItemStack"/>.
@@ -24,7 +24,7 @@ namespace Kryz.RPG.Items.Interfaces
 		bool CanSet(int index, in ItemStack stack);
 
 		/// <summary>
-		/// Check if it's possible to add at least 1 item from an <see cref="ItemStack"/> to the inventory.
+		/// Check if it's possible to add an <see cref="ItemStack"/> to the inventory.
 		/// </summary>
 		/// <param name="stack">The item stack to add.</param>
 		/// <param name="remainder">If <paramref name="stack"/> cannot be added in its entirety, this will contain how much will remain of the original stack.</param>
@@ -33,7 +33,7 @@ namespace Kryz.RPG.Items.Interfaces
 		bool CanAdd(in ItemStack stack, out ItemStack remainder, bool allowPartial = false);
 
 		/// <summary>
-		/// Check if it's possible to add at least 1 item from an <see cref="ItemStack"/> to a specific inventory slot.
+		/// Check if it's possible to add an <see cref="ItemStack"/> to a specific inventory slot.
 		/// </summary>
 		/// <param name="stack">The item stack to add.</param>
 		/// <param name="remainder">If <paramref name="stack"/> cannot be added in its entirety, this will contain how much will remain of the original stack.</param>
@@ -42,7 +42,7 @@ namespace Kryz.RPG.Items.Interfaces
 		bool CanAdd(int index, in ItemStack stack, out ItemStack remainder, bool allowPartial = false);
 
 		/// <summary>
-		/// Check if the inventory contains a certain amount of a specific item.
+		/// Check if the inventory contains a certain amount of an item.
 		/// </summary>
 		/// <param name="stack">The <see cref="ItemStack"/> to check.</param>
 		/// <returns>True if the inventory has enough of the specified item. False otherwise.</returns>
@@ -53,8 +53,8 @@ namespace Kryz.RPG.Items.Interfaces
 		/// </summary>
 		/// <param name="index">The slot index to set.</param>
 		/// <param name="stack">The <see cref="ItemStack"/> to assign to the slot.</param>
-		/// <param name="forceSet">Force sets the slot, even if under normal conditions it wouldn't be allowed. Useful for deserialization.</param>
-		/// <returns>Flase if the slot is already equal to '<paramref name="stack"/>' or if it can't be set to the specified <see cref="ItemStack"/>. True otherwise.</returns>
+		/// <param name="forceSet">Force set the slot, even if under normal conditions it wouldn't be allowed.</param>
+		/// <returns>False if the slot is already equal to '<paramref name="stack"/>' or if it can't be set to the specified <see cref="ItemStack"/>. True otherwise.</returns>
 		bool TrySet(int index, in ItemStack stack, bool forceSet = false);
 
 		/// <summary>
@@ -116,6 +116,11 @@ namespace Kryz.RPG.Items.Interfaces
 
 		void Clear();
 
+		/// <summary>
+		/// <para>Overwrite all slots by copying from a <see cref="IReadOnlyList{T}"/> of <see cref="ItemStack"/>.</para>
+		/// <para>If the current <see cref="Size"/> is smaller than the provided list, it will increase to match the list's size, otherwise, <see cref="Size"/> will stay the same.</para>
+		/// </summary>
+		/// <param name="stacks">The <see cref="ItemStack"/>s to copy from.</param>
 		void CopyFrom(IReadOnlyList<ItemStack> stacks);
 	}
 }

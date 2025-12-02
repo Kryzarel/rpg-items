@@ -47,7 +47,7 @@ namespace Kryz.RPG.Items.Tests
 			Assert.AreEqual(expectedSize, inventory.Count, 0);
 			Assert.AreEqual(expectedSize, inventory.Size, 0);
 			Assert.AreEqual(expectedSize, inventory.FreeSlots, 0);
-			Assert.AreEqual(0, inventory.FilledSlots, 0);
+			Assert.AreEqual(0, inventory.OccupiedSlots, 0);
 
 			if (expectedSize <= 0)
 			{
@@ -81,7 +81,7 @@ namespace Kryz.RPG.Items.Tests
 
 				Assert.IsTrue(inventory.TryAdd(stack, out ItemStack remainder, allowPartial: true));
 				Assert.AreEqual(Math.Max(0, freeSlots - requiredSlots), inventory.FreeSlots, 0);
-				Assert.AreEqual(Math.Min(inventory.Size, requiredSlots), inventory.FilledSlots, 0);
+				Assert.AreEqual(Math.Min(inventory.Size, requiredSlots), inventory.OccupiedSlots, 0);
 
 				if (requiredSlots <= freeSlots)
 				{
