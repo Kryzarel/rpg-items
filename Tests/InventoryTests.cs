@@ -12,7 +12,7 @@ namespace Kryz.RPG.Items.Tests
 	{
 		private class TestItem : IItem
 		{
-			private string name;
+			private readonly string name;
 
 			public Sprite Icon => null!;
 			public string Name => name;
