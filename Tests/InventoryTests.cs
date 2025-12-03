@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Kryz.RPG.Items.Classes;
 using Kryz.RPG.Items.Interfaces;
 using Kryz.RPG.Items.Structs;
@@ -11,12 +12,16 @@ namespace Kryz.RPG.Items.Tests
 	{
 		private class TestItem : IItem
 		{
+			private string name;
+
 			public Sprite Icon => null!;
-			public string Name => "Test Item";
+			public string Name => name;
 			public string Description => "An item just for testing";
 			public int MaxStacks => maxStacks;
 
 			public int CompareTo(IItem other) => Name.CompareTo(other.Name);
+			public override string ToString() => Name;
+			public TestItem(string name) => this.name = name;
 		}
 
 		private const int maxStacks = 20;
@@ -26,7 +31,7 @@ namespace Kryz.RPG.Items.Tests
 		private const string stackSizesSrc = nameof(stackSizes);
 
 		private static readonly int[] inventorySizes = { -1, 0, 1, 10, 100 };
-		private static readonly IItem[] items = { null!, new TestItem(), new TestItem() };
+		private static readonly IItem[] items = { null!, new TestItem("Test Item 1"), new TestItem("Test Item 2") };
 		private static readonly int[] stackSizes = { 1, maxStacks / 2, maxStacks, maxStacks * 2 };
 
 		[Test]
@@ -62,19 +67,272 @@ namespace Kryz.RPG.Items.Tests
 			ItemStack stack = new(item, stackSize);
 
 			Assert.IsFalse(inventory.CanSet(-1, stack));
-			Assert.IsFalse(inventory.TrySet(-1, stack));
-			Assert.IsFalse(inventory.CanSet(inventory.Size, stack));
-			Assert.IsFalse(inventory.TrySet(inventory.Size, stack));
+			Assert.IsFalse(inventory.TrySet(-1, stack, forceSet: false));
+			Assert.IsFalse(inventory.TrySet(-1, stack, forceSet: true));
 
-			if (stack.Item != null && stack.Count <= stack.Item.MaxStacks)
+			Assert.IsFalse(inventory.CanSet(inventory.Size, stack));
+			Assert.IsFalse(inventory.TrySet(inventory.Size, stack, forceSet: false));
+			Assert.IsFalse(inventory.TrySet(inventory.Size, stack, forceSet: true));
+
+			Assert.AreEqual(1, inventory.FreeSlots, 0);
+			Assert.AreEqual(0, inventory.OccupiedSlots, 0);
+			Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
+			Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
+
+			if (stack.Item != default)
 			{
-				Assert.IsTrue(inventory.CanSet(0, stack));
-				Assert.IsTrue(inventory.TrySet(0, stack));
+				if (stack.Count <= stack.Item.MaxStacks)
+				{
+					Assert.IsTrue(inventory.CanSet(0, stack));
+				}
+				else
+				{
+					Assert.IsFalse(inventory.CanSet(0, stack));
+				}
+
+				Assert.AreEqual(1, inventory.FreeSlots, 0);
+				Assert.AreEqual(0, inventory.OccupiedSlots, 0);
+				Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
+				Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
+
+				if (stack.Count <= stack.Item.MaxStacks)
+				{
+					Assert.IsTrue(inventory.TrySet(0, stack, forceSet: false));
+					Assert.AreEqual(0, inventory.FreeSlots, 0);
+					Assert.AreEqual(1, inventory.OccupiedSlots, 0);
+					Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
+					Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
+				}
+				else
+				{
+					Assert.IsFalse(inventory.TrySet(0, stack, forceSet: false));
+					Assert.AreEqual(1, inventory.FreeSlots, 0);
+					Assert.AreEqual(0, inventory.OccupiedSlots, 0);
+					Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
+					Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
+				}
+
+				if (inventory[0] == stack)
+				{
+					Assert.IsFalse(inventory.TrySet(0, stack, forceSet: true)); // Fails because the slot already equals the item being set
+					Assert.IsTrue(inventory.TrySet(0, default, forceSet: true)); // Succeeds because we're setting it back to the default item
+					Assert.IsTrue(inventory.TrySet(0, stack, forceSet: true)); // Succeeds because we're setting it to a different item again
+				}
+				else
+				{
+					Assert.IsTrue(inventory.TrySet(0, stack, forceSet: true));
+				}
+
+				Assert.AreEqual(0, inventory.FreeSlots, 0);
+				Assert.AreEqual(1, inventory.OccupiedSlots, 0);
 			}
 			else
 			{
 				Assert.IsFalse(inventory.CanSet(0, stack));
-				Assert.IsFalse(inventory.TrySet(0, stack));
+				Assert.AreEqual(1, inventory.FreeSlots, 0);
+				Assert.AreEqual(0, inventory.OccupiedSlots, 0);
+				Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
+				Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
+
+				Assert.IsFalse(inventory.TrySet(0, stack, forceSet: false));
+				Assert.AreEqual(1, inventory.FreeSlots, 0);
+				Assert.AreEqual(0, inventory.OccupiedSlots, 0);
+				Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
+				Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
+
+				Assert.IsFalse(inventory.TrySet(0, stack, forceSet: true)); // Fails because the slot already equals the default item
+				Assert.AreEqual(1, inventory.FreeSlots, 0);
+				Assert.AreEqual(0, inventory.OccupiedSlots, 0);
+				Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
+				Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
+			}
+		}
+
+		[Test]
+		public void Add_OneStack_Full([ValueSource(inventorySizesSrc)] int size, [ValueSource(itemsSrc)] IItem item, [ValueSource(stackSizesSrc)] int stackSize)
+		{
+			Inventory inventory = new(size);
+			ItemStack stack = new(item, stackSize);
+
+			if (inventory.Size == 0 || stack.Count == 0 || stack.Item == null)
+			{
+				Assert.IsFalse(inventory.CanAdd(stack, out _, allowPartial: false));
+				Assert.IsFalse(inventory.TryAdd(stack, out ItemStack remainder, allowPartial: false));
+				Assert.AreEqual(stack, remainder);
+				Assert.AreEqual(inventory.Size, inventory.FreeSlots, 0);
+				Assert.AreEqual(0, inventory.OccupiedSlots, 0);
+				Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
+				Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
+			}
+			else
+			{
+				int freeSlots = inventory.FreeSlots;
+				int requiredSlots = (int)Math.Ceiling(stack.Count / (float)stack.Item.MaxStacks);
+				bool canAdd = requiredSlots <= freeSlots;
+
+				Assert.AreEqual(canAdd, inventory.CanAdd(stack, out _, allowPartial: false));
+
+				bool success = inventory.TryAdd(stack, out ItemStack remainder, allowPartial: false);
+
+				if (canAdd)
+				{
+					Assert.IsTrue(success);
+					Assert.AreEqual(default(ItemStack), remainder);
+
+					Assert.AreEqual(inventory.Size - requiredSlots, inventory.FreeSlots, 0);
+					Assert.AreEqual(requiredSlots, inventory.OccupiedSlots, 0);
+					Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
+					Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
+				}
+				else
+				{
+					Assert.IsFalse(success);
+					Assert.AreEqual(stack, remainder);
+
+					Assert.AreEqual(inventory.Size, inventory.FreeSlots, 0);
+					Assert.AreEqual(0, inventory.OccupiedSlots, 0);
+					Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
+					Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
+				}
+			}
+		}
+
+		[Test]
+		public void Add_OneStack_Partial([ValueSource(inventorySizesSrc)] int size, [ValueSource(itemsSrc)] IItem item, [ValueSource(stackSizesSrc)] int stackSize)
+		{
+			Inventory inventory = new(size);
+			ItemStack stack = new(item, stackSize);
+
+			if (inventory.Size == 0 || stack.Count == 0 || stack.Item == null)
+			{
+				Assert.IsFalse(inventory.CanAdd(stack, out _, allowPartial: true));
+				Assert.IsFalse(inventory.TryAdd(stack, out ItemStack remainder, allowPartial: true));
+				Assert.AreEqual(stack, remainder);
+				Assert.AreEqual(inventory.Size, inventory.FreeSlots, 0);
+				Assert.AreEqual(0, inventory.OccupiedSlots, 0);
+				Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
+				Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
+			}
+			else
+			{
+				int freeSlots = inventory.FreeSlots;
+				int requiredSlots = (int)Math.Ceiling(stack.Count / (float)stack.Item.MaxStacks);
+
+				Assert.IsTrue(inventory.CanAdd(stack, out _, allowPartial: true));
+				Assert.IsTrue(inventory.TryAdd(stack, out ItemStack remainder, allowPartial: true));
+
+				if (requiredSlots <= freeSlots)
+				{
+					Assert.AreEqual(default(ItemStack), remainder);
+				}
+				else
+				{
+					Assert.AreNotEqual(default(ItemStack), remainder);
+				}
+
+				Assert.AreEqual(Math.Max(0, inventory.Size - requiredSlots), inventory.FreeSlots, 0);
+				Assert.AreEqual(Math.Min(inventory.Size, requiredSlots), inventory.OccupiedSlots, 0);
+				Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
+				Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
+			}
+		}
+
+		[Test]
+		public void Add_TwoStacks_SameItem([ValueSource(stackSizesSrc)] int stackSize1, [ValueSource(stackSizesSrc)] int stackSize2)
+		{
+			Inventory inventory = new(2);
+			ItemStack stack1 = new(items[1], stackSize1);
+			ItemStack stack2 = new(items[1], stackSize2);
+			int maxStacks = stack2.Item != null ? stack2.Item.MaxStacks : 0;
+
+			Assert.IsTrue(inventory.TryAdd(stack1, out ItemStack remainder1, allowPartial: true));
+			Assert.AreEqual(default(ItemStack), remainder1); // The inventory should always have space to add the entire first item stack
+
+			if (stack1.Count <= maxStacks)
+			{
+				int freeSpaceForItem = 0;
+				for (int i = 0; i < inventory.Size; i++)
+				{
+					ItemStack slot = inventory[i];
+					if (slot.Item == null || slot.Item == stack2.Item)
+					{
+						freeSpaceForItem += maxStacks - slot.Count;
+					}
+				}
+
+				Assert.IsTrue(inventory.TryAdd(stack2, out ItemStack remainder2, allowPartial: true));
+				Assert.AreEqual(Math.Max(0, stack2.Count - freeSpaceForItem), remainder2.Count, 0);
+			}
+			else
+			{
+				Assert.IsFalse(inventory.TryAdd(stack2, out ItemStack remainder2, allowPartial: true));
+				Assert.AreEqual(stack2, remainder2);
+			}
+
+			int requiredSlots = (int)Math.Ceiling((stack1.Count + stack2.Count) / (float)maxStacks);
+			Assert.AreEqual(Math.Max(0, inventory.Size - requiredSlots), inventory.FreeSlots);
+			Assert.AreEqual(Math.Min(inventory.Size, requiredSlots), inventory.OccupiedSlots);
+			Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
+			Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
+
+			Assert.IsTrue(inventory[0].Item == items[1]);
+
+			if (stack1.Count + stack2.Count > stack1.Item!.MaxStacks)
+			{
+				Assert.IsTrue(inventory[1].Item == items[1]);
+			}
+			else
+			{
+				Assert.IsTrue(inventory[1].Item == null);
+			}
+		}
+
+		[Test]
+		public void Add_TwoStacks_DifferentItems([ValueSource(stackSizesSrc)] int stackSize1, [ValueSource(stackSizesSrc)] int stackSize2)
+		{
+			Inventory inventory = new(2);
+			ItemStack stack1 = new(items[1], stackSize1);
+			ItemStack stack2 = new(items[2], stackSize2);
+			int maxStacks = stack2.Item != null ? stack2.Item.MaxStacks : 0;
+
+			Assert.IsTrue(inventory.TryAdd(stack1, out ItemStack remainder1, allowPartial: true));
+			Assert.AreEqual(default(ItemStack), remainder1); // The inventory should always have space to add the entire first item stack
+
+			if (stack1.Count <= maxStacks)
+			{
+				int freeSpaceForItem = 0;
+				for (int i = 0; i < inventory.Size; i++)
+				{
+					ItemStack slot = inventory[i];
+					if (slot.Item == null || slot.Item == stack2.Item)
+					{
+						freeSpaceForItem += maxStacks - slot.Count;
+					}
+				}
+
+				Assert.IsTrue(inventory.TryAdd(stack2, out ItemStack remainder2, allowPartial: true));
+				Assert.AreEqual(Math.Max(0, stack2.Count - freeSpaceForItem), remainder2.Count, 0);
+			}
+			else
+			{
+				Assert.IsFalse(inventory.TryAdd(stack2, out ItemStack remainder2, allowPartial: true));
+				Assert.AreEqual(stack2, remainder2);
+			}
+
+			Assert.AreEqual(0, inventory.FreeSlots);
+			Assert.AreEqual(2, inventory.OccupiedSlots);
+			Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
+			Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
+
+			Assert.IsTrue(inventory[0].Item == items[1]);
+
+			if (stack1.Count > stack1.Item!.MaxStacks)
+			{
+				Assert.IsTrue(inventory[1].Item == items[1]);
+			}
+			else
+			{
+				Assert.IsTrue(inventory[1].Item == items[2]);
 			}
 		}
 
@@ -99,6 +357,9 @@ namespace Kryz.RPG.Items.Tests
 					Assert.IsFalse(inventory.TryAdd(i, stack, out ItemStack remainderTry, allowPartial));
 					Assert.AreEqual(remainderCan, remainderTry);
 					Assert.AreEqual(default(ItemStack), remainderTry);
+
+					Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
+					Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
 				}
 				else if (slot.Item == null || slot.Item == stack.Item)
 				{
@@ -120,165 +381,10 @@ namespace Kryz.RPG.Items.Tests
 						Assert.AreEqual(remainderCan, remainderTry);
 						Assert.AreEqual(stack, remainderTry);
 					}
+
+					Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
+					Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
 				}
-			}
-		}
-
-		[Test]
-		public void Add_OneStack_Full([ValueSource(inventorySizesSrc)] int size, [ValueSource(itemsSrc)] IItem item, [ValueSource(stackSizesSrc)] int stackSize)
-		{
-			Inventory inventory = new(size);
-			ItemStack stack = new(item, stackSize);
-
-			if (inventory.Size == 0 || stack.Count == 0 || stack.Item == null)
-			{
-				Assert.IsFalse(inventory.CanAdd(stack, out _, allowPartial: false));
-				Assert.IsFalse(inventory.TryAdd(stack, out ItemStack remainder, allowPartial: false));
-				Assert.AreEqual(stack, remainder);
-			}
-			else
-			{
-				int freeSlots = inventory.FreeSlots;
-				int requiredSlots = (int)Math.Ceiling(stack.Count / (float)stack.Item.MaxStacks);
-				bool canAdd = requiredSlots <= freeSlots;
-
-				Assert.AreEqual(canAdd, inventory.CanAdd(stack, out _, allowPartial: false));
-
-				bool success = inventory.TryAdd(stack, out ItemStack remainder, allowPartial: false);
-
-				if (canAdd)
-				{
-					Assert.IsTrue(success);
-					Assert.AreEqual(default(ItemStack), remainder);
-				}
-				else
-				{
-					Assert.IsFalse(success);
-					Assert.AreEqual(stack, remainder);
-				}
-
-				Assert.AreEqual(canAdd ? freeSlots - requiredSlots : freeSlots, inventory.FreeSlots, 0);
-				Assert.AreEqual(canAdd ? requiredSlots : 0, inventory.OccupiedSlots, 0);
-			}
-		}
-
-		[Test]
-		public void Add_OneStack_Partial([ValueSource(inventorySizesSrc)] int size, [ValueSource(itemsSrc)] IItem item, [ValueSource(stackSizesSrc)] int stackSize)
-		{
-			Inventory inventory = new(size);
-			ItemStack stack = new(item, stackSize);
-
-			if (inventory.Size == 0 || stack.Count == 0 || stack.Item == null)
-			{
-				Assert.IsFalse(inventory.CanAdd(stack, out _, allowPartial: true));
-				Assert.IsFalse(inventory.TryAdd(stack, out ItemStack remainder, allowPartial: true));
-				Assert.AreEqual(stack, remainder);
-			}
-			else
-			{
-				int freeSlots = inventory.FreeSlots;
-				int requiredSlots = (int)Math.Ceiling(stack.Count / (float)stack.Item.MaxStacks);
-
-				Assert.IsTrue(inventory.CanAdd(stack, out _, allowPartial: true));
-				Assert.IsTrue(inventory.TryAdd(stack, out ItemStack remainder, allowPartial: true));
-
-				if (requiredSlots <= freeSlots)
-				{
-					Assert.AreEqual(default(ItemStack), remainder);
-				}
-				else
-				{
-					Assert.AreNotEqual(default(ItemStack), remainder);
-				}
-
-				Assert.AreEqual(Math.Max(0, freeSlots - requiredSlots), inventory.FreeSlots, 0);
-				Assert.AreEqual(Math.Min(inventory.Size, requiredSlots), inventory.OccupiedSlots, 0);
-			}
-		}
-
-		[Test]
-		public void Add_TwoStacks_SameItem([ValueSource(stackSizesSrc)] int stackSize1, [ValueSource(stackSizesSrc)] int stackSize2)
-		{
-			Inventory inventory = new(2);
-			ItemStack stack1 = new(items[1], stackSize1);
-			ItemStack stack2 = new(items[1], stackSize2);
-
-			Assert.IsTrue(inventory.TryAdd(stack1, out ItemStack remainder1, allowPartial: true));
-			Assert.AreEqual(default(ItemStack), remainder1); // The inventory should always have space to add the entire first item stack
-
-			if (inventory.FreeSlots > 0)
-			{
-				int freeSpaceForItem = 0;
-				for (int i = 0; i < inventory.Size; i++)
-				{
-					ItemStack slot = inventory[i];
-					if (slot.Item == null || slot.Item == stack2.Item)
-					{
-						freeSpaceForItem += stack2.Item!.MaxStacks - slot.Count;
-					}
-				}
-
-				Assert.IsTrue(inventory.TryAdd(stack2, out ItemStack remainder2, allowPartial: true));
-				Assert.AreEqual(Math.Max(0, stack2.Count - freeSpaceForItem), remainder2.Count, 0);
-			}
-			else
-			{
-				Assert.IsFalse(inventory.TryAdd(stack2, out ItemStack remainder2, allowPartial: true));
-				Assert.AreEqual(stack2, remainder2);
-			}
-
-			Assert.IsTrue(inventory[0].Item == items[1]);
-
-			if (stack1.Count + stack2.Count > stack1.Item!.MaxStacks)
-			{
-				Assert.IsTrue(inventory[1].Item == items[1]);
-			}
-			else
-			{
-				Assert.IsTrue(inventory[1].Item == null);
-			}
-		}
-
-		[Test]
-		public void Add_TwoStacks_DifferentItems([ValueSource(stackSizesSrc)] int stackSize1, [ValueSource(stackSizesSrc)] int stackSize2)
-		{
-			Inventory inventory = new(2);
-			ItemStack stack1 = new(items[1], stackSize1);
-			ItemStack stack2 = new(items[2], stackSize2);
-
-			Assert.IsTrue(inventory.TryAdd(stack1, out ItemStack remainder1, allowPartial: true));
-			Assert.AreEqual(default(ItemStack), remainder1); // The inventory should always have space to add the entire first item stack
-
-			if (inventory.FreeSlots > 0)
-			{
-				int freeSpaceForItem = 0;
-				for (int i = 0; i < inventory.Size; i++)
-				{
-					ItemStack slot = inventory[i];
-					if (slot.Item == null || slot.Item == stack2.Item)
-					{
-						freeSpaceForItem += stack2.Item!.MaxStacks - slot.Count;
-					}
-				}
-
-				Assert.IsTrue(inventory.TryAdd(stack2, out ItemStack remainder2, allowPartial: true));
-				Assert.AreEqual(Math.Max(0, stack2.Count - freeSpaceForItem), remainder2.Count, 0);
-			}
-			else
-			{
-				Assert.IsFalse(inventory.TryAdd(stack2, out ItemStack remainder2, allowPartial: true));
-				Assert.AreEqual(stack2, remainder2);
-			}
-
-			Assert.IsTrue(inventory[0].Item == items[1]);
-
-			if (stack1.Count > stack1.Item!.MaxStacks)
-			{
-				Assert.IsTrue(inventory[1].Item == items[1]);
-			}
-			else
-			{
-				Assert.IsTrue(inventory[1].Item == items[2]);
 			}
 		}
 
@@ -308,19 +414,29 @@ namespace Kryz.RPG.Items.Tests
 			Inventory inventory = new(size);
 			ItemStack stack = new(item, stackSize);
 			inventory.TryAdd(stack, out ItemStack remainder, allowPartial: true);
+			int requiredSlots = stack.Item != null ? (int)Math.Ceiling(stack.Count / (float)stack.Item.MaxStacks) : 0;
 
 			if (inventory.Size == 0 || stack.Count == 0 || stack.Item == null)
 			{
 				Assert.IsFalse(inventory.TryRemove(stack));
+				Assert.AreEqual(Math.Max(0, size - requiredSlots), inventory.FreeSlots);
+				Assert.AreEqual(Math.Max(0, Math.Min(size, requiredSlots)), inventory.OccupiedSlots);
 			}
 			else if (remainder.Count <= 0)
 			{
 				Assert.IsTrue(inventory.TryRemove(stack));
+				Assert.AreEqual(inventory.Size, inventory.FreeSlots);
+				Assert.AreEqual(0, inventory.OccupiedSlots);
 			}
 			else
 			{
 				Assert.IsFalse(inventory.TryRemove(stack));
+				Assert.AreEqual(Math.Max(0, size - requiredSlots), inventory.FreeSlots);
+				Assert.AreEqual(Math.Max(0, Math.Min(size, requiredSlots)), inventory.OccupiedSlots);
 			}
+
+			Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
+			Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
 		}
 
 		[Test]
@@ -333,21 +449,79 @@ namespace Kryz.RPG.Items.Tests
 				inventory.TrySet(i, new ItemStack(items[i]), forceSet: true);
 			}
 
+			Assert.AreEqual(1, inventory.FreeSlots);
+			Assert.AreEqual(2, inventory.OccupiedSlots);
+
 			for (int i = 0; i < inventory.Size; i++)
 			{
 				ItemStack slot = inventory[i];
+				int freeSlots = inventory.FreeSlots;
+				int occupiedSlots = inventory.OccupiedSlots;
 
 				if (slot.Item != null && slot.Count >= stackSize)
 				{
 					Assert.IsTrue(inventory.TryRemove(i, stackSize, out ItemStack removed));
 					Assert.AreEqual(new ItemStack(slot.Item, stackSize), removed);
+
+					Assert.AreEqual(freeSlots + 1, inventory.FreeSlots);
+					Assert.AreEqual(occupiedSlots - 1, inventory.OccupiedSlots);
 				}
 				else
 				{
 					Assert.IsFalse(inventory.TryRemove(i, stackSize, out ItemStack removed));
 					Assert.AreEqual(default(ItemStack), removed);
+
+					Assert.AreEqual(freeSlots, inventory.FreeSlots);
+					Assert.AreEqual(occupiedSlots, inventory.OccupiedSlots);
 				}
+
+				Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
+				Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
 			}
+		}
+
+		[Test]
+		public void Remove_Slot_Full()
+		{
+			Inventory inventory = new(3);
+
+			for (int i = 0; i < inventory.Size; i++)
+			{
+				inventory.TrySet(i, new ItemStack(items[i]), forceSet: true);
+			}
+
+			for (int i = 0; i < inventory.Size; i++)
+			{
+				ItemStack slot = inventory[i];
+				int freeSlots = inventory.FreeSlots;
+				int occupiedSlots = inventory.OccupiedSlots;
+
+				if (slot.Item != null)
+				{
+					Assert.IsTrue(inventory.TryRemove(i, out ItemStack removed));
+					Assert.AreEqual(slot, removed);
+
+					Assert.AreEqual(freeSlots + 1, inventory.FreeSlots);
+					Assert.AreEqual(occupiedSlots - 1, inventory.OccupiedSlots);
+				}
+				else
+				{
+					Assert.IsFalse(inventory.TryRemove(i, out ItemStack removed));
+					Assert.AreEqual(default(ItemStack), removed);
+
+					Assert.AreEqual(freeSlots, inventory.FreeSlots);
+					Assert.AreEqual(occupiedSlots, inventory.OccupiedSlots);
+				}
+
+				Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
+				Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
+			}
+		}
+
+		[Test]
+		public void Move([ValueSource(inventorySizesSrc)] int size)
+		{
+			Inventory inventory = new(size);
 		}
 	}
 }

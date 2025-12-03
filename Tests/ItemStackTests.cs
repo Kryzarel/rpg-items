@@ -10,12 +10,16 @@ namespace Kryz.RPG.Items.Tests
 	{
 		private class TestItem : IItem
 		{
+			private string name;
+
 			public Sprite Icon => null!;
-			public string Name => "Test Item";
+			public string Name => name;
 			public string Description => "An item just for testing";
 			public int MaxStacks => maxStacks;
 
 			public int CompareTo(IItem other) => Name.CompareTo(other.Name);
+			public override string ToString() => Name;
+			public TestItem(string name) => this.name = name;
 		}
 
 		private const int maxStacks = 20;
@@ -23,7 +27,7 @@ namespace Kryz.RPG.Items.Tests
 		private const string itemsSouce = nameof(items);
 		private const string stackSizesSouce = nameof(stackSizes);
 
-		private static readonly IItem[] items = { null!, new TestItem(), new TestItem() };
+		private static readonly IItem[] items = { null!, new TestItem("Test Item 1"), new TestItem("Test Item 2") };
 		private static readonly int[] stackSizes = { -1, 0, 1, maxStacks / 2, maxStacks, maxStacks * 2 };
 
 		[Test]
