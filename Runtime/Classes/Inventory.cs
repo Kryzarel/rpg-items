@@ -43,9 +43,14 @@ namespace Kryz.RPG.Items.Classes
 			SetSize(numSlots);
 		}
 
+		public Inventory(IReadOnlyList<ItemStack> items, ArrayPool<ItemStack>? arrayPool = null) : this(items.Count, arrayPool)
+		{
+			CopyFrom(items);
+		}
+
 		public bool CanSet(int index, in ItemStack stack)
 		{
-			return index >= 0 && index < size && stack.Item != null && stack.Count <= stack.Item.MaxStacks;
+			return index >= 0 && index < size && (stack.Item == null || stack.Count <= stack.Item.MaxStacks);
 		}
 
 		public bool CanAdd(in ItemStack stack, out ItemStack remainder, bool allowPartial = false)

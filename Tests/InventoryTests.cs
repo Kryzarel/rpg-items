@@ -128,13 +128,13 @@ namespace Kryz.RPG.Items.Tests
 			}
 			else
 			{
-				Assert.IsFalse(inventory.CanSet(0, stack));
+				Assert.IsTrue(inventory.CanSet(0, stack));
 				Assert.AreEqual(1, inventory.FreeSlots, 0);
 				Assert.AreEqual(0, inventory.OccupiedSlots, 0);
 				Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
 				Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
 
-				Assert.IsFalse(inventory.TrySet(0, stack, forceSet: false));
+				Assert.IsFalse(inventory.TrySet(0, stack, forceSet: false)); // Fails because the slot already equals the default item
 				Assert.AreEqual(1, inventory.FreeSlots, 0);
 				Assert.AreEqual(0, inventory.OccupiedSlots, 0);
 				Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
@@ -519,9 +519,41 @@ namespace Kryz.RPG.Items.Tests
 		}
 
 		[Test]
-		public void Move([ValueSource(inventorySizesSrc)] int size)
+		public void Move_SameInventory()
 		{
-			Inventory inventory = new(size);
+			Inventory inventory = new(new ItemStack[] { new(items[1]), new(items[1]), new(items[2]) });
+
+			Assert.AreEqual(0, inventory.FreeSlots);
+			Assert.AreEqual(3, inventory.OccupiedSlots);
+
+			// Move
+			Assert.IsTrue(inventory.TryMove(0, 1, inventory, allowSwap: false));
+			// Check Items
+			Assert.AreEqual(new ItemStack(items[1], 2), inventory[0]);
+			Assert.AreEqual(default(ItemStack), inventory[1]);
+			// Check Free/Occupied Slots
+			Assert.AreEqual(1, inventory.FreeSlots);
+			Assert.AreEqual(2, inventory.OccupiedSlots);
+
+			// Move
+			Assert.IsTrue(inventory.TryMove(1, 2, inventory, allowSwap: false));
+			// Check Items
+			Assert.AreEqual(new ItemStack(items[2]), inventory[1]);
+			Assert.AreEqual(default(ItemStack), inventory[2]);
+			// Check Free/Occupied Slots
+			Assert.AreEqual(1, inventory.FreeSlots);
+			Assert.AreEqual(2, inventory.OccupiedSlots);
+
+			// Move
+			Assert.IsFalse(inventory.TryMove(0, 1, inventory, allowSwap: false));
+			Assert.IsTrue(inventory.TryMove(0, 1, inventory, allowSwap: true));
+			// Check Items
+			Assert.AreEqual(new ItemStack(items[2]), inventory[0]);
+			Assert.AreEqual(new ItemStack(items[1], 2), inventory[1]);
+			Assert.AreEqual(default(ItemStack), inventory[2]);
+			// Check Free/Occupied Slots
+			Assert.AreEqual(1, inventory.FreeSlots);
+			Assert.AreEqual(2, inventory.OccupiedSlots);
 		}
 	}
 }
