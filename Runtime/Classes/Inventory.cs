@@ -364,35 +364,26 @@ namespace Kryz.RPG.Items.Classes
 
 		private void SetSize(int value)
 		{
-			if (size == value && slots != null)
-			{
-				return;
-			}
+			if (value < 0) value = 0;
+			if (value == size && slots != null) return;
 
-			if (value <= 0)
+			if (slots == null || value > slots.Length)
 			{
-				value = 0;
+				ItemStack[]? oldSlots = slots;
+				// If 'value' is 0, ArrayPool SHOULD return Array.Empty<T>().
+				slots = arrayPool.Rent(value);
 
-				if (slots != null)
+				// We SHOULD NOT return the empty array to the pool.
+				if (oldSlots != null && oldSlots.Length > 0)
 				{
-					Array.Clear(slots, 0, size);
-					arrayPool.Return(slots);
+					Array.Copy(oldSlots, slots, size);
+					Array.Clear(oldSlots, 0, size);
+					arrayPool.Return(oldSlots);
 				}
-
-				slots = Array.Empty<ItemStack>();
 			}
-			else if (slots == null || value > slots.Length)
+			else if (value < size)
 			{
-				ItemStack[] newSlots = arrayPool.Rent(value);
-
-				if (slots != null && slots.Length > 0)
-				{
-					Array.Copy(slots, newSlots, size);
-					Array.Clear(slots, 0, size);
-					arrayPool.Return(slots);
-				}
-
-				slots = newSlots;
+				Array.Clear(slots, value, size);
 			}
 
 			int previous = size;
