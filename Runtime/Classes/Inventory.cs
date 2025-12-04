@@ -271,7 +271,9 @@ namespace Kryz.RPG.Items.Classes
 			ItemStack[] original = arrayPool.Rent(size);
 			Array.Copy(slots, 0, original, 0, size);
 
-			Array.Sort(slots, 0, size, comparer ?? Comparer<ItemStack>.Default);
+			// We DON'T use the default Array.Sort because it is unstable. I think a stable sorting algorithm is very valuable here.
+			// Our version has similar speed for smaller arrays but tends to be faster on larger ones (around length=100) so that's also nice.
+			MergeBinarySort.Sort(slots, 0, size, comparer ?? Comparer<ItemStack>.Default);
 
 			for (int i = 0; i < size; i++)
 			{
