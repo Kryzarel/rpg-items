@@ -49,13 +49,18 @@ public class RPGItemsPerformanceTests : MonoBehaviour
 		inventory = new(inventorySize);
 
 		TestSort();
-		TestSortItems();
 	}
 
 	private void Update()
 	{
 		inventory.CopyFrom(itemsToAdd);
 		inventory.Sort();
+
+		// inventory.CopyFrom(itemsToAdd);
+		// inventory.SortTim();
+
+		// inventory.CopyFrom(itemsToAdd);
+		// inventory.SortAsIList();
 
 		// inventory.CopyFrom(itemsToAdd);
 		// inventory.SortDefaultArray();
@@ -71,66 +76,32 @@ public class RPGItemsPerformanceTests : MonoBehaviour
 		int[] sortTest2 = new int[data.Length];
 		int[] sortTest3 = new int[data.Length];
 		int[] sortTest4 = new int[data.Length];
+		int[] sortTest5 = new int[data.Length];
 
 		Array.Copy(data, sortTest1, data.Length);
 		Array.Copy(data, sortTest2, data.Length);
 		Array.Copy(data, sortTest3, data.Length);
 		Array.Copy(data, sortTest4, data.Length);
+		Array.Copy(data, sortTest5, data.Length);
 
 		InsertionSort.Sort(sortTest1);
 		BinarySort.Sort(sortTest2);
 		MergeSort.Sort(sortTest3);
 		MergeBinarySort.Sort(sortTest4);
+		TimSortLite.Sort(sortTest5);
 
 		Debug.Log("Data: " + ToString(data));
 		Debug.Log("Ins: " + ToString(sortTest1));
 		Debug.Log("Bin: " + ToString(sortTest2));
 		Debug.Log("Mer: " + ToString(sortTest3));
-		Debug.Log("Com: " + ToString(sortTest4));
+		Debug.Log("MeB: " + ToString(sortTest4));
+		Debug.Log("Tim: " + ToString(sortTest5));
 
 		Assert.IsTrue(sorted.ContentEquals(sortTest1));
 		Assert.IsTrue(sorted.ContentEquals(sortTest2));
 		Assert.IsTrue(sorted.ContentEquals(sortTest3));
 		Assert.IsTrue(sorted.ContentEquals(sortTest4));
-	}
-
-	private void TestSortItems()
-	{
-		ItemStack[] sorted = new ItemStack[1000];
-		for (int i = 0; i < sorted.Length; i++)
-		{
-			sorted[i] = new ItemStack(new TestItem(i));
-		}
-
-		ItemStack[] data = new ItemStack[sorted.Length];
-		Array.Copy(sorted, data, data.Length);
-		Shuffle(data);
-
-		ItemStack[] sortTest1 = new ItemStack[data.Length];
-		ItemStack[] sortTest2 = new ItemStack[data.Length];
-		ItemStack[] sortTest3 = new ItemStack[data.Length];
-		ItemStack[] sortTest4 = new ItemStack[data.Length];
-
-		Array.Copy(data, sortTest1, data.Length);
-		Array.Copy(data, sortTest2, data.Length);
-		Array.Copy(data, sortTest3, data.Length);
-		Array.Copy(data, sortTest4, data.Length);
-
-		InsertionSort.Sort(sortTest1);
-		BinarySort.Sort(sortTest2);
-		MergeSort.Sort(sortTest3);
-		MergeBinarySort.Sort(sortTest4);
-
-		Debug.Log("Data: " + ToString(data));
-		Debug.Log("Ins: " + ToString(sortTest1));
-		Debug.Log("Bin: " + ToString(sortTest2));
-		Debug.Log("Mer: " + ToString(sortTest3));
-		Debug.Log("Com: " + ToString(sortTest4));
-
-		Assert.IsTrue(sorted.ContentEquals(sortTest1));
-		Assert.IsTrue(sorted.ContentEquals(sortTest2));
-		Assert.IsTrue(sorted.ContentEquals(sortTest3));
-		Assert.IsTrue(sorted.ContentEquals(sortTest4));
+		Assert.IsTrue(sorted.ContentEquals(sortTest5));
 	}
 
 	private static readonly StringBuilder sb = new();

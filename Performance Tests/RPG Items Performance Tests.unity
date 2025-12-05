@@ -163,8 +163,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd7b5a70edb48d146857445a5302dcd3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inventorySize: 100
-  numItems: 100
+  inventorySize: 1000
+  numItems: 1000
 --- !u!1 &1770273914
 GameObject:
   m_ObjectHideFlags: 0
