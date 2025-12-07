@@ -163,7 +163,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ede19016032ab494da6615b2d2258ad1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Kryz.RPG.Items.PerformanceTests::SortPerformanceTests
-  numItems: 1000
+  numItems: 500
 --- !u!1 &1770273914
 GameObject:
   m_ObjectHideFlags: 0

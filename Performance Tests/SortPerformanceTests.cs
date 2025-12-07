@@ -58,20 +58,18 @@ public class SortPerformanceTests : MonoBehaviour
 	private void Update()
 	{
 		int[] ints = new int[numItems];
+		TestItem[] items = new TestItem[numItems];
+		ItemStack[] itemStacks = new ItemStack[numItems];
 
 		Array.Copy(shuffledInts, ints, numItems);
 		ArraySortInt(ints);
 		Array.Copy(shuffledInts, ints, numItems);
 		TimSortLiteInt(ints);
 
-		TestItem[] items = new TestItem[numItems];
-
 		Array.Copy(shuffledItems, items, numItems);
-		ArraySortTestItem(items);
+		ArraySortItem(items);
 		Array.Copy(shuffledItems, items, numItems);
-		TimSortLiteTestItem(items);
-
-		ItemStack[] itemStacks = new ItemStack[numItems];
+		TimSortLiteItem(items);
 
 		Array.Copy(shuffledItemStacks, itemStacks, numItems);
 		ArraySortItemStack(itemStacks);
@@ -82,8 +80,8 @@ public class SortPerformanceTests : MonoBehaviour
 	private static void ArraySortInt(int[] data) => Array.Sort(data);
 	private static void TimSortLiteInt(int[] data) => TimSortLite.Sort(data);
 
-	private static void ArraySortTestItem(TestItem[] data) => Array.Sort(data);
-	private static void TimSortLiteTestItem(TestItem[] data) => TimSortLite.Sort(data);
+	private static void ArraySortItem(TestItem[] data) => Array.Sort(data);
+	private static void TimSortLiteItem(TestItem[] data) => TimSortLite.Sort(data);
 
 	private static void ArraySortItemStack(ItemStack[] data) => Array.Sort(data);
 	private static void TimSortLiteItemStack(ItemStack[] data) => TimSortLite.Sort(data);
