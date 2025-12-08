@@ -8,7 +8,7 @@
     "name": "Kryzarel"
   },
   "dependencies": {
-    "com.kryzarel.c-sharp-utilities": "0.7.0",
+    "com.kryzarel.c-sharp-utilities": "0.9.0",
     "com.unity.ugui": "2.0.0"
   }
 }
