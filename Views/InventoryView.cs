@@ -125,7 +125,7 @@ namespace Kryz.RPG.Items.Views
 			itemSlots[index].SetItemStack(newStack);
 		}
 
-		private void OnSizeChanged(int previousValue, int newValue)
+		private void OnSizeChanged(int previousSize, int newSize)
 		{
 			HandleSlotViews();
 		}

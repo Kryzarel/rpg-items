@@ -7,7 +7,7 @@ namespace Kryz.RPG.Items.Interfaces
 	public interface IInventory : IReadOnlyList<ItemStack>
 	{
 		public delegate void OnSlotChangedDelegate(int index, ItemStack previousStack, ItemStack newStack);
-		public delegate void OnSizeChangedDelegate(int previousValue, int newValue);
+		public delegate void OnSizeChangedDelegate(int previousSize, int newSize);
 
 		event OnSlotChangedDelegate OnSlotChanged;
 		event OnSizeChangedDelegate OnSizeChanged;
