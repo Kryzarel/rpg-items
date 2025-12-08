@@ -115,7 +115,7 @@ namespace Kryz.RPG.Items.Interfaces
 
 		/// <summary>
 		/// <para>Overwrite all slots by copying from a <see cref="ReadOnlySpan{T}"/> of <see cref="ItemStack"/>.</para>
-		/// <para>If the current <see cref="Size"/> is smaller than the provided list, it will increase to match the list's size, otherwise, <see cref="Size"/> will stay the same.</para>
+		/// <para>If the current <see cref="Size"/> is smaller than the provided span, it will increase to match the span's size, otherwise, <see cref="Size"/> will stay the same.</para>
 		/// </summary>
 		/// <param name="stacks">The <see cref="ItemStack"/>s to copy from.</param>
 		void CopyFrom(ReadOnlySpan<ItemStack> stacks);
