@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Kryz.RPG.Items.Structs;
 
@@ -112,9 +113,12 @@ namespace Kryz.RPG.Items.Interfaces
 		/// <returns>True if '<paramref name="fromIndex"/>' has a valid item stack and it was successfully moved to or swapped with '<paramref name="toIndex"/>'. False otherwise.</returns>
 		bool TryMove(int toIndex, int fromIndex, IInventory fromInventory, bool allowSwap = false);
 
-		void Sort(IComparer<ItemStack>? comparer = null);
-
-		void Clear();
+		/// <summary>
+		/// <para>Overwrite all slots by copying from a <see cref="ReadOnlySpan{T}"/> of <see cref="ItemStack"/>.</para>
+		/// <para>If the current <see cref="Size"/> is smaller than the provided list, it will increase to match the list's size, otherwise, <see cref="Size"/> will stay the same.</para>
+		/// </summary>
+		/// <param name="stacks">The <see cref="ItemStack"/>s to copy from.</param>
+		void CopyFrom(ReadOnlySpan<ItemStack> stacks);
 
 		/// <summary>
 		/// <para>Overwrite all slots by copying from a <see cref="IReadOnlyList{T}"/> of <see cref="ItemStack"/>.</para>
@@ -122,5 +126,10 @@ namespace Kryz.RPG.Items.Interfaces
 		/// </summary>
 		/// <param name="stacks">The <see cref="ItemStack"/>s to copy from.</param>
 		void CopyFrom(IReadOnlyList<ItemStack> stacks);
+
+		void Sort();
+		void Sort<TComparer>(TComparer comparer) where TComparer : IComparer<ItemStack>;
+
+		void Clear();
 	}
 }

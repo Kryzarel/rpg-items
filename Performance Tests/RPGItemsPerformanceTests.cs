@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Kryz.RPG.Items.Classes;
 using Kryz.RPG.Items.Interfaces;
 using Kryz.RPG.Items.Structs;
@@ -45,8 +46,25 @@ public class RPGItemsPerformanceTests : MonoBehaviour
 
 	private void Update()
 	{
-		inventory.CopyFrom(itemsToAdd);
-		inventory.Sort();
+		// inventory.CopyFrom(itemsToAdd);
+		// inventory.Sort();
+
+		Enumerate();
+		EnumerateInterface();
+	}
+
+	private void Enumerate()
+	{
+		foreach (ItemStack item in inventory)
+		{
+		}
+	}
+
+	private void EnumerateInterface()
+	{
+		foreach (ItemStack item in (IEnumerable<ItemStack>)inventory)
+		{
+		}
 	}
 
 	public static void Shuffle<T>(T[] array)
@@ -54,7 +72,7 @@ public class RPGItemsPerformanceTests : MonoBehaviour
 		int n = array.Length;
 		while (n > 1)
 		{
-			int k = UnityEngine.Random.Range(0, n--);
+			int k = Random.Range(0, n--);
 			(array[k], array[n]) = (array[n], array[k]);
 		}
 	}

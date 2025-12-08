@@ -266,33 +266,27 @@ namespace Kryz.RPG.Items.Classes
 			return false;
 		}
 
-		public void Sort(IComparer<ItemStack>? comparer = null)
+		public void CopyFrom(ItemStack[] stacks) => CopyFrom(stacks.AsSpan());
+
+		public void CopyFrom(ReadOnlySpan<ItemStack> stacks)
 		{
-			ItemStack[] original = arrayPool.Rent(size);
-			Array.Copy(slots, 0, original, 0, size);
-
-			// We DON'T use the default Array.Sort because it is unstable. I think a stable sorting algorithm is very valuable here.
-			// Our version has similar speed for smaller arrays but tends to be faster on larger ones (around length=100) so that's also nice.
-			TimSortLite.Sort(slots, 0, size, comparer ?? Comparer<ItemStack>.Default);
-
-			for (int i = 0; i < size; i++)
+			if (size < stacks.Length)
 			{
-				ItemStack slot = slots[i];
-				ItemStack originalSlot = original[i];
+				SetSize(stacks.Length);
+			}
 
-				if (slot != originalSlot)
+			for (int i = 0; i < stacks.Length; i++)
+			{
+				ref ItemStack slot = ref slots[i];
+				ItemStack stack = stacks[i];
+
+				if (slot != stack)
 				{
-					OnSlotChanged(i, slot, originalSlot);
+					SetSlot(ref slot, i, stack);
 				}
 			}
 
-			Array.Clear(original, 0, size);
-			arrayPool.Return(original);
-		}
-
-		public void Clear()
-		{
-			for (int i = 0; i < size; i++)
+			for (int i = stacks.Length; i < size; i++)
 			{
 				ref ItemStack slot = ref slots[i];
 
@@ -332,16 +326,57 @@ namespace Kryz.RPG.Items.Classes
 			}
 		}
 
+		public void Sort() => Sort(ValueComparer<ItemStack>.Default);
+
+		public void Sort<TComparer>(TComparer comparer) where TComparer : IComparer<ItemStack>
+		{
+			ItemStack[] original = arrayPool.Rent(size);
+			Array.Copy(slots, 0, original, 0, size);
+
+			// We DON'T use the default Array.Sort because it is unstable. I think a stable sorting algorithm is very valuable here.
+			// Our version also tends to be faster in general, so that's nice.
+			TimSortLite.Sort(slots.AsSpan(0, size), comparer);
+
+			for (int i = 0; i < size; i++)
+			{
+				ItemStack slot = slots[i];
+				ItemStack originalSlot = original[i];
+
+				if (slot != originalSlot)
+				{
+					OnSlotChanged(i, slot, originalSlot);
+				}
+			}
+
+			Array.Clear(original, 0, size);
+			arrayPool.Return(original);
+		}
+
+		public void Clear()
+		{
+			for (int i = 0; i < size; i++)
+			{
+				ref ItemStack slot = ref slots[i];
+
+				if (slot != default)
+				{
+					SetSlot(ref slot, i, default);
+				}
+			}
+		}
+
 		public void Dispose()
 		{
 			Array.Clear(slots, 0, size);
 			arrayPool.Return(slots);
 		}
 
-		public ArrayEnumerator<ItemStack> GetEnumerator() => new(slots, size);
+		public ReadOnlySpan<ItemStack> AsSpan() => new(slots, 0, size);
 
-		IEnumerator<ItemStack> IEnumerable<ItemStack>.GetEnumerator() => GetEnumerator();
-		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+		public ReadOnlySpan<ItemStack>.Enumerator GetEnumerator() => AsSpan().GetEnumerator();
+
+		IEnumerator<ItemStack> IEnumerable<ItemStack>.GetEnumerator() => new ArrayEnumerator<ItemStack>(slots, size);
+		IEnumerator IEnumerable.GetEnumerator() => new ArrayEnumerator<ItemStack>(slots, size);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void SetSlot(ref ItemStack slot, int index, in ItemStack stack)
