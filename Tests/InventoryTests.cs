@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Kryz.RPG.Items.Classes;
 using Kryz.RPG.Items.Interfaces;
@@ -56,6 +57,71 @@ namespace Kryz.RPG.Items.Tests
 				{
 					ItemStack slot = inventory[i];
 					Assert.IsTrue(slot.Item == null && slot.Count == 0);
+				}
+			}
+		}
+
+		[Test]
+		public void SetSize([ValueSource(inventorySizesSrc)] int size)
+		{
+			Inventory inventory = new(0);
+
+			inventory.Size = size;
+			int expectedSize = Math.Max(0, size);
+
+			Assert.AreEqual(expectedSize, inventory.Count, 0);
+			Assert.AreEqual(expectedSize, inventory.Size, 0);
+			Assert.AreEqual(expectedSize, inventory.FreeSlots, 0);
+			Assert.AreEqual(0, inventory.OccupiedSlots, 0);
+			Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
+			Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
+
+			if (expectedSize <= 0)
+			{
+				Assert.Throws<IndexOutOfRangeException>(() => { ItemStack stack = inventory[0]; });
+			}
+			else
+			{
+				for (int i = 0; i < inventory.Count; i++)
+				{
+					ItemStack slot = inventory[i];
+					Assert.AreEqual(default(ItemStack), slot);
+				}
+			}
+		}
+
+		[Test]
+		public void SetSize_PreserveItems([ValueSource(inventorySizesSrc)] int size)
+		{
+			// Arrange
+			ItemStack[] itemStacks = new ItemStack[] { default, new(items[1]), new(items[2]) };
+			Inventory inventory = new(itemStacks);
+
+			// Act
+			inventory.Size = size;
+
+			// Assert
+			int expectedSize = Math.Max(0, size);
+			int expectedOccupied = itemStacks[..Math.Min(expectedSize, itemStacks.Length)].Count(s => s != default);
+			int expectedFree = Math.Max(0, expectedSize - expectedOccupied);
+
+			Assert.AreEqual(expectedSize, inventory.Count, 0);
+			Assert.AreEqual(expectedSize, inventory.Size, 0);
+			Assert.AreEqual(expectedFree, inventory.FreeSlots, 0);
+			Assert.AreEqual(expectedOccupied, inventory.OccupiedSlots, 0);
+			Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
+			Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
+
+			if (expectedSize <= 0)
+			{
+				Assert.Throws<IndexOutOfRangeException>(() => { ItemStack stack = inventory[0]; });
+			}
+			else
+			{
+				for (int i = 0; i < inventory.Count; i++)
+				{
+					ItemStack slot = inventory[i];
+					Assert.AreEqual(i < itemStacks.Length ? itemStacks[i] : default, slot);
 				}
 			}
 		}
@@ -554,6 +620,180 @@ namespace Kryz.RPG.Items.Tests
 			// Check Free/Occupied Slots
 			Assert.AreEqual(1, inventory.FreeSlots);
 			Assert.AreEqual(2, inventory.OccupiedSlots);
+		}
+
+		[Test]
+		public void Move_DifferentInventories()
+		{
+			Inventory inventory1 = new(new ItemStack[] { new(items[1]), new(items[1]), new(items[2]) });
+			Inventory inventory2 = new(new ItemStack[] { new(items[1]), new(items[1], items[1].MaxStacks), new(items[2]) });
+
+			Assert.AreEqual(0, inventory1.FreeSlots);
+			Assert.AreEqual(3, inventory1.OccupiedSlots);
+
+			Assert.AreEqual(0, inventory2.FreeSlots);
+			Assert.AreEqual(3, inventory2.OccupiedSlots);
+
+			// Move
+			Assert.IsTrue(inventory1.TryMove(0, 0, inventory2, allowSwap: false));
+			// Check Items
+			Assert.AreEqual(new ItemStack(items[1], 2), inventory1[0]);
+			Assert.AreEqual(default(ItemStack), inventory2[0]);
+			// Check Free/Occupied Slots
+			// Target inventory
+			Assert.AreEqual(0, inventory1.FreeSlots);
+			Assert.AreEqual(3, inventory1.OccupiedSlots);
+			// Source Inventory
+			Assert.AreEqual(1, inventory2.FreeSlots);
+			Assert.AreEqual(2, inventory2.OccupiedSlots);
+
+			// Move
+			Assert.IsTrue(inventory1.TryMove(0, 1, inventory2, allowSwap: false));
+			// Check Items
+			Assert.AreEqual(new ItemStack(items[1], items[1].MaxStacks), inventory1[0]);
+			Assert.AreEqual(new ItemStack(items[1], 2), inventory2[1]);
+			// Check Free/Occupied Slots
+			// Target inventory
+			Assert.AreEqual(0, inventory1.FreeSlots);
+			Assert.AreEqual(3, inventory1.OccupiedSlots);
+			// Source Inventory
+			Assert.AreEqual(1, inventory2.FreeSlots);
+			Assert.AreEqual(2, inventory2.OccupiedSlots);
+
+			// Move
+			Assert.IsFalse(inventory1.TryMove(1, 2, inventory2, allowSwap: false));
+			// Check Items
+			Assert.AreEqual(new ItemStack(items[1]), inventory1[1]);
+			Assert.AreEqual(new ItemStack(items[2]), inventory1[2]);
+			// Check Free/Occupied Slots
+			// Target inventory
+			Assert.AreEqual(0, inventory1.FreeSlots);
+			Assert.AreEqual(3, inventory1.OccupiedSlots);
+			// Source Inventory
+			Assert.AreEqual(1, inventory2.FreeSlots);
+			Assert.AreEqual(2, inventory2.OccupiedSlots);
+
+			// Move
+			Assert.IsTrue(inventory1.TryMove(1, 2, inventory2, allowSwap: true));
+			// Check Items
+			Assert.AreEqual(new ItemStack(items[2]), inventory1[1]);
+			Assert.AreEqual(new ItemStack(items[1]), inventory2[2]);
+			// Check Free/Occupied Slots
+			// Target inventory
+			Assert.AreEqual(0, inventory1.FreeSlots);
+			Assert.AreEqual(3, inventory1.OccupiedSlots);
+			// Source Inventory
+			Assert.AreEqual(1, inventory2.FreeSlots);
+			Assert.AreEqual(2, inventory2.OccupiedSlots);
+		}
+
+		[Test]
+		public void CopyFrom_Array([ValueSource(inventorySizesSrc)] int size)
+		{
+			// Arrange
+			ItemStack[] itemStacks = new ItemStack[] { default, new(items[1]), new(items[2]) };
+			Inventory inventory = new(size);
+
+			// Act
+			inventory.CopyFrom(itemStacks);
+
+			// Assert
+			for (int i = 0; i < inventory.Size && i < itemStacks.Length; i++)
+			{
+				Assert.AreEqual(itemStacks[i], inventory[i]);
+			}
+
+			Assert.AreEqual(Math.Max(size, itemStacks.Length) - 2, inventory.FreeSlots, 0);
+			Assert.AreEqual(2, inventory.OccupiedSlots, 0);
+		}
+
+		[Test]
+		public void CopyFrom_Span([ValueSource(inventorySizesSrc)] int size)
+		{
+			// Arrange
+			ItemStack[] itemStacks = new ItemStack[] { default, new(items[1]), new(items[2]) };
+			Inventory inventory = new(size);
+
+			// Act
+			inventory.CopyFrom(itemStacks.AsSpan());
+
+			// Assert
+			for (int i = 0; i < inventory.Size && i < itemStacks.Length; i++)
+			{
+				Assert.AreEqual(itemStacks[i], inventory[i]);
+			}
+
+			Assert.AreEqual(Math.Max(size, itemStacks.Length) - 2, inventory.FreeSlots, 0);
+			Assert.AreEqual(2, inventory.OccupiedSlots, 0);
+		}
+
+		[Test]
+		public void CopyFrom_List([ValueSource(inventorySizesSrc)] int size)
+		{
+			// Arrange
+			ItemStack[] itemStacks = new ItemStack[] { default, new(items[1]), new(items[2]) };
+			Inventory inventory = new(size);
+
+			// Act
+			inventory.CopyFrom((IReadOnlyList<ItemStack>)itemStacks);
+
+			// Assert
+			for (int i = 0; i < inventory.Size && i < itemStacks.Length; i++)
+			{
+				Assert.AreEqual(itemStacks[i], inventory[i]);
+			}
+
+			Assert.AreEqual(Math.Max(size, itemStacks.Length) - 2, inventory.FreeSlots, 0);
+			Assert.AreEqual(2, inventory.OccupiedSlots, 0);
+		}
+
+		[Test]
+		public void Sort([ValueSource(inventorySizesSrc)] int size)
+		{
+			// Arrange
+			ItemStack[] itemStacks = new ItemStack[] { default, new(items[1]), new(items[2]) };
+			Inventory inventory = new(size);
+			inventory.CopyFrom(itemStacks);
+
+			// Act
+			inventory.Sort();
+
+			// Assert
+			Assert.IsTrue(IsSorted(inventory, Comparer<ItemStack>.Default));
+		}
+
+		[Test]
+		public void Clear([ValueSource(inventorySizesSrc)] int size)
+		{
+			// Arrange
+			ItemStack[] itemStacks = new ItemStack[] { default, new(items[1]), new(items[2]) };
+			Inventory inventory = new(size);
+			inventory.CopyFrom(itemStacks);
+
+			// Act
+			inventory.Clear();
+
+			// Assert
+			for (int i = 0; i < inventory.Size; i++)
+			{
+				Assert.AreEqual(default(ItemStack), inventory[i]);
+			}
+
+			Assert.AreEqual(Math.Max(size, itemStacks.Length), inventory.FreeSlots, 0);
+			Assert.AreEqual(0, inventory.OccupiedSlots, 0);
+		}
+
+		private static bool IsSorted<T, TComparer>(IReadOnlyList<T> data, TComparer comparer) where TComparer : IComparer<T> => IsSorted(data, 0, data.Count, comparer);
+		private static bool IsSorted<T, TComparer>(IReadOnlyList<T> data, int index, int length, TComparer comparer) where TComparer : IComparer<T>
+		{
+			for (int i = index + 1; i < index + length; i++)
+			{
+				if (comparer.Compare(data[i - 1], data[i]) > 0)
+				{
+					return false;
+				}
+			}
+			return true;
 		}
 	}
 }

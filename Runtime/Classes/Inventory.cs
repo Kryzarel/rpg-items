@@ -430,7 +430,14 @@ namespace Kryz.RPG.Items.Classes
 			}
 			else if (value < size)
 			{
-				Array.Clear(slots, value, size);
+				for (int i = value; i < size; i++)
+				{
+					ref ItemStack slot = ref slots[i];
+					if (slot != default)
+					{
+						SetSlot(ref slot, i, default);
+					}
+				}
 			}
 
 			int previous = size;
