@@ -43,6 +43,16 @@ namespace Kryz.RPG.Items.Classes
 			SetSize(numSlots);
 		}
 
+		public Inventory(ItemStack[] items, ArrayPool<ItemStack>? arrayPool = null) : this(items.Length, arrayPool)
+		{
+			CopyFrom(items);
+		}
+
+		public Inventory(ReadOnlySpan<ItemStack> items, ArrayPool<ItemStack>? arrayPool = null) : this(items.Length, arrayPool)
+		{
+			CopyFrom(items);
+		}
+
 		public Inventory(IReadOnlyList<ItemStack> items, ArrayPool<ItemStack>? arrayPool = null) : this(items.Count, arrayPool)
 		{
 			CopyFrom(items);
