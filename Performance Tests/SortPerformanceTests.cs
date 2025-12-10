@@ -30,10 +30,13 @@ public class SortPerformanceTests : MonoBehaviour
 	}
 
 	[SerializeField] int numItems = 500;
+	[SerializeField] int numFramesToRun = 500;
 
 	private int[] shuffledInts;
 	private TestItem[] shuffledItems;
 	private ItemStack[] shuffledItemStacks;
+
+	private int startingFrame;
 
 	private void Awake()
 	{
@@ -53,10 +56,24 @@ public class SortPerformanceTests : MonoBehaviour
 		Shuffle(shuffledItemStacks);
 
 		TestSort();
+
+		Application.targetFrameRate = 60;
+		QualitySettings.vSyncCount = 0;
+	}
+
+	private void Start()
+	{
+		startingFrame = Time.frameCount;
 	}
 
 	private void Update()
 	{
+		if (numFramesToRun > 0 && Time.frameCount - startingFrame >= numFramesToRun)
+		{
+			Application.Quit();
+			return;
+		}
+
 		int[] ints = new int[numItems];
 		TestItem[] items = new TestItem[numItems];
 		ItemStack[] itemStacks = new ItemStack[numItems];
