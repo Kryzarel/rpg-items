@@ -5,12 +5,13 @@ using System.Text;
 using Kryz.RPG.Items.Interfaces;
 using Kryz.RPG.Items.Structs;
 using Kryz.Utils;
+using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Assertions;
 
 public class SortPerformanceTests : MonoBehaviour
 {
-	private class TestItem : IItem
+	private class TestItem : IItem/* , IComparable<TestItem> */
 	{
 		private readonly int index;
 		private readonly string name;
@@ -20,8 +21,10 @@ public class SortPerformanceTests : MonoBehaviour
 		public string Description => "An item just for testing";
 		public int MaxStacks => 20;
 
-		public int CompareTo(IItem other) => other is TestItem test ? index.CompareTo(test.index) : 0;
+		public int CompareTo(IItem other) => name.CompareTo(other.Name);
+		// public int CompareTo(TestItem other) => index.CompareTo(other.index);
 		public override string ToString() => Name;
+
 		public TestItem(int index)
 		{
 			this.index = index;
@@ -32,33 +35,41 @@ public class SortPerformanceTests : MonoBehaviour
 	[SerializeField] int numItems = 500;
 	[SerializeField] int numFramesToRun = 500;
 
-	private int[] shuffledInts;
-	private TestItem[] shuffledItems;
-	private ItemStack[] shuffledItemStacks;
+	private int[] originalInts;
+	private TestItem[] originalItems;
+	private ItemStack[] originalItemStacks;
+
+	private int[] ints;
+	private TestItem[] items;
+	private ItemStack[] itemStacks;
 
 	private int startingFrame;
 
 	private void Awake()
 	{
-		shuffledInts = new int[numItems];
-		shuffledItems = new TestItem[numItems];
-		shuffledItemStacks = new ItemStack[numItems];
+		originalInts = new int[numItems];
+		originalItems = new TestItem[numItems];
+		originalItemStacks = new ItemStack[numItems];
 
-		for (int i = 0; i < shuffledItemStacks.Length; i++)
+		ints = new int[numItems];
+		items = new TestItem[numItems];
+		itemStacks = new ItemStack[numItems];
+
+		for (int i = 0; i < originalItemStacks.Length; i++)
 		{
-			shuffledInts[i] = i;
-			shuffledItems[i] = new TestItem(i);
-			shuffledItemStacks[i] = new ItemStack(new TestItem(i), 20);
+			originalInts[i] = i;
+			originalItems[i] = new TestItem(i);
+			originalItemStacks[i] = new ItemStack(new TestItem(i), 20);
 		}
 
-		Shuffle(shuffledInts);
-		Shuffle(shuffledItems);
-		Shuffle(shuffledItemStacks);
+		Shuffle(originalInts);
+		Shuffle(originalItems);
+		Shuffle(originalItemStacks);
 
-		TestSort();
+		// TestSort();
 
-		Application.targetFrameRate = 60;
-		QualitySettings.vSyncCount = 0;
+		// Application.targetFrameRate = 60;
+		// QualitySettings.vSyncCount = 0;
 	}
 
 	private void Start()
@@ -74,43 +85,35 @@ public class SortPerformanceTests : MonoBehaviour
 			return;
 		}
 
-		int[] ints = new int[numItems];
-		TestItem[] items = new TestItem[numItems];
-		ItemStack[] itemStacks = new ItemStack[numItems];
-
-		Array.Copy(shuffledInts, ints, numItems);
-		ArraySortInt(ints);
-		Array.Copy(shuffledInts, ints, numItems);
-		TimSortLiteInt(ints);
-		Array.Copy(shuffledInts, ints, numItems);
-		TimSortLiteIntValue(ints);
-
-		Array.Copy(shuffledItems, items, numItems);
-		ArraySortItem(items);
-		Array.Copy(shuffledItems, items, numItems);
-		TimSortLiteItem(items);
-		Array.Copy(shuffledItems, items, numItems);
-		TimSortLiteItemValue(items);
-
-		Array.Copy(shuffledItemStacks, itemStacks, numItems);
-		ArraySortItemStack(itemStacks);
-		Array.Copy(shuffledItemStacks, itemStacks, numItems);
-		TimSortLiteItemStack(itemStacks);
-		Array.Copy(shuffledItemStacks, itemStacks, numItems);
-		TimSortLiteItemStackValue(itemStacks);
+		TestSorts<int>.Run(originalInts, ints);
+		TestSorts<TestItem>.Run(originalItems, items);
+		// TestSorts<ItemStack>.Run(originalItemStacks, itemStacks);
 	}
 
-	private static void ArraySortInt(int[] data) => Array.Sort(data);
-	private static void TimSortLiteInt(int[] data) => TimSortLite.Sort(data);
-	private static void TimSortLiteIntValue(int[] data) => TimSortLite.Sort(data, ValueComparer<int>.Default);
+	private static class TestSorts<T>
+	{
+		private static readonly Action<T[]>[] sorts = { Array.Sort, /* InsertionSort.Sort, */ BinarySort.Sort, MergeSort.Sort, MergeBinarySort.Sort, TimSortLite.Sort };
+		private static readonly ProfilerMarker[] markers = new ProfilerMarker[sorts.Length];
 
-	private static void ArraySortItem(TestItem[] data) => Array.Sort(data);
-	private static void TimSortLiteItem(TestItem[] data) => TimSortLite.Sort(data);
-	private static void TimSortLiteItemValue(TestItem[] data) => TimSortLite.Sort(data, ValueComparer<TestItem>.Default);
+		static TestSorts()
+		{
+			for (int i = 0; i < sorts.Length; i++)
+			{
+				markers[i] = new($"{sorts[i].Method.DeclaringType.Name}<{typeof(T).Name}>");
+			}
+		}
 
-	private static void ArraySortItemStack(ItemStack[] data) => Array.Sort(data);
-	private static void TimSortLiteItemStack(ItemStack[] data) => TimSortLite.Sort(data);
-	private static void TimSortLiteItemStackValue(ItemStack[] data) => TimSortLite.Sort(data, ValueComparer<ItemStack>.Default);
+		public static void Run(T[] original, T[] data)
+		{
+			for (int i = 0; i < sorts.Length; i++)
+			{
+				Array.Copy(original, data, original.Length);
+				markers[i].Begin();
+				sorts[i](data);
+				markers[i].End();
+			}
+		}
+	}
 
 	private void TestSort()
 	{
@@ -123,21 +126,18 @@ public class SortPerformanceTests : MonoBehaviour
 		int[] sortTest3 = new int[data.Length];
 		int[] sortTest4 = new int[data.Length];
 		int[] sortTest5 = new int[data.Length];
-		int[] sortTest6 = new int[data.Length];
 
 		Array.Copy(data, sortTest1, data.Length);
 		Array.Copy(data, sortTest2, data.Length);
 		Array.Copy(data, sortTest3, data.Length);
 		Array.Copy(data, sortTest4, data.Length);
 		Array.Copy(data, sortTest5, data.Length);
-		Array.Copy(data, sortTest6, data.Length);
 
 		InsertionSort.Sort(sortTest1);
 		BinarySort.Sort(sortTest2);
 		MergeSort.Sort(sortTest3);
 		MergeBinarySort.Sort(sortTest4);
 		TimSortLite.Sort(sortTest5);
-		TimSortLite.Sort(sortTest6.AsSpan());
 
 		Debug.Log("Data: " + ToString(data));
 		Debug.Log("Ins: " + ToString(sortTest1));
@@ -145,14 +145,12 @@ public class SortPerformanceTests : MonoBehaviour
 		Debug.Log("Mer: " + ToString(sortTest3));
 		Debug.Log("MeB: " + ToString(sortTest4));
 		Debug.Log("Tim: " + ToString(sortTest5));
-		Debug.Log("Tim Span: " + ToString(sortTest6));
 
 		Assert.IsTrue(sorted.ContentEquals(sortTest1));
 		Assert.IsTrue(sorted.ContentEquals(sortTest2));
 		Assert.IsTrue(sorted.ContentEquals(sortTest3));
 		Assert.IsTrue(sorted.ContentEquals(sortTest4));
 		Assert.IsTrue(sorted.ContentEquals(sortTest5));
-		Assert.IsTrue(sorted.ContentEquals(sortTest6));
 	}
 
 	private static readonly StringBuilder sb = new();
