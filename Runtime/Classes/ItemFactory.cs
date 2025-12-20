@@ -1,20 +1,22 @@
-using Kryz.DI;
+using System;
+using System.Collections.Generic;
 using Kryz.RPG.Items.Interfaces;
 
 namespace Kryz.RPG.Items
 {
 	public class ItemFactory : IItemFactory
 	{
-		private readonly IContainer container;
-
-		public ItemFactory(IContainer container)
-		{
-			this.container = container;
-		}
+		private readonly Dictionary<Type, IItemCreator> itemCreators = new();
 
 		public IItem GetOrCreate<TDefinition>(TDefinition definition) where TDefinition : IItemDefinition
 		{
-			return container.ResolveObject<IItemCreator<TDefinition>>().GetOrCreate(definition);
+			IItemCreator<TDefinition> creator = (IItemCreator<TDefinition>)itemCreators[typeof(TDefinition)];
+			return creator.GetOrCreate(definition);
+		}
+
+		public void Register<TDefinition>(IItemCreator<TDefinition> creator) where TDefinition : IItemDefinition
+		{
+			itemCreators[typeof(TDefinition)] = creator;
 		}
 	}
 }

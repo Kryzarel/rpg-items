@@ -2,8 +2,7 @@
     "name": "Kryz.RPG.Items",
     "rootNamespace": "Kryz.RPG.Items",
     "references": [
-        "Kryz.Utils",
-        "Kryz.DI"
+        "Kryz.Utils"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
