@@ -15,6 +15,7 @@ namespace Kryz.RPG.Items.Tests
 		{
 			private readonly string name;
 
+			public IItemDefinition Definition => null!;
 			public Sprite Icon => null!;
 			public string Name => name;
 			public string Description => "An item just for testing";
