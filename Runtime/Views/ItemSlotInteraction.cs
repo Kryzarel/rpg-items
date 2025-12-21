@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using Kryz.RPG.Items.Interfaces;
 using UnityEngine;
 using UnityEngine.EventSystems;
 

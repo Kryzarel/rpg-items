@@ -1,6 +1,4 @@
 using System;
-using Kryz.RPG.Items.Interfaces;
-using Kryz.RPG.Items.Structs;
 using NUnit.Framework;
 using UnityEngine;
 

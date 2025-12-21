@@ -3,11 +3,9 @@ using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Kryz.RPG.Items.Interfaces;
-using Kryz.RPG.Items.Structs;
 using Kryz.Utils;
 
-namespace Kryz.RPG.Items.Classes
+namespace Kryz.RPG.Items
 {
 	public class Inventory : IInventory, IDisposable
 	{

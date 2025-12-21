@@ -1,5 +1,3 @@
-using Kryz.RPG.Items.Interfaces;
-using Kryz.RPG.Items.Structs;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;

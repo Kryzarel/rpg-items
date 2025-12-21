@@ -1,5 +1,3 @@
-using Kryz.RPG.Items.Interfaces;
-using Kryz.RPG.Items.Structs;
 using UnityEngine;
 
 namespace Kryz.RPG.Items.Views

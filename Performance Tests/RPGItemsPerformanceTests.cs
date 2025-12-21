@@ -1,7 +1,5 @@
 using System.Collections.Generic;
-using Kryz.RPG.Items.Classes;
-using Kryz.RPG.Items.Interfaces;
-using Kryz.RPG.Items.Structs;
+using Kryz.RPG.Items;
 using UnityEngine;
 
 public class RPGItemsPerformanceTests : MonoBehaviour

@@ -1,8 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
-using Kryz.RPG.Items.Interfaces;
 
-namespace Kryz.RPG.Items.Structs
+namespace Kryz.RPG.Items
 {
 	public readonly struct ItemStack : IComparable<ItemStack>, IEquatable<ItemStack>
 	{

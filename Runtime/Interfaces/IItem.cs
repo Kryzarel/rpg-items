@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Kryz.RPG.Items.Interfaces
+namespace Kryz.RPG.Items
 {
 	public interface IItem : IComparable<IItem>
 	{

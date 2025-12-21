@@ -1,7 +1,6 @@
 using System.Collections.Generic;
-using Kryz.RPG.Items.Interfaces;
 
-namespace Kryz.RPG.Items.Classes
+namespace Kryz.RPG.Items
 {
 	public abstract class SingletonItemCreator<TDefinition> : IItemCreator<TDefinition> where TDefinition : IItemDefinition
 	{

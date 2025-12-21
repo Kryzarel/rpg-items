@@ -1,4 +1,3 @@
-using Kryz.RPG.Items.Structs;
 using UnityEngine.EventSystems;
 
 namespace Kryz.RPG.Items.Views

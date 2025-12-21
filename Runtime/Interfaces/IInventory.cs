@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
-using Kryz.RPG.Items.Structs;
 
-namespace Kryz.RPG.Items.Interfaces
+namespace Kryz.RPG.Items
 {
 	public interface IInventory : IReadOnlyList<ItemStack>
 	{

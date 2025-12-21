@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Kryz.RPG.Items.Classes;
-using Kryz.RPG.Items.Interfaces;
-using Kryz.RPG.Items.Structs;
 using NUnit.Framework;
 using UnityEngine;
 
