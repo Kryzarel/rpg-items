@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Kryz.RPG.Items.Interfaces;
 
-namespace Kryz.RPG.Items
+namespace Kryz.RPG.Items.Classes
 {
 	public class ItemFactory : IItemFactory
 	{
