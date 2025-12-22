@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Kryz.UnityUtils;
 using UnityEngine;
 
 namespace Kryz.RPG.Items.Views
