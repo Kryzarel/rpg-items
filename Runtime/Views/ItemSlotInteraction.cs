@@ -6,8 +6,8 @@ namespace Kryz.RPG.Items.Views
 {
 	public class ItemSlotInteraction : MonoBehaviour, IItemSlotInteraction
 	{
-		[SerializeField] Serialize<IItemTooltip> itemTooltip;
-		[SerializeField] Serialize<IItemSlotDragManager> dragManager;
+		[SerializeField] SerializeInterface<IItemTooltip> itemTooltip;
+		[SerializeField] SerializeInterface<IItemSlotDragManager> dragManager;
 
 		public bool OnPointerClick(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
