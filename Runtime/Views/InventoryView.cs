@@ -37,17 +37,22 @@ namespace Kryz.RPG.Items.Views
 
 		private void OnValidate()
 		{
+			OnValidateRuntime();
+			OnValidateEditor();
+		}
+
+		private void OnValidateRuntime()
+		{
 			if (itemSlotsParent == null) itemSlotsParent = (RectTransform)transform;
 			itemSlotsParent.GetComponentsInChildren(includeInactive: true, itemSlots);
-			OnValidateEditor();
 		}
 
 		private void Awake()
 		{
-			OnValidate(); // Call OnValidate to make sure everything is setup correctly
-			HandleSlotViews();
 			onSlotChangedAction = OnSlotChanged;
 			onSizeChangedAction = OnSizeChanged;
+			OnValidateRuntime();
+			HandleSlotViews();
 		}
 
 		public void SetInventory(IInventory? newInventory)
