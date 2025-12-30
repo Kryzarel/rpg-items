@@ -18,12 +18,11 @@ namespace Kryz.RPG.Items.Views
 		[SerializeField] Color disabledColor = Color.gray;
 		[SerializeField] Sprite? disabledSprite;
 
-		private int lastCount = -1;
-
 		private int index;
 		private IInventory? inventory;
 		private IItemSlotInteraction? interaction;
 		private ItemStack itemStack;
+		private int lastCount = -1;
 
 		public override int Index => index;
 		public override IInventory? Inventory => inventory;
