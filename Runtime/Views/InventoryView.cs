@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Kryz.RPG.Items.Views
 {
 	[RequireComponent(typeof(RectTransform))]
-	public class InventoryView : MonoBehaviour
+	public partial class InventoryView : MonoBehaviour
 	{
 		[Header("Project References")]
 		[SerializeField]
@@ -33,17 +33,13 @@ namespace Kryz.RPG.Items.Views
 		public IInventory? Inventory => inventory;
 		public IReadOnlyList<BaseItemSlotView> ItemSlots => itemSlots;
 
+		partial void OnValidateEditor();
+
 		private void OnValidate()
 		{
 			if (itemSlotsParent == null) itemSlotsParent = (RectTransform)transform;
 			itemSlotsParent.GetComponentsInChildren(includeInactive: true, itemSlots);
-
-#if UNITY_EDITOR
-			if (!UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
-			{
-				UnityEditor.EditorApplication.delayCall += HandleSlotViews;
-			}
-#endif
+			OnValidateEditor();
 		}
 
 		private void Awake()
@@ -80,13 +76,14 @@ namespace Kryz.RPG.Items.Views
 
 		private void HandleSlotViews()
 		{
-			if (inventory != null && inventory.Size > maxSlots && maxSlots > 0)
+			int maxSlots = this.maxSlots > 0 ? this.maxSlots : int.MaxValue;
+			int inventorySlots = inventory != null ? inventory.Size : 0;
+			int numSlots = Math.Min(Math.Max(inventorySlots, minSlots), maxSlots);
+
+			if (inventory != null && inventory.Size > maxSlots)
 			{
 				Debug.LogError("Inventory has " + inventory.Size + " slots, but the " + nameof(InventoryView) + " is configured to display a maximum of " + maxSlots, this);
 			}
-
-			int inventorySlots = inventory != null ? inventory.Size : 0;
-			int numSlots = Math.Min(Math.Max(inventorySlots, minSlots), maxSlots <= 0 ? int.MaxValue : maxSlots);
 
 			for (int i = 0; i < itemSlots.Count; i++)
 			{
