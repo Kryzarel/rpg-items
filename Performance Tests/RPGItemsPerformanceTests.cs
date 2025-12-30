@@ -27,8 +27,8 @@ public class RPGItemsPerformanceTests : MonoBehaviour
 	[SerializeField] int inventorySize = 100;
 	[SerializeField] int numItems = 100;
 
-	private ItemStack[] itemsToAdd;
-	private Inventory inventory;
+	private ItemStack[]? itemsToAdd;
+	private Inventory? inventory;
 
 	private void Awake()
 	{
@@ -54,14 +54,14 @@ public class RPGItemsPerformanceTests : MonoBehaviour
 
 	private void Enumerate()
 	{
-		foreach (ItemStack item in inventory)
+		foreach (ItemStack item in inventory!)
 		{
 		}
 	}
 
 	private void EnumerateInterface()
 	{
-		foreach (ItemStack item in (IEnumerable<ItemStack>)inventory)
+		foreach (ItemStack item in (IEnumerable<ItemStack>)inventory!)
 		{
 		}
 	}

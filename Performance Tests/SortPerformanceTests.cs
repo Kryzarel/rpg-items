@@ -35,13 +35,13 @@ public class SortPerformanceTests : MonoBehaviour
 	[SerializeField] int numItems = 500;
 	[SerializeField] int numFramesToRun = 500;
 
-	private int[] originalInts;
-	private TestItem[] originalItems;
-	private ItemStack[] originalItemStacks;
+	private int[]? originalInts;
+	private TestItem[]? originalItems;
+	private ItemStack[]? originalItemStacks;
 
-	private int[] ints;
-	private TestItem[] items;
-	private ItemStack[] itemStacks;
+	private int[]? ints;
+	private TestItem[]? items;
+	private ItemStack[]? itemStacks;
 
 	private int startingFrame;
 
@@ -85,9 +85,9 @@ public class SortPerformanceTests : MonoBehaviour
 			return;
 		}
 
-		TestSorts<int>.Run(originalInts, ints);
-		TestSorts<TestItem>.Run(originalItems, items);
-		// TestSorts<ItemStack>.Run(originalItemStacks, itemStacks);
+		TestSorts<int>.Run(originalInts!, ints!);
+		TestSorts<TestItem>.Run(originalItems!, items!);
+		TestSorts<ItemStack>.Run(originalItemStacks!, itemStacks!);
 	}
 
 	private static class TestSorts<T>
