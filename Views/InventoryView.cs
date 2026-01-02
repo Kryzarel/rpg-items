@@ -18,13 +18,15 @@ namespace Kryz.RPG.Items.Views
 		[SerializeField]
 		private List<BaseItemSlotView> itemSlots = new();
 		[SerializeField]
-		private SerializeInterface<IItemSlotInput> itemSlotInteraction;
+		private SerializeInterface<IItemSlotInput> itemSlotInput;
 
 		[Header("Settings")]
-		[SerializeField, Tooltip("The minimum amount of slots to instantiate and display.")]
+		[SerializeField, Tooltip("The minimum number of slots to display. If the assigned " + nameof(IInventory) + " is smaller, extra slots are shown but disabled.")]
 		private int minSlots;
-		[SerializeField, Tooltip("The maximum amount of slots that can be displayed. A value of 0 or lower means infinite.")]
+		[SerializeField, Tooltip("The maximum number of slots that can be displayed. A value of 0 or negative means unlimited.\nIf the assigned " + nameof(IInventory) + " is larger, slots beyond the maximum cannot be accessed and an error is logged to the console, but other slots will still function.")]
 		private int maxSlots;
+		// [SerializeField, Tooltip("The minimum and maximum number of slots to display from the assigned " + nameof(IInventory) + ".\n\nSlots under the minimum are shown but disabled.\n\nSlots beyond the maximum cannot be accessed and an error is logged to the console.\n\nA value less than or equal to 0 means unlimited.")]
+		// private MinMaxInt minMaxSlots;
 
 		private IInventory.OnSlotChangedDelegate? onSlotChangedAction;
 		private IInventory.OnSizeChangedDelegate? onSizeChangedAction;
@@ -45,6 +47,8 @@ namespace Kryz.RPG.Items.Views
 		{
 			if (itemSlotsParent == null) itemSlotsParent = (RectTransform)transform;
 			itemSlotsParent.GetComponentsInChildren(includeInactive: true, itemSlots);
+
+			if (itemSlotInput.Value == null) itemSlotInput.Value = GetComponent<IItemSlotInput>();
 		}
 
 		private void Awake()
@@ -93,7 +97,7 @@ namespace Kryz.RPG.Items.Views
 			for (int i = 0; i < itemSlots.Count; i++)
 			{
 				BaseItemSlotView itemSlotView = itemSlots[i];
-				itemSlotView.Setup(i, inventory, itemSlotInteraction.Value);
+				itemSlotView.Setup(i, inventory, itemSlotInput.Value);
 				itemSlotView.gameObject.SetActive(i < numSlots);
 			}
 
@@ -109,7 +113,7 @@ namespace Kryz.RPG.Items.Views
 				{
 					BaseItemSlotView itemSlotView = Instantiate(itemSlotPrefab, itemSlotsParent);
 					itemSlots.Add(itemSlotView);
-					itemSlotView.Setup(i, inventory, itemSlotInteraction.Value);
+					itemSlotView.Setup(i, inventory, itemSlotInput.Value);
 					itemSlotView.gameObject.SetActive(true);
 				}
 			}
