@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 namespace Kryz.RPG.Items.Views
 {
+	[ExecuteAlways]
 	public class ItemSlotView : BaseItemSlotView, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IBeginDragHandler, IEndDragHandler, IDragHandler, IDropHandler
 	{
 		[Header("References")]
@@ -40,6 +41,11 @@ namespace Kryz.RPG.Items.Views
 			if (text != null) text.raycastTarget = false;
 
 			RefreshVisuals();
+		}
+
+		private void Awake()
+		{
+			Setup(-1, null, null);
 		}
 
 		private void OnEnable()
