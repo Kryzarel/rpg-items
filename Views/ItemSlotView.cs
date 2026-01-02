@@ -21,13 +21,13 @@ namespace Kryz.RPG.Items.Views
 
 		private int index;
 		private IInventory? inventory;
-		private IItemSlotInput? interaction;
+		private IItemSlotInput? input;
 		private ItemStack itemStack;
 		private int lastCount = -1;
 
 		public override int Index => index;
 		public override IInventory? Inventory => inventory;
-		public IItemSlotInput? Interaction => interaction;
+		public override IItemSlotInput? Input => input;
 		public override ItemStack ItemStack => itemStack;
 
 		private void OnValidate()
@@ -45,7 +45,7 @@ namespace Kryz.RPG.Items.Views
 
 		private void Awake()
 		{
-			Setup(-1, null, null);
+			enabled = inventory != null && index >= 0 && index < inventory.Size;
 		}
 
 		private void OnEnable()
@@ -58,16 +58,16 @@ namespace Kryz.RPG.Items.Views
 			RefreshVisuals();
 		}
 
-		public override void Setup(int index, IInventory? inventory, IItemSlotInput? interaction)
+		public override void Setup(int index, IInventory? inventory, IItemSlotInput? input)
 		{
 			this.index = index;
 			this.inventory = inventory;
-			this.interaction = interaction;
+			this.input = input;
 
 			if (inventory != null && index >= 0 && index < inventory.Size)
 			{
-				SetItemStack(inventory[index]);
 				enabled = true;
+				SetItemStack(inventory[index]);
 			}
 			else
 			{
@@ -94,7 +94,7 @@ namespace Kryz.RPG.Items.Views
 		{
 			if (raycastImage != null)
 			{
-				raycastImage.raycastTarget = true;
+				raycastImage.raycastTarget = input != null;
 			}
 
 			if (itemImage != null)
@@ -141,12 +141,12 @@ namespace Kryz.RPG.Items.Views
 			}
 		}
 
-		public void OnPointerClick(PointerEventData eventData) => interaction?.OnPointerClick(this, eventData);
-		public void OnPointerEnter(PointerEventData eventData) => interaction?.OnPointerEnter(this, eventData);
-		public void OnPointerExit(PointerEventData eventData) => interaction?.OnPointerExit(this, eventData);
-		public void OnBeginDrag(PointerEventData eventData) => interaction?.OnBeginDrag(this, eventData);
-		public void OnEndDrag(PointerEventData eventData) => interaction?.OnEndDrag(this, eventData);
-		public void OnDrag(PointerEventData eventData) => interaction?.OnDrag(this, eventData);
-		public void OnDrop(PointerEventData eventData) => interaction?.OnDrop(this, eventData);
+		public void OnPointerClick(PointerEventData eventData) => input?.OnPointerClick(this, eventData);
+		public void OnPointerEnter(PointerEventData eventData) => input?.OnPointerEnter(this, eventData);
+		public void OnPointerExit(PointerEventData eventData) => input?.OnPointerExit(this, eventData);
+		public void OnBeginDrag(PointerEventData eventData) => input?.OnBeginDrag(this, eventData);
+		public void OnEndDrag(PointerEventData eventData) => input?.OnEndDrag(this, eventData);
+		public void OnDrag(PointerEventData eventData) => input?.OnDrag(this, eventData);
+		public void OnDrop(PointerEventData eventData) => input?.OnDrop(this, eventData);
 	}
 }
