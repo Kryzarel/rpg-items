@@ -13,7 +13,7 @@ namespace Kryz.RPG.Items.Views
 		[SerializeField] Image? itemImage;
 		[SerializeField] TextMeshProUGUI? text;
 		[Header("Settings")]
-		[SerializeField] string textFormatString = string.Empty;
+		[SerializeField] string textFormatString = "{0}";
 		[SerializeField] Color emptyColor = Color.clear;
 		[SerializeField] Color nonEmptyColor = Color.white;
 		[SerializeField] Color disabledColor = Color.gray;
@@ -108,7 +108,15 @@ namespace Kryz.RPG.Items.Views
 				if (itemStack.Count > 1 && itemStack.Count != lastCount)
 				{
 					lastCount = itemStack.Count;
-					text.text = string.Format(textFormatString, itemStack.Count);
+
+					if (string.IsNullOrEmpty(textFormatString))
+					{
+						text.text = itemStack.Count.ToString();
+					}
+					else
+					{
+						text.text = string.Format(textFormatString, itemStack.Count);
+					}
 				}
 				text.enabled = itemStack.Count > 1;
 			}
