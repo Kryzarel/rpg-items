@@ -17,6 +17,7 @@ namespace Kryz.RPG.Items.Views
 		[SerializeField] Color emptyColor = Color.clear;
 		[SerializeField] Color nonEmptyColor = Color.white;
 		[SerializeField] Color disabledColor = Color.gray;
+		[SerializeField] Color draggingColor = Color.gray;
 		[SerializeField] Sprite? disabledSprite;
 
 		private int index;
@@ -24,6 +25,7 @@ namespace Kryz.RPG.Items.Views
 		private IItemSlotInput? input;
 		private ItemStack itemStack;
 		private int lastCount = -1;
+		private bool isDragging;
 
 		public override int Index => index;
 		public override IInventory? Inventory => inventory;
@@ -41,11 +43,6 @@ namespace Kryz.RPG.Items.Views
 			if (text != null) text.raycastTarget = false;
 
 			RefreshVisuals();
-		}
-
-		private void Awake()
-		{
-			enabled = inventory != null && index >= 0 && index < inventory.Size;
 		}
 
 		private void OnEnable()
@@ -100,7 +97,15 @@ namespace Kryz.RPG.Items.Views
 			if (itemImage != null)
 			{
 				itemImage.sprite = itemStack.Item?.Icon!;
-				itemImage.color = itemStack.Item == null ? emptyColor : nonEmptyColor;
+
+				if (itemStack.Item == null)
+				{
+					itemImage.color = emptyColor;
+				}
+				else
+				{
+					itemImage.color = isDragging ? draggingColor : nonEmptyColor;
+				}
 			}
 
 			if (text != null)
@@ -144,8 +149,25 @@ namespace Kryz.RPG.Items.Views
 		public void OnPointerClick(PointerEventData eventData) => input?.OnPointerClick(this, eventData);
 		public void OnPointerEnter(PointerEventData eventData) => input?.OnPointerEnter(this, eventData);
 		public void OnPointerExit(PointerEventData eventData) => input?.OnPointerExit(this, eventData);
-		public void OnBeginDrag(PointerEventData eventData) => input?.OnBeginDrag(this, eventData);
-		public void OnEndDrag(PointerEventData eventData) => input?.OnEndDrag(this, eventData);
+
+		public void OnBeginDrag(PointerEventData eventData)
+		{
+			if (input != null && input.OnBeginDrag(this, eventData))
+			{
+				isDragging = true;
+				RefreshVisuals();
+			}
+		}
+
+		public void OnEndDrag(PointerEventData eventData)
+		{
+			if (input != null && input.OnEndDrag(this, eventData))
+			{
+				isDragging = false;
+				RefreshVisuals();
+			}
+		}
+
 		public void OnDrag(PointerEventData eventData) => input?.OnDrag(this, eventData);
 		public void OnDrop(PointerEventData eventData) => input?.OnDrop(this, eventData);
 	}

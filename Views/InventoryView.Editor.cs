@@ -24,6 +24,7 @@ namespace Kryz.RPG.Items.Views
 			{
 				BaseItemSlotView itemSlotView = (BaseItemSlotView)PrefabUtility.InstantiatePrefab(itemSlotPrefab, itemSlotsParent);
 				itemSlots.Add(itemSlotView);
+				itemSlotView.Setup(i, null, null);
 				itemSlotView.gameObject.SetActive(true);
 			}
 

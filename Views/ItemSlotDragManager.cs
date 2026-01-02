@@ -29,11 +29,12 @@ namespace Kryz.RPG.Items.Views
 					sourceScale.y / targetScale.y,
 					sourceScale.z / targetScale.z
 				);
-
 				dragItemSlot.transform.position = eventData.position;
 
-				dragItemSlot.Setup(view.Index, view.Inventory, null);
+				dragItemSlot.SetItemStack(view.ItemStack);
+
 				dragItemSlot.gameObject.SetActive(true);
+				dragItemSlot.enabled = true;
 			}
 		}
 
