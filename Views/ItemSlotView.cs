@@ -20,13 +20,13 @@ namespace Kryz.RPG.Items.Views
 
 		private int index;
 		private IInventory? inventory;
-		private IItemSlotInteraction? interaction;
+		private IItemSlotInput? interaction;
 		private ItemStack itemStack;
 		private int lastCount = -1;
 
 		public override int Index => index;
 		public override IInventory? Inventory => inventory;
-		public IItemSlotInteraction? Interaction => interaction;
+		public IItemSlotInput? Interaction => interaction;
 		public override ItemStack ItemStack => itemStack;
 
 		private void OnValidate()
@@ -52,7 +52,7 @@ namespace Kryz.RPG.Items.Views
 			RefreshVisuals();
 		}
 
-		public override void Setup(int index, IInventory? inventory, IItemSlotInteraction? interaction)
+		public override void Setup(int index, IInventory? inventory, IItemSlotInput? interaction)
 		{
 			this.index = index;
 			this.inventory = inventory;

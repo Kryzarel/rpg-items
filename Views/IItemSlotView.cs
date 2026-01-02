@@ -1,4 +1,3 @@
-
 namespace Kryz.RPG.Items.Views
 {
 	public interface IItemSlotView

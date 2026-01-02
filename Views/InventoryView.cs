@@ -18,7 +18,7 @@ namespace Kryz.RPG.Items.Views
 		[SerializeField]
 		private List<BaseItemSlotView> itemSlots = new();
 		[SerializeField]
-		private SerializeInterface<IItemSlotInteraction> itemSlotInteraction;
+		private SerializeInterface<IItemSlotInput> itemSlotInteraction;
 
 		[Header("Settings")]
 		[SerializeField, Tooltip("The minimum amount of slots to instantiate and display.")]

@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 
 namespace Kryz.RPG.Items.Views
 {
-	public class ItemSlotInteraction : MonoBehaviour, IItemSlotInteraction
+	public class ItemSlotInput : MonoBehaviour, IItemSlotInput
 	{
 		[SerializeField] SerializeInterface<IItemTooltip> itemTooltip;
 		[SerializeField] SerializeInterface<IItemSlotDragManager> dragManager;
