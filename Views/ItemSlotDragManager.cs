@@ -27,9 +27,7 @@ namespace Kryz.RPG.Items.Views
 				dragItemSlot.RectTransform.localScale = new Vector3(
 					sourceScale.x / targetScale.x,
 					sourceScale.y / targetScale.y,
-					sourceScale.z / targetScale.z
-				);
-				dragItemSlot.transform.position = eventData.position;
+					sourceScale.z / targetScale.z);
 
 				dragItemSlot.SetItemStack(view.ItemStack);
 

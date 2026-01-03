@@ -96,14 +96,14 @@ namespace Kryz.RPG.Items.Views
 
 			if (itemImage != null)
 			{
-				itemImage.sprite = itemStack.Item?.Icon!;
-
 				if (itemStack.Item == null)
 				{
+					itemImage.sprite = null!;
 					itemImage.color = emptyColor;
 				}
 				else
 				{
+					itemImage.sprite = itemStack.Item.Icon;
 					itemImage.color = isDragging ? draggingColor : nonEmptyColor;
 				}
 			}
