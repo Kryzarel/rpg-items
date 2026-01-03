@@ -87,7 +87,7 @@ namespace Kryz.RPG.Items.Views
 
 		private static bool ValidateSlot(IItemSlotView itemSlotView, out int index, [MaybeNullWhen(returnValue: false)] out IInventory inventory)
 		{
-			index = itemSlotView.Index;
+			index = itemSlotView.SlotIndex;
 			inventory = itemSlotView.Inventory;
 			return inventory != null && index >= 0 && index < inventory.Size;
 		}

@@ -20,17 +20,19 @@ namespace Kryz.RPG.Items.Views
 		[SerializeField] Color draggingColor = Color.gray;
 		[SerializeField] Sprite? disabledSprite;
 
-		private int index;
+		private int slotIndex = -1;
 		private IInventory? inventory;
 		private IItemSlotInput? input;
 		private ItemStack itemStack;
 		private int lastCount = -1;
 		private bool isDragging;
 
-		public override int Index => index;
+		public override int SlotIndex => slotIndex;
 		public override IInventory? Inventory => inventory;
 		public override IItemSlotInput? Input => input;
 		public override ItemStack ItemStack => itemStack;
+
+		public bool IsActive => itemStack != default || inventory != null && slotIndex >= 0 && slotIndex < inventory.Size;
 
 		private void OnValidate()
 		{
@@ -38,38 +40,39 @@ namespace Kryz.RPG.Items.Views
 			if (itemImage == null) itemImage = GetComponentInChildren<Image>(includeInactive: true);
 			if (text == null) text = GetComponentInChildren<TextMeshProUGUI>(includeInactive: true);
 
-			if (raycastImage != null) raycastImage.raycastTarget = true;
+			if (raycastImage != null) raycastImage.raycastTarget = input != null;
 			if (itemImage != null && itemImage != raycastImage) itemImage.raycastTarget = false;
 			if (text != null) text.raycastTarget = false;
 
 			RefreshVisuals();
 		}
 
-		private void OnEnable()
+		public override void Bind(int slotIndex, IInventory inventory, IItemSlotInput? input)
 		{
-			RefreshVisuals();
-		}
+			if (this.slotIndex == slotIndex && this.inventory == inventory && this.input == input)
+			{
+				return;
+			}
 
-		private void OnDisable()
-		{
-			RefreshVisuals();
-		}
-
-		public override void Setup(int index, IInventory? inventory, IItemSlotInput? input)
-		{
-			this.index = index;
+			this.slotIndex = slotIndex;
 			this.inventory = inventory;
 			this.input = input;
 
-			if (inventory != null && index >= 0 && index < inventory.Size)
+			if (inventory != null && slotIndex >= 0 && slotIndex < inventory.Size)
 			{
-				enabled = true;
-				SetItemStack(inventory[index]);
+				itemStack = inventory[slotIndex];
 			}
-			else
-			{
-				enabled = false;
-			}
+
+			RefreshVisuals();
+		}
+
+		public override void Unbind()
+		{
+			slotIndex = -1;
+			inventory = null;
+			input = null;
+			itemStack = default;
+			RefreshVisuals();
 		}
 
 		public override void SetItemStack(ItemStack stack)
@@ -83,11 +86,11 @@ namespace Kryz.RPG.Items.Views
 
 		private void RefreshVisuals()
 		{
-			if (enabled) RefreshEnabled();
-			else RefreshDisabled();
+			if (IsActive) RefreshActive();
+			else RefreshInactive();
 		}
 
-		private void RefreshEnabled()
+		private void RefreshActive()
 		{
 			if (raycastImage != null)
 			{
@@ -108,12 +111,10 @@ namespace Kryz.RPG.Items.Views
 				}
 			}
 
-			if (text != null)
+			if (text != null && itemStack.Count != lastCount)
 			{
-				if (itemStack.Count > 1 && itemStack.Count != lastCount)
+				if (itemStack.Count > 1)
 				{
-					lastCount = itemStack.Count;
-
 					if (string.IsNullOrEmpty(textFormatString))
 					{
 						text.text = itemStack.Count.ToString();
@@ -123,11 +124,13 @@ namespace Kryz.RPG.Items.Views
 						text.text = string.Format(textFormatString, itemStack.Count);
 					}
 				}
+
+				lastCount = itemStack.Count;
 				text.enabled = itemStack.Count > 1;
 			}
 		}
 
-		private void RefreshDisabled()
+		private void RefreshInactive()
 		{
 			if (raycastImage != null)
 			{

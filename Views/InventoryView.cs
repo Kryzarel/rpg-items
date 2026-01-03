@@ -85,8 +85,8 @@ namespace Kryz.RPG.Items.Views
 
 		private void HandleSlotViews()
 		{
-			int maxSlots = this.maxSlots > 0 ? this.maxSlots : int.MaxValue;
 			int inventorySlots = inventory != null ? inventory.Size : 0;
+			int maxSlots = this.maxSlots > 0 ? this.maxSlots : int.MaxValue;
 			int numSlots = Math.Min(Math.Max(inventorySlots, minSlots), maxSlots);
 
 			if (inventory != null && inventory.Size > maxSlots)
@@ -94,28 +94,33 @@ namespace Kryz.RPG.Items.Views
 				Debug.LogError("Inventory has " + inventory.Size + " slots, but the " + nameof(InventoryView) + " is configured to display a maximum of " + maxSlots, this);
 			}
 
-			for (int i = 0; i < itemSlots.Count; i++)
-			{
-				BaseItemSlotView itemSlotView = itemSlots[i];
-				itemSlotView.Setup(i, inventory, itemSlotInput.Value);
-				itemSlotView.gameObject.SetActive(i < numSlots);
-			}
-
 			if (itemSlots.Count < numSlots)
 			{
 				if (itemSlotPrefab == null)
 				{
 					Debug.LogError("Failed to instantiate " + nameof(ItemSlotView) + "s because " + nameof(itemSlotPrefab) + " is null", this);
-					return;
 				}
-
-				for (int i = itemSlots.Count; i < numSlots; i++)
+				else
 				{
-					BaseItemSlotView itemSlotView = Instantiate(itemSlotPrefab, itemSlotsParent);
-					itemSlots.Add(itemSlotView);
-					itemSlotView.Setup(i, inventory, itemSlotInput.Value);
-					itemSlotView.gameObject.SetActive(true);
+					for (int i = itemSlots.Count; i < numSlots; i++)
+					{
+						itemSlots.Add(Instantiate(itemSlotPrefab, itemSlotsParent));
+					}
 				}
+			}
+
+			for (int i = 0; i < itemSlots.Count; i++)
+			{
+				BaseItemSlotView itemSlotView = itemSlots[i];
+				if (inventory != null)
+				{
+					itemSlotView.Bind(i, inventory, itemSlotInput.Value);
+				}
+				else
+				{
+					itemSlotView.Unbind();
+				}
+				itemSlotView.gameObject.SetActive(i < numSlots);
 			}
 		}
 
