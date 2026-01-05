@@ -5,7 +5,8 @@
         "Kryz.RPG.Items",
         "Kryz.UnityUtils",
         "UnityEngine.UI",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

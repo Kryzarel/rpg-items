@@ -62,11 +62,11 @@ namespace Kryz.RPG.Items.Views
 
 		public bool OnDrag(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
-			if (ValidateSlot(itemSlotView, out _, out _))
-			{
-				dragManager.Value?.OnDrag(itemSlotView, eventData);
-				return true;
-			}
+			// if (ValidateSlot(itemSlotView, out _, out _))
+			// {
+			// 	dragManager.Value?.OnDrag(itemSlotView, eventData);
+			// 	return true;
+			// }
 			return false;
 		}
 

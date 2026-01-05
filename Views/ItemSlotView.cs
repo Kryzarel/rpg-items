@@ -47,7 +47,7 @@ namespace Kryz.RPG.Items.Views
 			RefreshVisuals();
 		}
 
-		public override void Bind(int slotIndex, IInventory inventory, IItemSlotInput? input)
+		public override void Bind(int slotIndex, IInventory inventory, IItemSlotInput? input = null)
 		{
 			if (this.slotIndex == slotIndex && this.inventory == inventory && this.input == input)
 			{
