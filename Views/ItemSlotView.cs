@@ -24,7 +24,8 @@ namespace Kryz.RPG.Items.Views
 		private IInventory? inventory;
 		private IItemSlotInput? input;
 		private ItemStack itemStack;
-		private int lastCount = -1;
+
+		private int cachedCount;
 		private bool isDragging;
 
 		public override int SlotIndex => slotIndex;
@@ -119,21 +120,18 @@ namespace Kryz.RPG.Items.Views
 
 			if (text != null)
 			{
-				if (itemStack.Count != lastCount)
+				if (itemStack.Count > 1 && itemStack.Count != cachedCount)
 				{
-					if (itemStack.Count > 1)
+					if (string.IsNullOrEmpty(textFormatString))
 					{
-						if (string.IsNullOrEmpty(textFormatString))
-						{
-							text.text = itemStack.Count.ToString();
-						}
-						else
-						{
-							text.text = string.Format(textFormatString, itemStack.Count);
-						}
+						text.text = itemStack.Count.ToString();
+					}
+					else
+					{
+						text.text = string.Format(textFormatString, itemStack.Count);
 					}
 
-					lastCount = itemStack.Count;
+					cachedCount = itemStack.Count;
 				}
 
 				text.color = isDragging ? draggingColor : nonEmptyColor;
