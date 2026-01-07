@@ -47,8 +47,7 @@ namespace Kryz.RPG.Items.Views
 		{
 			if (itemSlotsParent == null) itemSlotsParent = (RectTransform)transform;
 			itemSlotsParent.GetComponentsInChildren(includeInactive: true, itemSlots);
-
-			if (itemSlotInput.Value == null) itemSlotInput.Value = GetComponent<IItemSlotInput>();
+			itemSlotInput.Value ??= GetComponentInParent<IItemSlotInput>();
 		}
 
 		private void Awake()
