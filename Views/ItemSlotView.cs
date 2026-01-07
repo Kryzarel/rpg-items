@@ -117,21 +117,26 @@ namespace Kryz.RPG.Items.Views
 				}
 			}
 
-			if (text != null && itemStack.Count != lastCount)
+			if (text != null)
 			{
-				if (itemStack.Count > 1)
+				if (itemStack.Count != lastCount)
 				{
-					if (string.IsNullOrEmpty(textFormatString))
+					if (itemStack.Count > 1)
 					{
-						text.text = itemStack.Count.ToString();
+						if (string.IsNullOrEmpty(textFormatString))
+						{
+							text.text = itemStack.Count.ToString();
+						}
+						else
+						{
+							text.text = string.Format(textFormatString, itemStack.Count);
+						}
 					}
-					else
-					{
-						text.text = string.Format(textFormatString, itemStack.Count);
-					}
+
+					lastCount = itemStack.Count;
 				}
 
-				lastCount = itemStack.Count;
+				text.color = isDragging ? draggingColor : nonEmptyColor;
 				text.enabled = itemStack.Count > 1;
 			}
 		}
