@@ -25,8 +25,6 @@ namespace Kryz.RPG.Items.Views
 		private int minSlots;
 		[SerializeField, Tooltip("The maximum number of slots that can be displayed. A value of 0 or negative means unlimited.\nIf the assigned " + nameof(IInventory) + " is larger, slots beyond the maximum cannot be accessed and an error is logged to the console, but other slots will still function.")]
 		private int maxSlots;
-		// [SerializeField, Tooltip("The minimum and maximum number of slots to display from the assigned " + nameof(IInventory) + ".\n\nSlots under the minimum are shown but disabled.\n\nSlots beyond the maximum cannot be accessed and an error is logged to the console.\n\nA value less than or equal to 0 means unlimited.")]
-		// private MinMaxInt minMaxSlots;
 
 		private IInventory.OnSlotChangedDelegate? onSlotChangedAction;
 		private IInventory.OnSizeChangedDelegate? onSizeChangedAction;

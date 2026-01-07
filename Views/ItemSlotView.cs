@@ -122,15 +122,7 @@ namespace Kryz.RPG.Items.Views
 			{
 				if (itemStack.Count > 1 && itemStack.Count != cachedCount)
 				{
-					if (string.IsNullOrEmpty(textFormatString))
-					{
-						text.text = itemStack.Count.ToString();
-					}
-					else
-					{
-						text.text = string.Format(textFormatString, itemStack.Count);
-					}
-
+					text.text = string.Format(string.IsNullOrEmpty(textFormatString) ? "{0}" : textFormatString, itemStack.Count);
 					cachedCount = itemStack.Count;
 				}
 
