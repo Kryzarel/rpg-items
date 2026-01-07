@@ -84,6 +84,12 @@ namespace Kryz.RPG.Items.Views
 			}
 		}
 
+		public override void SetDragVisuals(bool isDragging)
+		{
+			this.isDragging = isDragging;
+			RefreshVisuals();
+		}
+
 		private void RefreshVisuals()
 		{
 			if (IsActive) RefreshActive();
@@ -152,25 +158,8 @@ namespace Kryz.RPG.Items.Views
 		public void OnPointerClick(PointerEventData eventData) => input?.OnPointerClick(this, eventData);
 		public void OnPointerEnter(PointerEventData eventData) => input?.OnPointerEnter(this, eventData);
 		public void OnPointerExit(PointerEventData eventData) => input?.OnPointerExit(this, eventData);
-
-		public void OnBeginDrag(PointerEventData eventData)
-		{
-			if (input != null && input.OnBeginDrag(this, eventData))
-			{
-				isDragging = true;
-				RefreshVisuals();
-			}
-		}
-
-		public void OnEndDrag(PointerEventData eventData)
-		{
-			if (input != null && input.OnEndDrag(this, eventData))
-			{
-				isDragging = false;
-				RefreshVisuals();
-			}
-		}
-
+		public void OnBeginDrag(PointerEventData eventData) => input?.OnBeginDrag(this, eventData);
+		public void OnEndDrag(PointerEventData eventData) => input?.OnEndDrag(this, eventData);
 		public void OnDrag(PointerEventData eventData) => input?.OnDrag(this, eventData);
 		public void OnDrop(PointerEventData eventData) => input?.OnDrop(this, eventData);
 	}

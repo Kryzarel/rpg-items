@@ -11,10 +11,10 @@ namespace Kryz.RPG.Items.Views
 		[SerializeField]
 		private BaseItemSlotView? dragSlot;
 
-		public bool IsDragging => dragSlot != null && dragSlot.ItemStack != default;
-		public BaseItemSlotView? DragSlot => dragSlot;
-
 		private IInventory.OnSlotChangedDelegate? onSlotChangedAction;
+		private BaseItemSlotView? draggedSlot;
+
+		public IItemSlotView? DraggedSlot => draggedSlot;
 
 		private void OnValidate()
 		{
@@ -33,10 +33,14 @@ namespace Kryz.RPG.Items.Views
 			}
 		}
 
-		public void StartDrag(IItemSlotView view, PointerEventData eventData)
+		public void StartDrag(IItemSlotView slotView, PointerEventData eventData)
 		{
-			if (dragSlot != null && view.Inventory != null && view is BaseItemSlotView baseView)
+			if (dragSlot != null && slotView is BaseItemSlotView baseView && baseView.Inventory != null)
 			{
+				draggedSlot = baseView;
+				draggedSlot.Inventory.OnSlotChanged += onSlotChangedAction;
+				draggedSlot.SetDragVisuals(isDragging: true);
+
 				Vector3 sourceScale = baseView.RectTransform.lossyScale;
 				Vector3 targetScale = dragSlot.RectTransform.parent.lossyScale;
 
@@ -46,17 +50,21 @@ namespace Kryz.RPG.Items.Views
 					sourceScale.y / targetScale.y,
 					sourceScale.z / targetScale.z);
 
-				view.Inventory.OnSlotChanged += onSlotChangedAction;
-				dragSlot.Bind(view.SlotIndex, view.Inventory);
+				dragSlot.Bind(baseView.SlotIndex, baseView.Inventory);
 				dragSlot.gameObject.SetActive(true);
 			}
 		}
 
-		public void StopDrag(IItemSlotView view, PointerEventData eventData)
+		public void StopDrag()
 		{
-			if (view.Inventory != null)
+			if (draggedSlot != null)
 			{
-				view.Inventory.OnSlotChanged -= onSlotChangedAction;
+				if (draggedSlot.Inventory != null)
+				{
+					draggedSlot.Inventory.OnSlotChanged -= onSlotChangedAction;
+				}
+				draggedSlot.SetDragVisuals(isDragging: false);
+				draggedSlot = null;
 			}
 
 			if (dragSlot != null)
@@ -64,14 +72,6 @@ namespace Kryz.RPG.Items.Views
 				dragSlot.gameObject.SetActive(false);
 				dragSlot.Unbind();
 			}
-		}
-
-		public void OnDrag(IItemSlotView view, PointerEventData eventData)
-		{
-			// if (dragItemSlot != null)
-			// {
-			// 	SetScreenPosition(dragItemSlot.RectTransform, eventData.position);
-			// }
 		}
 
 		private void LateUpdate()
