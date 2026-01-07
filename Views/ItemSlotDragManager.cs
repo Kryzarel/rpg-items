@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace Kryz.RPG.Items.Views
@@ -15,6 +14,7 @@ namespace Kryz.RPG.Items.Views
 		private BaseItemSlotView? draggedSlot;
 
 		public IItemSlotView? DraggedSlot => draggedSlot;
+		public IItemSlotView? DraggedSlotCopy => dragSlot;
 
 		private void OnValidate()
 		{
@@ -33,14 +33,10 @@ namespace Kryz.RPG.Items.Views
 			}
 		}
 
-		public void StartDrag(IItemSlotView slotView, PointerEventData eventData)
+		public void StartDrag(IItemSlotView slotView, ItemStack itemStack = default)
 		{
 			if (dragSlot != null && slotView is BaseItemSlotView baseView && baseView.Inventory != null)
 			{
-				draggedSlot = baseView;
-				draggedSlot.Inventory.OnSlotChanged += onSlotChangedAction;
-				draggedSlot.SetDragVisuals(isDragging: true);
-
 				Vector3 sourceScale = baseView.RectTransform.lossyScale;
 				Vector3 targetScale = dragSlot.RectTransform.parent.lossyScale;
 
@@ -50,7 +46,19 @@ namespace Kryz.RPG.Items.Views
 					sourceScale.y / targetScale.y,
 					sourceScale.z / targetScale.z);
 
-				dragSlot.Bind(baseView.SlotIndex, baseView.Inventory);
+				draggedSlot = baseView;
+				draggedSlot.SetDragVisuals(isDragging: true);
+
+				if (itemStack == default)
+				{
+					draggedSlot.Inventory.OnSlotChanged += onSlotChangedAction;
+					dragSlot.Bind(baseView.SlotIndex, baseView.Inventory);
+				}
+				else
+				{
+					dragSlot.SetItemStack(itemStack);
+				}
+
 				dragSlot.gameObject.SetActive(true);
 			}
 		}
@@ -62,6 +70,7 @@ namespace Kryz.RPG.Items.Views
 				if (draggedSlot.Inventory != null)
 				{
 					draggedSlot.Inventory.OnSlotChanged -= onSlotChangedAction;
+					draggedSlot.RefreshBinding();
 				}
 				draggedSlot.SetDragVisuals(isDragging: false);
 				draggedSlot = null;
