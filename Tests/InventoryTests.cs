@@ -453,7 +453,7 @@ namespace Kryz.RPG.Items.Tests
 		}
 
 		[Test]
-		public void Contains([ValueSource(inventorySizesSrc)] int size, [ValueSource(itemsSrc)] IItem item1, [ValueSource(stackSizesSrc)] int stackSize1, [ValueSource(itemsSrc)] IItem item2, [ValueSource(stackSizesSrc)] int stackSize2)
+		public void CanRemove([ValueSource(inventorySizesSrc)] int size, [ValueSource(itemsSrc)] IItem item1, [ValueSource(stackSizesSrc)] int stackSize1, [ValueSource(itemsSrc)] IItem item2, [ValueSource(stackSizesSrc)] int stackSize2)
 		{
 			Inventory inventory = new(size);
 			ItemStack stack1 = new(item1, stackSize1);
@@ -464,11 +464,11 @@ namespace Kryz.RPG.Items.Tests
 
 			if (inventory.Size >= requiredSlots && stack1.Item != null && stack1.Item == stack2.Item && stack1.Count >= stack2.Count)
 			{
-				Assert.IsTrue(inventory.Contains(stack2));
+				Assert.IsTrue(inventory.CanRemove(stack2));
 			}
 			else
 			{
-				Assert.IsFalse(inventory.Contains(stack2));
+				Assert.IsFalse(inventory.CanRemove(stack2));
 			}
 		}
 
@@ -482,18 +482,21 @@ namespace Kryz.RPG.Items.Tests
 
 			if (inventory.Size == 0 || stack.Count == 0 || stack.Item == null)
 			{
+				Assert.IsFalse(inventory.CanRemove(stack));
 				Assert.IsFalse(inventory.TryRemove(stack));
 				Assert.AreEqual(Math.Max(0, size - requiredSlots), inventory.FreeSlots);
 				Assert.AreEqual(Math.Max(0, Math.Min(size, requiredSlots)), inventory.OccupiedSlots);
 			}
 			else if (remainder.Count <= 0)
 			{
+				Assert.IsTrue(inventory.CanRemove(stack));
 				Assert.IsTrue(inventory.TryRemove(stack));
 				Assert.AreEqual(inventory.Size, inventory.FreeSlots);
 				Assert.AreEqual(0, inventory.OccupiedSlots);
 			}
 			else
 			{
+				Assert.IsFalse(inventory.CanRemove(stack));
 				Assert.IsFalse(inventory.TryRemove(stack));
 				Assert.AreEqual(Math.Max(0, size - requiredSlots), inventory.FreeSlots);
 				Assert.AreEqual(Math.Max(0, Math.Min(size, requiredSlots)), inventory.OccupiedSlots);
@@ -524,6 +527,7 @@ namespace Kryz.RPG.Items.Tests
 
 				if (slot.Item != null && slot.Count >= stackSize)
 				{
+					Assert.IsTrue(inventory.CanRemove(i, stackSize));
 					Assert.IsTrue(inventory.TryRemove(i, stackSize, out ItemStack removed));
 					Assert.AreEqual(new ItemStack(slot.Item, stackSize), removed);
 
@@ -532,6 +536,7 @@ namespace Kryz.RPG.Items.Tests
 				}
 				else
 				{
+					Assert.IsFalse(inventory.CanRemove(i, stackSize));
 					Assert.IsFalse(inventory.TryRemove(i, stackSize, out ItemStack removed));
 					Assert.AreEqual(default(ItemStack), removed);
 
@@ -562,6 +567,7 @@ namespace Kryz.RPG.Items.Tests
 
 				if (slot.Item != null)
 				{
+					Assert.IsTrue(inventory.CanRemove(i));
 					Assert.IsTrue(inventory.TryRemove(i, out ItemStack removed));
 					Assert.AreEqual(slot, removed);
 
@@ -570,6 +576,7 @@ namespace Kryz.RPG.Items.Tests
 				}
 				else
 				{
+					Assert.IsFalse(inventory.CanRemove(i));
 					Assert.IsFalse(inventory.TryRemove(i, out ItemStack removed));
 					Assert.AreEqual(default(ItemStack), removed);
 

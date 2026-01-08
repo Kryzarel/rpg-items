@@ -42,11 +42,26 @@ namespace Kryz.RPG.Items
 		bool CanAdd(int index, in ItemStack stack, out ItemStack remainder, bool allowPartial = false);
 
 		/// <summary>
-		/// Check if the inventory contains a certain amount of an item.
+		/// Check if the it's possible to remove an <see cref="ItemStack"/> from the inventory.
 		/// </summary>
-		/// <param name="stack">The <see cref="ItemStack"/> to check.</param>
-		/// <returns>True if the inventory has enough of the specified item. False otherwise.</returns>
-		bool Contains(in ItemStack stack);
+		/// <param name="stack">The <see cref="ItemStack"/> to remove.</param>
+		/// <returns>True if the inventory has enough of the specified item and it can be removed. False otherwise.</returns>
+		bool CanRemove(in ItemStack stack);
+
+		/// <summary>
+		/// Check if the it's possible to remove the whole item stack from a specific inventory slot.
+		/// </summary>
+		/// <param name="index">The slot index to remove from.</param>
+		/// <returns>True if the <see cref="ItemStack"/> in the slot can be removed. False otherwise.</returns>
+		bool CanRemove(int index);
+
+		/// <summary>
+		/// Check if the it's possible to remove a certain amount of items from a specific inventory slot.
+		/// </summary>
+		/// <param name="index">The slot index to remove from.</param>
+		/// <param name="count">The amount to remove.</param>
+		/// <returns>True if the slot has enough items and they can be removed. False otherwise.</returns>
+		bool CanRemove(int index, int count);
 
 		/// <summary>
 		/// Try to set an item slot to the specified <see cref="ItemStack"/>, overwriting any <see cref="ItemStack"/> that may already be in that slot.
@@ -84,6 +99,14 @@ namespace Kryz.RPG.Items
 		bool TryRemove(in ItemStack stack);
 
 		/// <summary>
+		/// Try to remove an entire item stack from a specific inventory slot.
+		/// </summary>
+		/// <param name="index">The slot index to remove from.</param>
+		/// <param name="removed">The item stack that was removed.</param>
+		/// <returns>True if the slot had a valid item stack and it was removed. False otherwise.</returns>
+		bool TryRemove(int index, out ItemStack removed);
+
+		/// <summary>
 		/// Try to remove a certain amount of items from a specific inventory slot.
 		/// </summary>
 		/// <param name="index">The slot index to remove from.</param>
@@ -91,14 +114,6 @@ namespace Kryz.RPG.Items
 		/// <param name="removed">The item stack that was removed.</param>
 		/// <returns>True if the slot had a valid item stack and it was removed. False otherwise.</returns>
 		bool TryRemove(int index, int count, out ItemStack removed);
-
-		/// <summary>
-		/// Try to remove an entire item stack from a specific inventory slot.
-		/// </summary>
-		/// <param name="index">The slot index to remove from.</param>
-		/// <param name="removed">The item stack that was removed.</param>
-		/// <returns>True if the slot had a valid item stack and it was removed. False otherwise.</returns>
-		bool TryRemove(int index, out ItemStack removed);
 
 		/// <summary>
 		/// <para>Try to move an item stack from a specific inventory slot to another.</para>

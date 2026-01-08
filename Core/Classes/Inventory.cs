@@ -34,27 +34,16 @@ namespace Kryz.RPG.Items
 		public int FreeSlots => size - occupiedSlots;
 		public int OccupiedSlots => occupiedSlots;
 
-		public Inventory(int numSlots, ArrayPool<ItemStack>? arrayPool = null)
+		public Inventory(int numSlots, ArrayPool<ItemStack>? pool = null)
 		{
-			this.arrayPool = arrayPool ?? ArrayPool<ItemStack>.Shared;
+			arrayPool = pool ?? ArrayPool<ItemStack>.Shared;
 			slots = null!;
 			SetSize(numSlots);
 		}
 
-		public Inventory(ItemStack[] items, ArrayPool<ItemStack>? arrayPool = null) : this(items.Length, arrayPool)
-		{
-			CopyFrom(items);
-		}
-
-		public Inventory(ReadOnlySpan<ItemStack> items, ArrayPool<ItemStack>? arrayPool = null) : this(items.Length, arrayPool)
-		{
-			CopyFrom(items);
-		}
-
-		public Inventory(IReadOnlyList<ItemStack> items, ArrayPool<ItemStack>? arrayPool = null) : this(items.Count, arrayPool)
-		{
-			CopyFrom(items);
-		}
+		public Inventory(ItemStack[] items, ArrayPool<ItemStack>? pool = null) : this(items.Length, pool) => CopyFrom(items);
+		public Inventory(ReadOnlySpan<ItemStack> items, ArrayPool<ItemStack>? pool = null) : this(items.Length, pool) => CopyFrom(items);
+		public Inventory(IReadOnlyList<ItemStack> items, ArrayPool<ItemStack>? pool = null) : this(items.Count, pool) => CopyFrom(items);
 
 		public bool CanSet(int index, in ItemStack stack)
 		{
@@ -103,7 +92,7 @@ namespace Kryz.RPG.Items
 			return false;
 		}
 
-		public bool Contains(in ItemStack stack)
+		public bool CanRemove(in ItemStack stack)
 		{
 			if (stack.Item == null)
 			{
@@ -114,18 +103,23 @@ namespace Kryz.RPG.Items
 			{
 				ItemStack slot = slots[i];
 
-				if (slot.Item == stack.Item)
+				if (slot.Item == stack.Item && (required -= slot.Count) <= 0)
 				{
-					required -= slot.Count;
-
-					if (required <= 0)
-					{
-						return true;
-					}
+					return true;
 				}
 			}
 
 			return false;
+		}
+
+		public bool CanRemove(int index)
+		{
+			return index >= 0 && index < size && slots[index].Count > 0;
+		}
+
+		public bool CanRemove(int index, int count)
+		{
+			return index >= 0 && index < size && slots[index].TryRemove(count, out _, out _);
 		}
 
 		public bool TrySet(int index, in ItemStack stack, bool forceSet = false)
@@ -202,7 +196,7 @@ namespace Kryz.RPG.Items
 
 		public bool TryRemove(in ItemStack stack)
 		{
-			if (!Contains(stack))
+			if (!CanRemove(stack))
 			{
 				return false;
 			}
@@ -221,6 +215,11 @@ namespace Kryz.RPG.Items
 			return true;
 		}
 
+		public bool TryRemove(int index, out ItemStack removed)
+		{
+			return TryRemove(index, -1, out removed);
+		}
+
 		public bool TryRemove(int index, int count, out ItemStack removed)
 		{
 			if (index < 0 || index >= size)
@@ -229,19 +228,16 @@ namespace Kryz.RPG.Items
 				return false;
 			}
 
-			return TryRemove(ref slots[index], index, count, out removed);
-		}
+			ref ItemStack slot = ref slots[index];
+			if (count < 0) count = slot.Count;
 
-		public bool TryRemove(int index, out ItemStack removed)
-		{
-			if (index < 0 || index >= size)
+			if (slot.TryRemove(count, out ItemStack result, out removed))
 			{
-				removed = default;
-				return false;
+				SetSlot(ref slot, index, result);
+				return true;
 			}
 
-			ref ItemStack slot = ref slots[index];
-			return TryRemove(ref slot, index, slot.Count, out removed);
+			return false;
 		}
 
 		public bool TryMove(int toIndex, int fromIndex, IInventory fromInv, bool allowSwap = false)
@@ -394,17 +390,6 @@ namespace Kryz.RPG.Items
 			ItemStack previous = slot;
 			slot = stack;
 			OnSlotChanged(index, previous, slot);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private bool TryRemove(ref ItemStack slot, int index, int count, out ItemStack removed)
-		{
-			if (slot.TryRemove(count, out ItemStack result, out removed))
-			{
-				SetSlot(ref slot, index, result);
-				return true;
-			}
-			return false;
 		}
 
 		private void SetSize(int value)
