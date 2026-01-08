@@ -57,6 +57,7 @@ namespace Kryz.RPG.Items.Views
 				else
 				{
 					dragSlot.SetItemStack(itemStack);
+					draggedSlot.SetItemStack(draggedSlot.ItemStack.Remove(itemStack.Count, out _));
 				}
 
 				dragSlot.gameObject.SetActive(true);

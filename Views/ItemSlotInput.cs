@@ -109,11 +109,8 @@ namespace Kryz.RPG.Items.Views
 				}
 				else if (splitStackAction != null && splitStackAction.action.WasPerformedThisFrame())
 				{
-					ItemStack stack = itemSlotView.ItemStack;
-					if (stack.TryRemove(stack.Count / 2, out ItemStack result, out ItemStack splitStack))
+					if (StartSplitDrag(itemSlotView))
 					{
-						if (itemSlotView is BaseItemSlotView baseView) baseView.SetItemStack(result);
-						StartDrag(itemSlotView, splitStack);
 						return true;
 					}
 				}
@@ -143,11 +140,8 @@ namespace Kryz.RPG.Items.Views
 			{
 				if (splitStackAction != null && splitStackAction.action.IsPressed())
 				{
-					ItemStack stack = itemSlotView.ItemStack;
-					if (stack.TryRemove(stack.Count / 2, out ItemStack result, out ItemStack splitStack))
+					if (StartSplitDrag(itemSlotView))
 					{
-						if (itemSlotView is BaseItemSlotView baseView) baseView.SetItemStack(result);
-						StartDrag(itemSlotView, splitStack);
 						return true;
 					}
 				}
@@ -156,6 +150,17 @@ namespace Kryz.RPG.Items.Views
 					StartDrag(itemSlotView);
 					return true;
 				}
+			}
+			return false;
+		}
+
+		private bool StartSplitDrag(IItemSlotView itemSlotView)
+		{
+			ItemStack stack = itemSlotView.ItemStack;
+			if (stack.TryRemove(stack.Count / 2, out _, out ItemStack splitStack))
+			{
+				StartDrag(itemSlotView, splitStack);
+				return true;
 			}
 			return false;
 		}
