@@ -134,7 +134,7 @@ namespace Kryz.RPG.Items
 		/// <param name="fromCount">The amount of items to move. If negative, it moves the whole stack.</param>
 		/// <param name="allowSwap">If we should swap the stacks when the target inventory doesn't have enough space.</param>
 		/// <returns>True if '<paramref name="fromIndex"/>' has a valid item stack and it was successfully moved to or swapped with '<paramref name="toIndex"/>'. False otherwise.</returns>
-		bool TryMove(int toIndex, int fromIndex, IInventory fromInv, out ItemStack remainder, int fromCount = -1, bool allowPartial = false, bool allowSwap = false);
+		bool TryMove(int toIndex, int fromIndex, IInventory fromInv, out ItemStack remainder, int fromCount = -1, bool allowSwap = false);
 
 		/// <summary>
 		/// <para>Overwrite all slots by copying from a <see cref="ReadOnlySpan{T}"/> of <see cref="ItemStack"/>.</para>

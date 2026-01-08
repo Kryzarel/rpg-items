@@ -83,7 +83,7 @@ namespace Kryz.RPG.Items.Views
 						return true;
 					}
 
-					TryMove(itemSlotView, allowPartial: true, out ItemStack remainder);
+					TryMove(itemSlotView, out ItemStack remainder);
 					EndDrag();
 
 					if (remainder != default)
@@ -173,10 +173,10 @@ namespace Kryz.RPG.Items.Views
 
 		public bool OnDrop(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
-			return TryMove(itemSlotView, allowPartial: false, out _);
+			return TryMove(itemSlotView, out _);
 		}
 
-		private bool TryMove(IItemSlotView itemSlotView, bool allowPartial, out ItemStack remainder)
+		private bool TryMove(IItemSlotView itemSlotView, out ItemStack remainder)
 		{
 			remainder = default;
 
@@ -190,7 +190,7 @@ namespace Kryz.RPG.Items.Views
 				return false;
 
 			ItemStack draggedStack = dragManager.Value.DraggedItemStack;
-			return dropInventory.TryMove(dropIndex, dragIndex, dragInventory, out remainder, draggedStack.Count, allowPartial, allowSwap: true);
+			return dropInventory.TryMove(dropIndex, dragIndex, dragInventory, out remainder, draggedStack.Count, allowSwap: true);
 		}
 
 		private static bool ValidateSlot(IItemSlotView itemSlotView, out int index, [MaybeNullWhen(returnValue: false)] out IInventory inventory)

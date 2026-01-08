@@ -258,7 +258,7 @@ namespace Kryz.RPG.Items
 			return false;
 		}
 
-		public bool TryMove(int toIndex, int fromIndex, IInventory fromInv, out ItemStack remainder, int fromCount = -1, bool allowPartial = false, bool allowSwap = false)
+		public bool TryMove(int toIndex, int fromIndex, IInventory fromInv, out ItemStack remainder, int fromCount = -1, bool allowSwap = false)
 		{
 			if (toIndex < 0 || toIndex >= size || fromIndex < 0 || fromIndex >= fromInv.Size || (toIndex == fromIndex && this == fromInv))
 			{
@@ -272,23 +272,17 @@ namespace Kryz.RPG.Items
 				return false;
 			}
 
-			allowPartial |= removeResult.Count == 0;
 			ref ItemStack toSlot = ref slots[toIndex];
+			bool isFullMove = removeResult.Count == 0;
 
-			if (CanAdd(toIndex, removed, out ItemStack addResult, out remainder, allowPartial))
+			if (CanAdd(toIndex, removed, out ItemStack addResult, out remainder, allowPartial: isFullMove))
 			{
-				if (remainder.Count > 0 && removeResult.Count == 0 && fromInv.CanSet(fromIndex, remainder))
-				{
-					fromInv.TrySet(fromIndex, remainder);
-				}
-				else
-				{
-					fromInv.TrySet(fromIndex, removeResult);
-				}
+				ItemStack fromResult = remainder.Count > 0 ? remainder : removeResult;
+				fromInv.TrySet(fromIndex, fromResult);
 				SetSlot(ref toSlot, toIndex, addResult);
 				return true;
 			}
-			else if (removeResult.Count == 0 && allowSwap && fromInv.CanSet(fromIndex, addResult) && CanSet(toIndex, removed))
+			else if (isFullMove && allowSwap && fromInv.CanSet(fromIndex, toSlot) && CanSet(toIndex, removed))
 			{
 				fromInv.TrySet(fromIndex, toSlot);
 				SetSlot(ref toSlot, toIndex, removed);
