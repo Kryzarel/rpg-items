@@ -14,7 +14,7 @@ namespace Kryz.RPG.Items.Views
 		private BaseItemSlotView? draggedSlot;
 
 		public IItemSlotView? DraggedSlot => draggedSlot;
-		public IItemSlotView? DraggedSlotCopy => dragSlot;
+		public ItemStack DraggedItemStack => dragSlot != null ? dragSlot.ItemStack : default;
 
 		private void OnValidate()
 		{

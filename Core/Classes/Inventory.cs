@@ -75,20 +75,24 @@ namespace Kryz.RPG.Items
 			return false;
 		}
 
-		public bool CanAdd(int index, in ItemStack stack, out ItemStack remainder, bool allowPartial = false)
+		public bool CanAdd(int index, in ItemStack stack, out ItemStack result, out ItemStack remainder, bool allowPartial = false)
 		{
-			if (stack.Item == null || index < 0 || index >= size)
+			if (index < 0 || index >= size)
 			{
 				remainder = stack;
+				result = default;
 				return false;
 			}
 
-			if (slots[index].TryAdd(stack, out _, out remainder) && (remainder.Count == 0 || allowPartial))
+			ItemStack slot = slots[index];
+
+			if (slot.TryAdd(stack, out result, out remainder) && (remainder.Count == 0 || allowPartial))
 			{
 				return true;
 			}
 
 			remainder = stack;
+			result = slot;
 			return false;
 		}
 
@@ -112,14 +116,23 @@ namespace Kryz.RPG.Items
 			return false;
 		}
 
-		public bool CanRemove(int index)
+		public bool CanRemove(int index, out ItemStack result, out ItemStack removed)
 		{
-			return index >= 0 && index < size && slots[index].Count > 0;
+			return CanRemove(index, -1, out result, out removed);
 		}
 
-		public bool CanRemove(int index, int count)
+		public bool CanRemove(int index, int count, out ItemStack result, out ItemStack removed)
 		{
-			return index >= 0 && index < size && slots[index].TryRemove(count, out _, out _);
+			if (index < 0 || index >= size)
+			{
+				result = default;
+				removed = default;
+				return false;
+			}
+
+			ItemStack slot = slots[index];
+			if (count < 0) count = slot.Count;
+			return slot.TryRemove(count, out result, out removed);
 		}
 
 		public bool TrySet(int index, in ItemStack stack, bool forceSet = false)
@@ -174,23 +187,25 @@ namespace Kryz.RPG.Items
 			return remainder.Count < stack.Count; // Return true if we added at least 1 item
 		}
 
-		public bool TryAdd(int index, in ItemStack stack, out ItemStack remainder, bool allowPartial = false)
+		public bool TryAdd(int index, in ItemStack stack, out ItemStack result, out ItemStack remainder, bool allowPartial = false)
 		{
-			if (stack.Item == null || index < 0 || index >= size)
+			if (index < 0 || index >= size)
 			{
 				remainder = stack;
+				result = default;
 				return false;
 			}
 
 			ref ItemStack slot = ref slots[index];
 
-			if (slot.TryAdd(stack, out ItemStack result, out remainder) && (remainder.Count == 0 || allowPartial))
+			if (slot.TryAdd(stack, out result, out remainder) && (remainder.Count == 0 || allowPartial))
 			{
 				SetSlot(ref slot, index, result);
 				return true;
 			}
 
 			remainder = stack;
+			result = slot;
 			return false;
 		}
 
@@ -215,55 +230,69 @@ namespace Kryz.RPG.Items
 			return true;
 		}
 
-		public bool TryRemove(int index, out ItemStack removed)
+		public bool TryRemove(int index, out ItemStack result, out ItemStack removed)
 		{
-			return TryRemove(index, -1, out removed);
+			return TryRemove(index, -1, out result, out removed);
 		}
 
-		public bool TryRemove(int index, int count, out ItemStack removed)
+		public bool TryRemove(int index, int count, out ItemStack result, out ItemStack removed)
 		{
 			if (index < 0 || index >= size)
 			{
 				removed = default;
+				result = default;
 				return false;
 			}
 
 			ref ItemStack slot = ref slots[index];
 			if (count < 0) count = slot.Count;
 
-			if (slot.TryRemove(count, out ItemStack result, out removed))
+			if (slot.TryRemove(count, out result, out removed))
 			{
 				SetSlot(ref slot, index, result);
 				return true;
 			}
 
+			removed = default;
+			result = slot;
 			return false;
 		}
 
-		public bool TryMove(int toIndex, int fromIndex, IInventory fromInv, bool allowSwap = false)
+		public bool TryMove(int toIndex, int fromIndex, IInventory fromInv, out ItemStack remainder, int fromCount = -1, bool allowPartial = false, bool allowSwap = false)
 		{
 			if (toIndex < 0 || toIndex >= size || fromIndex < 0 || fromIndex >= fromInv.Size || (toIndex == fromIndex && this == fromInv))
 			{
+				remainder = default;
 				return false;
 			}
 
-			ItemStack fromSlot = fromInv[fromIndex];
-
-			if (fromSlot.Item == null)
+			if (!fromInv.CanRemove(fromIndex, fromCount, out ItemStack removeResult, out ItemStack removed))
 			{
+				remainder = default;
 				return false;
 			}
 
+			allowPartial |= removeResult.Count == 0;
 			ref ItemStack toSlot = ref slots[toIndex];
 
-			if (toSlot.TryAdd(fromSlot, out ItemStack result, out ItemStack remainder) && fromInv.TrySet(fromIndex, remainder))
+			if (CanAdd(toIndex, removed, out ItemStack addResult, out remainder, allowPartial))
 			{
-				SetSlot(ref toSlot, toIndex, result);
+				if (remainder.Count > 0 && removeResult.Count == 0 && fromInv.CanSet(fromIndex, remainder))
+				{
+					fromInv.TrySet(fromIndex, remainder);
+				}
+				else
+				{
+					fromInv.TrySet(fromIndex, removeResult);
+				}
+				SetSlot(ref toSlot, toIndex, addResult);
 				return true;
 			}
-			else if (allowSwap && CanSet(toIndex, fromSlot) && fromInv.TrySet(fromIndex, toSlot))
+			else if (removeResult.Count == 0 && allowSwap && fromInv.CanSet(fromIndex, addResult) && CanSet(toIndex, removed))
 			{
-				SetSlot(ref toSlot, toIndex, fromSlot);
+				fromInv.TrySet(fromIndex, toSlot);
+				SetSlot(ref toSlot, toIndex, removed);
+				remainder = default;
 				return true;
 			}
 

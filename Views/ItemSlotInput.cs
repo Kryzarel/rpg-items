@@ -71,13 +71,29 @@ namespace Kryz.RPG.Items.Views
 		{
 			if (dragManager.Value != null && pickUpAction != null && pickUpAction.action.WasPerformedThisFrame())
 			{
-				if (dragManager.Value.DraggedSlot != null)
+				IItemSlotView? draggedSlot = dragManager.Value.DraggedSlot;
+				bool wasEmpty = itemSlotView.ItemStack.Item == null;
+				bool isSameItem = itemSlotView.ItemStack.Item == draggedSlot?.ItemStack.Item;
+
+				if (draggedSlot != null)
 				{
-					OnDrop(itemSlotView, eventData);
+					if (draggedSlot == itemSlotView)
+					{
+						EndDrag();
+						return true;
+					}
+
+					TryMove(itemSlotView, allowPartial: true, out ItemStack remainder);
 					EndDrag();
-					return true;
+
+					if (remainder != default)
+					{
+						StartDrag(draggedSlot, remainder);
+						return true;
+					}
 				}
-				else if (ValidateSlot(itemSlotView, out _, out _))
+
+				if (!wasEmpty && !isSameItem && ValidateSlot(itemSlotView, out _, out _))
 				{
 					StartDrag(itemSlotView);
 					return true;
@@ -157,6 +173,13 @@ namespace Kryz.RPG.Items.Views
 
 		public bool OnDrop(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
+			return TryMove(itemSlotView, allowPartial: false, out _);
+		}
+
+		private bool TryMove(IItemSlotView itemSlotView, bool allowPartial, out ItemStack remainder)
+		{
+			remainder = default;
+
 			if (!ValidateSlot(itemSlotView, out int dropIndex, out IInventory? dropInventory))
 				return false;
 
@@ -166,17 +189,8 @@ namespace Kryz.RPG.Items.Views
 			if (!ValidateSlot(dragManager.Value.DraggedSlot, out int dragIndex, out IInventory? dragInventory))
 				return false;
 
-			ItemStack itemStack = dragManager.Value.DraggedSlotCopy?.ItemStack ?? default;
-
-			if (dragManager.Value.DraggedSlotCopy == null || ValidateSlot(dragManager.Value.DraggedSlotCopy, out _, out _))
-			{
-				return dropInventory.TryMove(dropIndex, dragIndex, dragInventory, allowSwap: true);
-			}
-			else if (dropInventory.CanAdd(dropIndex, itemStack, out _, allowPartial: false))
-			{
-				return dragInventory.TryRemove(dragIndex, itemStack.Count, out _) && dropInventory.TryAdd(dropIndex, itemStack, out _, allowPartial: false);
-			}
-			return false;
+			ItemStack draggedStack = dragManager.Value.DraggedItemStack;
+			return dropInventory.TryMove(dropIndex, dragIndex, dragInventory, out remainder, draggedStack.Count, allowPartial, allowSwap: true);
 		}
 
 		private static bool ValidateSlot(IItemSlotView itemSlotView, out int index, [MaybeNullWhen(returnValue: false)] out IInventory inventory)
