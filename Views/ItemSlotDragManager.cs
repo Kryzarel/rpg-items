@@ -8,40 +8,40 @@ namespace Kryz.RPG.Items.Views
 		[SerializeField]
 		private Canvas? canvas;
 		[SerializeField]
-		private BaseItemSlotView? dragSlot;
+		private BaseItemSlotView? dragSlotVisual;
 
 		private IInventory.OnSlotChangedDelegate? onSlotChangedAction;
 		private BaseItemSlotView? draggedSlot;
 
 		public IItemSlotView? DraggedSlot => draggedSlot;
-		public ItemStack DraggedItemStack => dragSlot != null ? dragSlot.ItemStack : default;
+		public ItemStack DraggedItemStack => dragSlotVisual != null ? dragSlotVisual.ItemStack : default;
 
 		private void OnValidate()
 		{
-			if (canvas == null) canvas = GetComponentInParent<Canvas>();
-			if (dragSlot == null) dragSlot = GetComponentInChildren<BaseItemSlotView>();
+			if (canvas == null) canvas = GetComponentInParent<Canvas>(includeInactive: true);
+			if (dragSlotVisual == null) dragSlotVisual = GetComponentInChildren<BaseItemSlotView>(includeInactive: true);
 		}
 
 		private void Awake()
 		{
 			onSlotChangedAction = OnSlotChanged;
 
-			if (dragSlot != null)
+			if (dragSlotVisual != null)
 			{
-				dragSlot.gameObject.SetActive(false);
-				dragSlot.Unbind();
+				dragSlotVisual.gameObject.SetActive(false);
+				dragSlotVisual.Unbind();
 			}
 		}
 
 		public void StartDrag(IItemSlotView slotView, ItemStack itemStack = default)
 		{
-			if (dragSlot != null && slotView is BaseItemSlotView baseView && baseView.Inventory != null)
+			if (dragSlotVisual != null && slotView is BaseItemSlotView baseView && baseView.Inventory != null)
 			{
 				Vector3 sourceScale = baseView.RectTransform.lossyScale;
-				Vector3 targetScale = dragSlot.RectTransform.parent.lossyScale;
+				Vector3 targetScale = dragSlotVisual.RectTransform.parent.lossyScale;
 
-				dragSlot.RectTransform.sizeDelta = baseView.RectTransform.sizeDelta;
-				dragSlot.RectTransform.localScale = new Vector3(
+				dragSlotVisual.RectTransform.sizeDelta = baseView.RectTransform.sizeDelta;
+				dragSlotVisual.RectTransform.localScale = new Vector3(
 					sourceScale.x / targetScale.x,
 					sourceScale.y / targetScale.y,
 					sourceScale.z / targetScale.z);
@@ -52,15 +52,15 @@ namespace Kryz.RPG.Items.Views
 				if (itemStack == default)
 				{
 					draggedSlot.Inventory.OnSlotChanged += onSlotChangedAction;
-					dragSlot.Bind(baseView.SlotIndex, baseView.Inventory);
+					dragSlotVisual.Bind(baseView.SlotIndex, baseView.Inventory);
 				}
 				else
 				{
-					dragSlot.SetItemStack(itemStack);
 					draggedSlot.SetItemStack(draggedSlot.ItemStack.Remove(itemStack.Count, out _));
+					dragSlotVisual.SetItemStack(itemStack);
 				}
 
-				dragSlot.gameObject.SetActive(true);
+				dragSlotVisual.gameObject.SetActive(true);
 			}
 		}
 
@@ -77,18 +77,18 @@ namespace Kryz.RPG.Items.Views
 				draggedSlot = null;
 			}
 
-			if (dragSlot != null)
+			if (dragSlotVisual != null)
 			{
-				dragSlot.gameObject.SetActive(false);
-				dragSlot.Unbind();
+				dragSlotVisual.gameObject.SetActive(false);
+				dragSlotVisual.Unbind();
 			}
 		}
 
 		private void LateUpdate()
 		{
-			if (dragSlot != null && dragSlot.gameObject.activeSelf)
+			if (dragSlotVisual != null && dragSlotVisual.gameObject.activeSelf)
 			{
-				SetScreenPosition(dragSlot.RectTransform, Mouse.current.position.value);
+				SetScreenPosition(dragSlotVisual.RectTransform, Mouse.current.position.value);
 			}
 		}
 
@@ -105,9 +105,9 @@ namespace Kryz.RPG.Items.Views
 
 		private void OnSlotChanged(int index, ItemStack previousStack, ItemStack newStack)
 		{
-			if (dragSlot != null && dragSlot.Inventory != null && dragSlot.SlotIndex == index)
+			if (dragSlotVisual != null && dragSlotVisual.Inventory != null && dragSlotVisual.SlotIndex == index)
 			{
-				dragSlot.SetItemStack(newStack);
+				dragSlotVisual.SetItemStack(newStack);
 			}
 		}
 	}
