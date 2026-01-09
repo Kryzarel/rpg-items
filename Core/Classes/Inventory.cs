@@ -274,10 +274,12 @@ namespace Kryz.RPG.Items
 
 			ref ItemStack toSlot = ref slots[toIndex];
 			bool isFullMove = removeResult.Count == 0;
+			bool allowPartial = isFullMove || toSlot.Item == removed.Item;
 
-			if (CanAdd(toIndex, removed, out ItemStack addResult, out remainder, allowPartial: isFullMove))
+			if (CanAdd(toIndex, removed, out ItemStack addResult, out remainder, allowPartial))
 			{
-				ItemStack fromResult = remainder.Count > 0 ? remainder : removeResult;
+				ItemStack cona = new(removed.Item!, removeResult.Count + remainder.Count);
+				ItemStack fromResult = remainder.Count > 0 ? isFullMove ? remainder : cona : removeResult;
 				fromInv.TrySet(fromIndex, fromResult);
 				SetSlot(ref toSlot, toIndex, addResult);
 				return true;
