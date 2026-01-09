@@ -69,35 +69,9 @@ namespace Kryz.RPG.Items.Views
 
 		public bool OnPointerClick(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
-			if (dragManager.Value != null && pickUpAction != null && pickUpAction.action.WasPerformedThisFrame())
+			if (HandleItemPickup(itemSlotView))
 			{
-				IItemSlotView? draggedSlot = dragManager.Value.DraggedSlot;
-				bool wasEmpty = itemSlotView.ItemStack.Item == null;
-				bool isSameItem = itemSlotView.ItemStack.Item == draggedSlot?.ItemStack.Item;
-
-				if (draggedSlot != null)
-				{
-					if (draggedSlot == itemSlotView)
-					{
-						EndDrag();
-						return true;
-					}
-
-					TryMove(itemSlotView, out ItemStack remainder);
-					EndDrag();
-
-					if (remainder != default)
-					{
-						StartDrag(draggedSlot, remainder);
-						return true;
-					}
-				}
-
-				if (!wasEmpty && !isSameItem && ValidateSlot(itemSlotView, out _, out _))
-				{
-					StartDrag(itemSlotView);
-					return true;
-				}
+				return true;
 			}
 
 			if (ValidateSlot(itemSlotView, out _, out _) && itemSlotView.ItemStack.Item != null)
@@ -109,10 +83,7 @@ namespace Kryz.RPG.Items.Views
 				}
 				else if (splitStackAction != null && splitStackAction.action.WasPerformedThisFrame())
 				{
-					if (StartSplitDrag(itemSlotView))
-					{
-						return true;
-					}
+					return StartSplitDrag(itemSlotView);
 				}
 			}
 			return false;
@@ -140,12 +111,42 @@ namespace Kryz.RPG.Items.Views
 			{
 				if (splitStackAction != null && splitStackAction.action.IsPressed())
 				{
-					if (StartSplitDrag(itemSlotView))
+					return StartSplitDrag(itemSlotView);
+				}
+
+				StartDrag(itemSlotView);
+				return true;
+			}
+			return false;
+		}
+
+		private bool HandleItemPickup(IItemSlotView itemSlotView)
+		{
+			if (dragManager.Value != null && pickUpAction != null && pickUpAction.action.WasPerformedThisFrame())
+			{
+				IItemSlotView? draggedSlot = dragManager.Value.DraggedSlot;
+				bool wasEmpty = itemSlotView.ItemStack.Item == null;
+				bool isSameItem = itemSlotView.ItemStack.Item == draggedSlot?.ItemStack.Item;
+
+				if (draggedSlot != null)
+				{
+					if (draggedSlot == itemSlotView)
 					{
+						EndDrag();
+						return true;
+					}
+
+					TryMove(itemSlotView, out ItemStack remainder);
+					EndDrag();
+
+					if (remainder != default)
+					{
+						StartDrag(draggedSlot, remainder);
 						return true;
 					}
 				}
-				else
+
+				if (!wasEmpty && !isSameItem && ValidateSlot(itemSlotView, out _, out _))
 				{
 					StartDrag(itemSlotView);
 					return true;
