@@ -601,6 +601,109 @@ namespace Kryz.RPG.Items.Tests
 		}
 
 		[Test]
+		public void Move_SameInventory()
+		{
+			Inventory inventory = new(new ItemStack[] { new(items[1]), new(items[1]), new(items[2]) });
+
+			Assert.AreEqual(0, inventory.FreeSlots);
+			Assert.AreEqual(3, inventory.OccupiedSlots);
+
+			// Move
+			Assert.IsTrue(inventory.TryMove(0, inventory, 1, allowSwap: false));
+			// Check Items
+			Assert.AreEqual(new ItemStack(items[1], 2), inventory[0]);
+			Assert.AreEqual(default(ItemStack), inventory[1]);
+			// Check Free/Occupied Slots
+			Assert.AreEqual(1, inventory.FreeSlots);
+			Assert.AreEqual(2, inventory.OccupiedSlots);
+
+			// Move
+			Assert.IsTrue(inventory.TryMove(1, inventory, 2, allowSwap: false));
+			// Check Items
+			Assert.AreEqual(new ItemStack(items[2]), inventory[1]);
+			Assert.AreEqual(default(ItemStack), inventory[2]);
+			// Check Free/Occupied Slots
+			Assert.AreEqual(1, inventory.FreeSlots);
+			Assert.AreEqual(2, inventory.OccupiedSlots);
+
+			// Move
+			Assert.IsFalse(inventory.TryMove(0, inventory, 1, allowSwap: false));
+			Assert.IsTrue(inventory.TryMove(0, inventory, 1, allowSwap: true));
+			// Check Items
+			Assert.AreEqual(new ItemStack(items[2]), inventory[0]);
+			Assert.AreEqual(new ItemStack(items[1], 2), inventory[1]);
+			Assert.AreEqual(default(ItemStack), inventory[2]);
+			// Check Free/Occupied Slots
+			Assert.AreEqual(1, inventory.FreeSlots);
+			Assert.AreEqual(2, inventory.OccupiedSlots);
+		}
+
+		[Test]
+		public void Move_DifferentInventories()
+		{
+			Inventory inventory1 = new(new ItemStack[] { new(items[1]), new(items[1]), new(items[2]) });
+			Inventory inventory2 = new(new ItemStack[] { new(items[1]), new(items[1], items[1].MaxStacks), new(items[2]) });
+
+			Assert.AreEqual(0, inventory1.FreeSlots);
+			Assert.AreEqual(3, inventory1.OccupiedSlots);
+
+			Assert.AreEqual(0, inventory2.FreeSlots);
+			Assert.AreEqual(3, inventory2.OccupiedSlots);
+
+			// Move
+			Assert.IsTrue(inventory1.TryMove(0, inventory2, 0, allowSwap: false));
+			// Check Items
+			Assert.AreEqual(new ItemStack(items[1], 2), inventory1[0]);
+			Assert.AreEqual(default(ItemStack), inventory2[0]);
+			// Check Free/Occupied Slots
+			// Target inventory
+			Assert.AreEqual(0, inventory1.FreeSlots);
+			Assert.AreEqual(3, inventory1.OccupiedSlots);
+			// Source Inventory
+			Assert.AreEqual(1, inventory2.FreeSlots);
+			Assert.AreEqual(2, inventory2.OccupiedSlots);
+
+			// Move
+			Assert.IsTrue(inventory1.TryMove(0, inventory2, 1, allowSwap: false));
+			// Check Items
+			Assert.AreEqual(new ItemStack(items[1], items[1].MaxStacks), inventory1[0]);
+			Assert.AreEqual(new ItemStack(items[1], 2), inventory2[1]);
+			// Check Free/Occupied Slots
+			// Target inventory
+			Assert.AreEqual(0, inventory1.FreeSlots);
+			Assert.AreEqual(3, inventory1.OccupiedSlots);
+			// Source Inventory
+			Assert.AreEqual(1, inventory2.FreeSlots);
+			Assert.AreEqual(2, inventory2.OccupiedSlots);
+
+			// Move
+			Assert.IsFalse(inventory1.TryMove(1, inventory2, 2, allowSwap: false));
+			// Check Items
+			Assert.AreEqual(new ItemStack(items[1]), inventory1[1]);
+			Assert.AreEqual(new ItemStack(items[2]), inventory1[2]);
+			// Check Free/Occupied Slots
+			// Target inventory
+			Assert.AreEqual(0, inventory1.FreeSlots);
+			Assert.AreEqual(3, inventory1.OccupiedSlots);
+			// Source Inventory
+			Assert.AreEqual(1, inventory2.FreeSlots);
+			Assert.AreEqual(2, inventory2.OccupiedSlots);
+
+			// Move
+			Assert.IsTrue(inventory1.TryMove(1, inventory2, 2, allowSwap: true));
+			// Check Items
+			Assert.AreEqual(new ItemStack(items[2]), inventory1[1]);
+			Assert.AreEqual(new ItemStack(items[1]), inventory2[2]);
+			// Check Free/Occupied Slots
+			// Target inventory
+			Assert.AreEqual(0, inventory1.FreeSlots);
+			Assert.AreEqual(3, inventory1.OccupiedSlots);
+			// Source Inventory
+			Assert.AreEqual(1, inventory2.FreeSlots);
+			Assert.AreEqual(2, inventory2.OccupiedSlots);
+		}
+
+		[Test]
 		public void CopyFrom_Array([ValueSource(inventorySizesSrc)] int size)
 		{
 			// Arrange

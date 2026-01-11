@@ -266,6 +266,11 @@ namespace Kryz.RPG.Items
 			return false;
 		}
 
+		public bool TryMove(int toIndex, IInventory fromInv, int fromIndex, bool allowSwap = false)
+		{
+			return IInventory.TryMove(this, toIndex, fromInv, fromIndex, allowSwap);
+		}
+
 		public void CopyFrom(ItemStack[] stacks) => CopyFrom(stacks.AsSpan());
 
 		public void CopyFrom(ReadOnlySpan<ItemStack> stacks)

@@ -101,7 +101,7 @@ namespace Kryz.RPG.Items.Views
 				}
 				else if (splitStackAction != null && splitStackAction.action.WasPerformedThisFrame())
 				{
-					return StartDrag(itemSlotView, itemSlotView.ItemStack.Count);
+					return StartDrag(itemSlotView, itemSlotView.ItemStack.Count / 2);
 				}
 			}
 			return false;
@@ -141,19 +141,22 @@ namespace Kryz.RPG.Items.Views
 
 		private bool HandleItemPickup(IItemSlotView itemSlotView)
 		{
-			if (dragManager.Value != null && pickUpAction != null && pickUpAction.action.WasPerformedThisFrame())
+			if (dragManager.Value == null || pickUpAction == null || !pickUpAction.action.WasPerformedThisFrame())
 			{
-				if (TryDrop(itemSlotView, out ItemStack remainder))
-				{
-					if (remainder == default)
-					{
-						EndDrag();
-					}
-					return true;
-				}
-				return StartDrag(itemSlotView, itemSlotView.ItemStack.Count);
+				return false;
 			}
-			return false;
+
+			if (TryDrop(itemSlotView))
+			{
+				IItemSlotView? dragSlot = dragManager.Value.DragSlot;
+				if (dragSlot != null && dragSlot.ItemStack == default)
+				{
+					EndDrag();
+				}
+				return true;
+			}
+
+			return StartDrag(itemSlotView, itemSlotView.ItemStack.Count);
 		}
 
 		public bool OnEndDrag(IItemSlotView itemSlotView, PointerEventData eventData)
@@ -169,13 +172,11 @@ namespace Kryz.RPG.Items.Views
 
 		public bool OnDrop(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
-			return TryDrop(itemSlotView, out _);
+			return TryDrop(itemSlotView);
 		}
 
-		private bool TryDrop(IItemSlotView itemSlotView, out ItemStack remainder)
+		private bool TryDrop(IItemSlotView itemSlotView)
 		{
-			remainder = default;
-
 			if (!ValidateSlot(itemSlotView, out int dropIndex, out IInventory? dropInventory))
 				return false;
 
@@ -185,24 +186,7 @@ namespace Kryz.RPG.Items.Views
 			if (!ValidateSlot(dragManager.Value.DragSlot, out int dragIndex, out IInventory? dragInventory))
 				return false;
 
-			if (!dragInventory.CanRemove(dragIndex, out _, out ItemStack dragStack))
-				return false;
-
-			if (dropInventory.CanAdd(dropIndex, dragStack, out _, out remainder, allowPartial: true) && dragInventory.CanSwap(dragIndex, remainder, out _))
-			{
-				dropInventory.TryAdd(dropIndex, dragStack, out _, out remainder, allowPartial: true);
-				dragInventory.TrySwap(dragIndex, remainder, out ItemStack removed);
-				if (remainder != default) remainder = removed;
-				return true;
-			}
-			else if (dropInventory.CanSwap(dropIndex, dragStack, out ItemStack removed) && dragInventory.CanSwap(dragIndex, removed, out remainder))
-			{
-				dropInventory.TrySwap(dropIndex, dragStack, out removed);
-				dragInventory.TrySwap(dragIndex, removed, out remainder);
-				return true;
-			}
-
-			return false;
+			return dropInventory.TryMove(dropIndex, dragInventory, dragIndex, allowSwap: true);
 		}
 
 		private static void ReturnCursorItem(IItemSlotView dragSlot, IItemSlotView sourceSlot)
