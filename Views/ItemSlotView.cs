@@ -76,14 +76,6 @@ namespace Kryz.RPG.Items.Views
 			RefreshVisuals();
 		}
 
-		public override void RefreshBinding()
-		{
-			if (inventory != null && slotIndex >= 0 && slotIndex < inventory.Size)
-			{
-				SetItemStack(inventory[slotIndex]);
-			}
-		}
-
 		public override void SetItemStack(ItemStack stack)
 		{
 			if (itemStack != stack)

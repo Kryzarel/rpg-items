@@ -45,9 +45,15 @@ namespace Kryz.RPG.Items
 		public Inventory(ReadOnlySpan<ItemStack> items, ArrayPool<ItemStack>? pool = null) : this(items.Length, pool) => CopyFrom(items);
 		public Inventory(IReadOnlyList<ItemStack> items, ArrayPool<ItemStack>? pool = null) : this(items.Count, pool) => CopyFrom(items);
 
-		public bool CanSet(int index, in ItemStack stack)
+		public bool CanSwap(int index, in ItemStack stack, out ItemStack removed)
 		{
-			return index >= 0 && index < size && (stack.Item == null || stack.Count <= stack.Item.MaxStacks);
+			if (index >= 0 && index < size && (stack.Item == null || stack.Count <= stack.Item.MaxStacks))
+			{
+				removed = slots[index];
+				return true;
+			}
+			removed = default;
+			return false;
 		}
 
 		public bool CanAdd(in ItemStack stack, out ItemStack remainder, bool allowPartial = false)
@@ -135,19 +141,21 @@ namespace Kryz.RPG.Items
 			return slot.TryRemove(count, out result, out removed);
 		}
 
-		public bool TrySet(int index, in ItemStack stack, bool forceSet = false)
+		public bool TrySwap(int index, in ItemStack stack, out ItemStack removed, bool forceSwap = false)
 		{
-			if (index >= 0 && index < size && (forceSet || CanSet(index, stack)))
+			if (index >= 0 && index < size && (forceSwap || CanSwap(index, stack, out _)))
 			{
 				ref ItemStack slot = ref slots[index];
+				removed = slot;
 
 				if (slot != stack)
 				{
 					SetSlot(ref slot, index, stack);
-					return true;
 				}
+				return true;
 			}
 
+			removed = default;
 			return false;
 		}
 
@@ -255,43 +263,6 @@ namespace Kryz.RPG.Items
 
 			removed = default;
 			result = slot;
-			return false;
-		}
-
-		public bool TryMove(int toIndex, int fromIndex, IInventory fromInv, out ItemStack remainder, int fromCount = -1, bool allowSwap = false)
-		{
-			if (toIndex < 0 || toIndex >= size || fromIndex < 0 || fromIndex >= fromInv.Size || (toIndex == fromIndex && this == fromInv))
-			{
-				remainder = default;
-				return false;
-			}
-
-			if (!fromInv.CanRemove(fromIndex, fromCount, out ItemStack removeResult, out ItemStack removed))
-			{
-				remainder = default;
-				return false;
-			}
-
-			ref ItemStack toSlot = ref slots[toIndex];
-			bool isFullMove = removeResult.Count == 0;
-			bool allowPartial = isFullMove || toSlot.Item == removed.Item;
-
-			if (CanAdd(toIndex, removed, out ItemStack addResult, out remainder, allowPartial))
-			{
-				ItemStack cona = new(removed.Item!, removeResult.Count + remainder.Count);
-				ItemStack fromResult = remainder.Count > 0 ? isFullMove ? remainder : cona : removeResult;
-				fromInv.TrySet(fromIndex, fromResult);
-				SetSlot(ref toSlot, toIndex, addResult);
-				return true;
-			}
-			else if (isFullMove && allowSwap && fromInv.CanSet(fromIndex, toSlot) && CanSet(toIndex, removed))
-			{
-				fromInv.TrySet(fromIndex, toSlot);
-				SetSlot(ref toSlot, toIndex, removed);
-				remainder = default;
-				return true;
-			}
-
 			return false;
 		}
 
