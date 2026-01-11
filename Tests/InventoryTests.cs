@@ -125,7 +125,7 @@ namespace Kryz.RPG.Items.Tests
 		}
 
 		[Test]
-		public void Set([ValueSource(itemsSrc)] IItem item, [ValueSource(stackSizesSrc)] int stackSize)
+		public void Swap([ValueSource(itemsSrc)] IItem item, [ValueSource(stackSizesSrc)] int stackSize)
 		{
 			Inventory inventory = new(1);
 			ItemStack stack = new(item, stackSize);
@@ -178,9 +178,9 @@ namespace Kryz.RPG.Items.Tests
 
 				if (inventory[0] == stack)
 				{
-					Assert.IsFalse(inventory.TrySwap(0, stack, out _, forceSwap: true)); // Fails because the slot already equals the item being set
-					Assert.IsTrue(inventory.TrySwap(0, default, out _, forceSwap: true)); // Succeeds because we're setting it back to the default item
-					Assert.IsTrue(inventory.TrySwap(0, stack, out _, forceSwap: true)); // Succeeds because we're setting it to a different item again
+					Assert.IsTrue(inventory.TrySwap(0, stack, out _, forceSwap: true));
+					Assert.IsTrue(inventory.TrySwap(0, default, out _, forceSwap: true));
+					Assert.IsTrue(inventory.TrySwap(0, stack, out _, forceSwap: true));
 				}
 				else
 				{
@@ -198,13 +198,13 @@ namespace Kryz.RPG.Items.Tests
 				Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
 				Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
 
-				Assert.IsFalse(inventory.TrySwap(0, stack, out _, forceSwap: false)); // Fails because the slot already equals the default item
+				Assert.IsTrue(inventory.TrySwap(0, stack, out _, forceSwap: false));
 				Assert.AreEqual(1, inventory.FreeSlots, 0);
 				Assert.AreEqual(0, inventory.OccupiedSlots, 0);
 				Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
 				Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
 
-				Assert.IsFalse(inventory.TrySwap(0, stack, out _, forceSwap: true)); // Fails because the slot already equals the default item
+				Assert.IsTrue(inventory.TrySwap(0, stack, out _, forceSwap: true));
 				Assert.AreEqual(1, inventory.FreeSlots, 0);
 				Assert.AreEqual(0, inventory.OccupiedSlots, 0);
 				Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
