@@ -146,12 +146,24 @@ namespace Kryz.RPG.Items.Views
 				return false;
 			}
 
+			IItemSlotView? dragSlot = dragManager.Value.DragSlot;
+			ItemStack dragBefore = dragSlot?.ItemStack ?? default;
+			ItemStack dropBefore = itemSlotView.ItemStack;
+
 			if (TryDrop(itemSlotView))
 			{
-				ItemStack dragStack = dragManager.Value.DragSlot?.ItemStack ?? default;
-				bool added = ValidateSlot(itemSlotView, out int index, out IInventory? inventory) && inventory.CanAdd(index, dragStack, out _, out _, allowPartial: true);
+				ItemStack dragAfter = dragSlot?.ItemStack ?? default;
+				ItemStack dropAfter = itemSlotView.ItemStack;
+				bool notEmpty = dragBefore != default && dragAfter != default;
+				bool swapped = notEmpty && dragBefore == dropAfter && dropBefore == dragAfter;
+
 				EndDrag();
-				return added || dragStack == default || StartDrag(itemSlotView, itemSlotView.ItemStack.Count);
+
+				if (swapped)
+				{
+					return StartDrag(itemSlotView, itemSlotView.ItemStack.Count);
+				}
+				return true;
 			}
 
 			return StartDrag(itemSlotView, itemSlotView.ItemStack.Count);
