@@ -125,38 +125,9 @@ namespace Kryz.RPG.Items
 		/// <returns>True if the slot had an item stack with enough items and it was removed. False otherwise.</returns>
 		bool TryRemove(int index, int count, out ItemStack result, out ItemStack removed);
 
-		bool TryMove(int toIndex, IInventory fromInv, int fromIndex, bool allowSwap = false)
-		{
-			return TryMove(this, toIndex, fromInv, fromIndex, allowSwap);
-		}
+		bool CanMove(int toIndex, IInventory fromInv, int fromIndex, bool allowSwap = false) => CanMove(this, toIndex, fromInv, fromIndex, allowSwap);
 
-		static bool TryMove(IInventory toInv, int toIndex, IInventory fromInv, int fromIndex, bool allowSwap = false)
-		{
-			if (toIndex < 0 || toIndex >= toInv.Size || fromIndex < 0 || fromIndex >= fromInv.Size || (toIndex == fromIndex && toInv == fromInv))
-			{
-				return false;
-			}
-
-			if (!fromInv.CanRemove(fromIndex, out _, out ItemStack fromSlot))
-			{
-				return false;
-			}
-
-			if (toInv.CanAdd(toIndex, fromSlot, out _, out ItemStack remainder, allowPartial: true) && fromInv.CanSwap(fromIndex, remainder, out _))
-			{
-				toInv.TryAdd(toIndex, fromSlot, out _, out remainder, allowPartial: true);
-				fromInv.TrySwap(fromIndex, remainder, out _);
-				return true;
-			}
-			else if (allowSwap && toInv.CanSwap(toIndex, fromSlot, out ItemStack toSlot) && fromInv.CanSwap(fromIndex, toSlot, out _))
-			{
-				toInv.TrySwap(toIndex, fromSlot, out toSlot);
-				fromInv.TrySwap(fromIndex, toSlot, out _);
-				return true;
-			}
-
-			return false;
-		}
+		bool TryMove(int toIndex, IInventory fromInv, int fromIndex, bool allowSwap = false) => TryMove(this, toIndex, fromInv, fromIndex, allowSwap);
 
 		/// <summary>
 		/// <para>Overwrite all slots by copying from a <see cref="ReadOnlySpan{T}"/> of <see cref="ItemStack"/>.</para>
@@ -176,5 +147,47 @@ namespace Kryz.RPG.Items
 		void Sort<TComparer>(TComparer comparer) where TComparer : IComparer<ItemStack>;
 
 		void Clear();
+
+		static bool CanMove(IInventory toInv, int toIndex, IInventory fromInv, int fromIndex, bool allowSwap = false)
+		{
+			if (toIndex == fromIndex && toInv == fromInv || !fromInv.CanRemove(fromIndex, out _, out ItemStack fromSlot))
+			{
+				return false;
+			}
+
+			if (toInv.CanAdd(toIndex, fromSlot, out _, out ItemStack remainder, allowPartial: true) && fromInv.CanSwap(fromIndex, remainder, out _))
+			{
+				return true;
+			}
+			else if (allowSwap && toInv.CanSwap(toIndex, fromSlot, out ItemStack toSlot) && fromInv.CanSwap(fromIndex, toSlot, out _))
+			{
+				return true;
+			}
+
+			return false;
+		}
+
+		static bool TryMove(IInventory toInv, int toIndex, IInventory fromInv, int fromIndex, bool allowSwap = false)
+		{
+			if (toIndex == fromIndex && toInv == fromInv || !fromInv.CanRemove(fromIndex, out _, out ItemStack fromSlot))
+			{
+				return false;
+			}
+
+			if (toInv.CanAdd(toIndex, fromSlot, out _, out ItemStack remainder, allowPartial: true) && fromInv.CanSwap(fromIndex, remainder, out _))
+			{
+				toInv.TryAdd(toIndex, fromSlot, out _, out remainder, allowPartial: true);
+				fromInv.TrySwap(fromIndex, remainder, out _);
+				return true;
+			}
+			else if (allowSwap && toInv.CanSwap(toIndex, fromSlot, out ItemStack toSlot) && fromInv.CanSwap(fromIndex, toSlot, out _))
+			{
+				toInv.TrySwap(toIndex, fromSlot, out toSlot);
+				fromInv.TrySwap(fromIndex, toSlot, out _);
+				return true;
+			}
+
+			return false;
+		}
 	}
 }

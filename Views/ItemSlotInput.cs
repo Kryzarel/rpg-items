@@ -148,12 +148,10 @@ namespace Kryz.RPG.Items.Views
 
 			if (TryDrop(itemSlotView))
 			{
-				IItemSlotView? dragSlot = dragManager.Value.DragSlot;
-				if (dragSlot != null && dragSlot.ItemStack == default)
-				{
-					EndDrag();
-				}
-				return true;
+				ItemStack dragStack = dragManager.Value.DragSlot?.ItemStack ?? default;
+				bool added = ValidateSlot(itemSlotView, out int index, out IInventory? inventory) && inventory.CanAdd(index, dragStack, out _, out _, allowPartial: true);
+				EndDrag();
+				return added || dragStack == default || StartDrag(itemSlotView, itemSlotView.ItemStack.Count);
 			}
 
 			return StartDrag(itemSlotView, itemSlotView.ItemStack.Count);
