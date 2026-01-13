@@ -45,9 +45,14 @@ namespace Kryz.RPG.Items
 		public Inventory(ReadOnlySpan<ItemStack> items, ArrayPool<ItemStack>? pool = null) : this(items.Length, pool) => CopyFrom(items);
 		public Inventory(IReadOnlyList<ItemStack> items, ArrayPool<ItemStack>? pool = null) : this(items.Count, pool) => CopyFrom(items);
 
+		public int GetMaxStacks(IItem? item)
+		{
+			return item == null ? 0 : item is IStackable stackable ? stackable.MaxStacks : 1;
+		}
+
 		public bool CanSwap(int index, in ItemStack stack, out ItemStack removed)
 		{
-			if (index >= 0 && index < size && (stack.Item == null || stack.Count <= stack.Item.MaxStacks))
+			if (index >= 0 && index < size && (stack.Item == null || stack.Count <= GetMaxStacks(stack.Item)))
 			{
 				removed = slots[index];
 				return true;
@@ -65,11 +70,13 @@ namespace Kryz.RPG.Items
 				return false;
 			}
 
+			int maxCount = GetMaxStacks(stack.Item);
+
 			for (int i = 0; i < size && remainder.Count > 0; i++)
 			{
 				// Call ItemStack.TryAdd() but don't assign the result to anything.
 				// This way we check what WOULD happen without actually changing the inventory.
-				slots[i].TryAdd(remainder, out _, out remainder);
+				slots[i].TryAdd(remainder, out _, out remainder, maxCount);
 			}
 
 			if (remainder.Count < stack.Count && (remainder.Count == 0 || allowPartial))
@@ -91,8 +98,9 @@ namespace Kryz.RPG.Items
 			}
 
 			ItemStack slot = slots[index];
+			int maxCount = GetMaxStacks(stack.Item);
 
-			if (slot.TryAdd(stack, out result, out remainder) && (remainder.Count == 0 || allowPartial))
+			if (slot.TryAdd(stack, out result, out remainder, maxCount) && (remainder.Count == 0 || allowPartial))
 			{
 				return true;
 			}
@@ -168,7 +176,7 @@ namespace Kryz.RPG.Items
 				return false;
 			}
 
-			int maxCount = stack.Item.MaxStacks;
+			int maxCount = GetMaxStacks(stack.Item);
 
 			// First, try adding to slots that already have the same item
 			for (int i = 0; i < size && remainder.Count > 0; i++)
@@ -205,8 +213,9 @@ namespace Kryz.RPG.Items
 			}
 
 			ref ItemStack slot = ref slots[index];
+			int maxCount = GetMaxStacks(stack.Item);
 
-			if (slot.TryAdd(stack, out result, out remainder) && (remainder.Count == 0 || allowPartial))
+			if (slot.TryAdd(stack, out result, out remainder, maxCount) && (remainder.Count == 0 || allowPartial))
 			{
 				SetSlot(ref slot, index, result);
 				return true;

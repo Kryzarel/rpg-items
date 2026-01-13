@@ -8,7 +8,7 @@ namespace Kryz.RPG.Items.Tests
 {
 	public class InventoryTests
 	{
-		private class TestItem : IItem
+		private class TestItem : IItem, IStackable
 		{
 			private readonly string name;
 
@@ -129,6 +129,7 @@ namespace Kryz.RPG.Items.Tests
 		{
 			Inventory inventory = new(1);
 			ItemStack stack = new(item, stackSize);
+			int maxStacks = GetMaxStacks(item);
 
 			Assert.IsFalse(inventory.CanSwap(-1, stack, out _));
 			Assert.IsFalse(inventory.TrySwap(-1, stack, out _, forceSwap: false));
@@ -145,7 +146,7 @@ namespace Kryz.RPG.Items.Tests
 
 			if (stack.Item != default)
 			{
-				if (stack.Count <= stack.Item.MaxStacks)
+				if (stack.Count <= maxStacks)
 				{
 					Assert.IsTrue(inventory.CanSwap(0, stack, out _));
 				}
@@ -159,7 +160,7 @@ namespace Kryz.RPG.Items.Tests
 				Assert.AreEqual(inventory.Count(s => s == default), inventory.FreeSlots);
 				Assert.AreEqual(inventory.Count(s => s != default), inventory.OccupiedSlots);
 
-				if (stack.Count <= stack.Item.MaxStacks)
+				if (stack.Count <= maxStacks)
 				{
 					Assert.IsTrue(inventory.TrySwap(0, stack, out _, forceSwap: false));
 					Assert.AreEqual(0, inventory.FreeSlots, 0);
@@ -231,7 +232,8 @@ namespace Kryz.RPG.Items.Tests
 			else
 			{
 				int freeSlots = inventory.FreeSlots;
-				int requiredSlots = (int)Math.Ceiling(stack.Count / (float)stack.Item.MaxStacks);
+				int maxStacks = GetMaxStacks(stack.Item);
+				int requiredSlots = (int)Math.Ceiling(stack.Count / (float)maxStacks);
 				bool canAdd = requiredSlots <= freeSlots;
 
 				Assert.AreEqual(canAdd, inventory.CanAdd(stack, out _, allowPartial: false));
@@ -280,7 +282,8 @@ namespace Kryz.RPG.Items.Tests
 			else
 			{
 				int freeSlots = inventory.FreeSlots;
-				int requiredSlots = (int)Math.Ceiling(stack.Count / (float)stack.Item.MaxStacks);
+				int maxStacks = GetMaxStacks(stack.Item);
+				int requiredSlots = (int)Math.Ceiling(stack.Count / (float)maxStacks);
 
 				Assert.IsTrue(inventory.CanAdd(stack, out _, allowPartial: true));
 				Assert.IsTrue(inventory.TryAdd(stack, out ItemStack remainder, allowPartial: true));
@@ -307,7 +310,7 @@ namespace Kryz.RPG.Items.Tests
 			Inventory inventory = new(2);
 			ItemStack stack1 = new(items[1], stackSize1);
 			ItemStack stack2 = new(items[1], stackSize2);
-			int maxStacks = stack2.Item != null ? stack2.Item.MaxStacks : 0;
+			int maxStacks = GetMaxStacks(stack2.Item);
 
 			Assert.IsTrue(inventory.TryAdd(stack1, out ItemStack remainder1, allowPartial: true));
 			Assert.AreEqual(default(ItemStack), remainder1); // The inventory should always have space to add the entire first item stack
@@ -341,7 +344,9 @@ namespace Kryz.RPG.Items.Tests
 
 			Assert.IsTrue(inventory[0].Item == items[1]);
 
-			if (stack1.Count + stack2.Count > stack1.Item!.MaxStacks)
+			maxStacks = GetMaxStacks(stack1.Item);
+
+			if (stack1.Count + stack2.Count > maxStacks)
 			{
 				Assert.IsTrue(inventory[1].Item == items[1]);
 			}
@@ -357,7 +362,7 @@ namespace Kryz.RPG.Items.Tests
 			Inventory inventory = new(2);
 			ItemStack stack1 = new(items[1], stackSize1);
 			ItemStack stack2 = new(items[2], stackSize2);
-			int maxStacks = stack2.Item != null ? stack2.Item.MaxStacks : 0;
+			int maxStacks = GetMaxStacks(stack2.Item);
 
 			Assert.IsTrue(inventory.TryAdd(stack1, out ItemStack remainder1, allowPartial: true));
 			Assert.AreEqual(default(ItemStack), remainder1); // The inventory should always have space to add the entire first item stack
@@ -390,7 +395,9 @@ namespace Kryz.RPG.Items.Tests
 
 			Assert.IsTrue(inventory[0].Item == items[1]);
 
-			if (stack1.Count > stack1.Item!.MaxStacks)
+			maxStacks = GetMaxStacks(stack1.Item);
+
+			if (stack1.Count > maxStacks)
 			{
 				Assert.IsTrue(inventory[1].Item == items[1]);
 			}
@@ -428,7 +435,7 @@ namespace Kryz.RPG.Items.Tests
 				}
 				else if (slot.Item == null || slot.Item == stack.Item)
 				{
-					int maxStacks = stack.Item.MaxStacks;
+					int maxStacks = GetMaxStacks(stack.Item);
 					bool canAddAtLeastOne = slot.Count < maxStacks;
 					bool canAddFullStack = slot.Count + stack.Count <= maxStacks;
 
@@ -463,7 +470,8 @@ namespace Kryz.RPG.Items.Tests
 			ItemStack stack2 = new(item2, stackSize2);
 
 			inventory.TryAdd(stack1, out _);
-			int requiredSlots = stack1.Item != null ? (int)Math.Ceiling(stack1.Count / (float)stack1.Item.MaxStacks) : 0;
+			int maxStacks = GetMaxStacks(stack1.Item);
+			int requiredSlots = stack1.Item == null ? 0 : (int)Math.Ceiling(stack1.Count / (float)maxStacks);
 
 			if (inventory.Size >= requiredSlots && stack1.Item != null && stack1.Item == stack2.Item && stack1.Count >= stack2.Count)
 			{
@@ -481,7 +489,9 @@ namespace Kryz.RPG.Items.Tests
 			Inventory inventory = new(size);
 			ItemStack stack = new(item, stackSize);
 			inventory.TryAdd(stack, out ItemStack remainder, allowPartial: true);
-			int requiredSlots = stack.Item != null ? (int)Math.Ceiling(stack.Count / (float)stack.Item.MaxStacks) : 0;
+
+			int maxStacks = GetMaxStacks(stack.Item);
+			int requiredSlots = stack.Item == null ? 0 : (int)Math.Ceiling(stack.Count / (float)maxStacks);
 
 			if (inventory.Size == 0 || stack.Count == 0 || stack.Item == null)
 			{
@@ -642,7 +652,7 @@ namespace Kryz.RPG.Items.Tests
 		public void Move_DifferentInventories()
 		{
 			Inventory inventory1 = new(new ItemStack[] { new(items[1]), new(items[1]), new(items[2]) });
-			Inventory inventory2 = new(new ItemStack[] { new(items[1]), new(items[1], items[1].MaxStacks), new(items[2]) });
+			Inventory inventory2 = new(new ItemStack[] { new(items[1]), new(items[1], GetMaxStacks(items[1])), new(items[2]) });
 
 			Assert.AreEqual(0, inventory1.FreeSlots);
 			Assert.AreEqual(3, inventory1.OccupiedSlots);
@@ -666,7 +676,7 @@ namespace Kryz.RPG.Items.Tests
 			// Move
 			Assert.IsTrue(inventory1.TryMove(0, inventory2, 1, allowSwap: false));
 			// Check Items
-			Assert.AreEqual(new ItemStack(items[1], items[1].MaxStacks), inventory1[0]);
+			Assert.AreEqual(new ItemStack(items[1], GetMaxStacks(items[1])), inventory1[0]);
 			Assert.AreEqual(new ItemStack(items[1], 2), inventory2[1]);
 			// Check Free/Occupied Slots
 			// Target inventory
@@ -798,6 +808,8 @@ namespace Kryz.RPG.Items.Tests
 			Assert.AreEqual(Math.Max(size, itemStacks.Length), inventory.FreeSlots, 0);
 			Assert.AreEqual(0, inventory.OccupiedSlots, 0);
 		}
+
+		private static int GetMaxStacks(IItem? item) => item switch { null => 0, IStackable s => s.MaxStacks, _ => 1 };
 
 		private static bool IsSorted<T, TComparer>(IReadOnlyList<T> data, TComparer comparer) where TComparer : IComparer<T> => IsSorted(data, 0, data.Count, comparer);
 		private static bool IsSorted<T, TComparer>(IReadOnlyList<T> data, int index, int length, TComparer comparer) where TComparer : IComparer<T>

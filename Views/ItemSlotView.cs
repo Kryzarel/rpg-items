@@ -113,7 +113,7 @@ namespace Kryz.RPG.Items.Views
 				}
 				else
 				{
-					itemImage.sprite = itemStack.Item.Icon;
+					itemImage.sprite = (itemStack.Item as IItemIcon)?.Icon!;
 					itemImage.color = isDragging ? draggingColor : nonEmptyColor;
 				}
 			}

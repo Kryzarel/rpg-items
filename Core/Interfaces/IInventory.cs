@@ -16,6 +16,13 @@ namespace Kryz.RPG.Items
 		int OccupiedSlots { get; }
 
 		/// <summary>
+		/// Get the maximum stack size of a particular item.
+		/// </summary>
+		/// <param name="item">The item to check.</param>
+		/// <returns>The maximum stack size for the <paramref name="item"/>.</returns>
+		int GetMaxStacks(IItem? item);
+
+		/// <summary>
 		/// Check if an item slot can be swapped with the specified <see cref="ItemStack"/>.
 		/// </summary>
 		/// <param name="index">The slot index to set.</param>
