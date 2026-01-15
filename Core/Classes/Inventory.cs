@@ -45,10 +45,7 @@ namespace Kryz.RPG.Items
 		public Inventory(ReadOnlySpan<ItemStack> items, ArrayPool<ItemStack>? pool = null) : this(items.Length, pool) => CopyFrom(items);
 		public Inventory(IReadOnlyList<ItemStack> items, ArrayPool<ItemStack>? pool = null) : this(items.Count, pool) => CopyFrom(items);
 
-		public int GetMaxStacks(IItem? item)
-		{
-			return item == null ? 0 : item is IStackable stackable ? stackable.MaxStacks : 1;
-		}
+		public int GetMaxStacks(IItem item) => item.MaxStacks;
 
 		public bool CanSwap(int index, in ItemStack stack, out ItemStack removed)
 		{
@@ -98,11 +95,15 @@ namespace Kryz.RPG.Items
 			}
 
 			ItemStack slot = slots[index];
-			int maxCount = GetMaxStacks(stack.Item);
 
-			if (slot.TryAdd(stack, out result, out remainder, maxCount) && (remainder.Count == 0 || allowPartial))
+			if (stack.Item != null)
 			{
-				return true;
+				int maxCount = GetMaxStacks(stack.Item);
+
+				if (slot.TryAdd(stack, out result, out remainder, maxCount) && (remainder.Count == 0 || allowPartial))
+				{
+					return true;
+				}
 			}
 
 			remainder = stack;
@@ -213,12 +214,16 @@ namespace Kryz.RPG.Items
 			}
 
 			ref ItemStack slot = ref slots[index];
-			int maxCount = GetMaxStacks(stack.Item);
 
-			if (slot.TryAdd(stack, out result, out remainder, maxCount) && (remainder.Count == 0 || allowPartial))
+			if (stack.Item != null)
 			{
-				SetSlot(ref slot, index, result);
-				return true;
+				int maxCount = GetMaxStacks(stack.Item);
+
+				if (slot.TryAdd(stack, out result, out remainder, maxCount) && (remainder.Count == 0 || allowPartial))
+				{
+					SetSlot(ref slot, index, result);
+					return true;
+				}
 			}
 
 			remainder = stack;

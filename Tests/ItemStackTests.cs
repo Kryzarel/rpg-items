@@ -6,13 +6,13 @@ namespace Kryz.RPG.Items.Tests
 {
 	public class ItemStackTests
 	{
-		private class TestItem : IItem, IStackable
+		private class TestItem : IItem
 		{
 			private readonly string name;
 
 			public IItemDefinition Definition => null!;
 			public string Name => name;
-			public string Description => "An item just for testing";
+			public Sprite Icon => null!;
 			public int MaxStacks => maxStacks;
 
 			public int CompareTo(IItem other) => Name.CompareTo(other.Name);
@@ -50,7 +50,7 @@ namespace Kryz.RPG.Items.Tests
 			ItemStack stack1 = new(item1, stackSize1);
 			ItemStack stack2 = new(item2, stackSize2);
 
-			int maxCount = item2 == null ? 0 : item2 is IStackable stackable ? stackable.MaxStacks : 1;
+			int maxCount = item2 == null ? 0 : item2.MaxStacks;
 
 			bool success = stack1.TryAdd(stack2, out ItemStack result, out ItemStack remainder);
 

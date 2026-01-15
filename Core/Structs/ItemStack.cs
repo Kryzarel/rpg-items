@@ -63,10 +63,7 @@ namespace Kryz.RPG.Items
 		{
 			if (stack.Item != null && (Item == null || stack.Item == Item))
 			{
-				if (maxCount <= 0)
-				{
-					maxCount = stack.Item is IStackable stackable ? stackable.MaxStacks : 1;
-				}
+				if (maxCount <= 0) maxCount = stack.Item.MaxStacks;
 
 				if (Count < maxCount)
 				{

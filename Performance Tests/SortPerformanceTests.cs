@@ -10,13 +10,14 @@ using UnityEngine.Assertions;
 
 public class SortPerformanceTests : MonoBehaviour
 {
-	private class TestItem : IItem, IStackable//, IComparable<TestItem>
+	private class TestItem : IItem//, IComparable<TestItem>
 	{
 		private readonly int index;
 		private readonly string name;
 
 		public IItemDefinition Definition => null!;
 		public string Name => name;
+		public Sprite Icon => null!;
 		public int MaxStacks => 20;
 
 		public int CompareTo(IItem other) => name.CompareTo(other.Name);
