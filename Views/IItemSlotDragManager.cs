@@ -2,10 +2,10 @@ namespace Kryz.RPG.Items.Views
 {
 	public interface IItemSlotDragManager
 	{
-		IItemSlotView? DragSlot { get; }
+		IItemSlotView? CursorSlot { get; }
 		IItemSlotView? SourceSlot { get; }
 
-		void StartDrag(IItemSlotView slotView, ItemStack itemStack);
-		void StopDrag();
+		bool StartDrag(IItemSlotView slotView, int count);
+		bool StopDrag();
 	}
 }
