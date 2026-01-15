@@ -5,8 +5,8 @@ namespace Kryz.RPG.Items
 {
 	public interface IItem : IComparable<IItem>
 	{
-		string Name { get; }
 		Sprite Icon { get; }
+		string Name { get; }
 		int MaxStacks { get; }
 		IItemDefinition Definition { get; }
 	}
