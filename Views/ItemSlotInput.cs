@@ -68,12 +68,7 @@ namespace Kryz.RPG.Items.Views
 
 		private void EndDrag()
 		{
-			if (dragManager.Value == null)
-			{
-				return;
-			}
-
-			dragManager.Value.StopDrag();
+			dragManager.Value?.StopDrag();
 
 			if (pickUpAction != null) pickUpAction.action.Enable();
 			if (cancelPickUpAction != null) cancelPickUpAction.action.Disable();
@@ -156,7 +151,7 @@ namespace Kryz.RPG.Items.Views
 
 				if (swapped)
 				{
-					return StartDrag(itemSlotView, itemSlotView.ItemStack.Count);
+					StartDrag(itemSlotView, itemSlotView.ItemStack.Count);
 				}
 				return true;
 			}
@@ -178,6 +173,16 @@ namespace Kryz.RPG.Items.Views
 		public bool OnDrop(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
 			return TryDrop(itemSlotView);
+		}
+
+		public bool OnSelect(IItemSlotView itemSlotView, BaseEventData eventData)
+		{
+			return false;
+		}
+
+		public bool OnDeselect(IItemSlotView itemSlotView, BaseEventData eventData)
+		{
+			return false;
 		}
 
 		private bool TryDrop(IItemSlotView itemSlotView)

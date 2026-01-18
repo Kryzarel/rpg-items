@@ -6,7 +6,7 @@ using UnityEngine.UI;
 namespace Kryz.RPG.Items.Views
 {
 	[ExecuteAlways]
-	public class ItemSlotView : BaseItemSlotView, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IBeginDragHandler, IEndDragHandler, IDragHandler, IDropHandler
+	public class ItemSlotView : BaseItemSlotView, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IBeginDragHandler, IEndDragHandler, IDragHandler, IDropHandler, ISelectHandler, IDeselectHandler
 	{
 		[Header("References")]
 		[SerializeField] Image? raycastImage;
@@ -157,5 +157,7 @@ namespace Kryz.RPG.Items.Views
 		public void OnEndDrag(PointerEventData eventData) => input?.OnEndDrag(this, eventData);
 		public void OnDrag(PointerEventData eventData) => input?.OnDrag(this, eventData);
 		public void OnDrop(PointerEventData eventData) => input?.OnDrop(this, eventData);
+		public void OnSelect(BaseEventData eventData) => input?.OnSelect(this, eventData);
+		public void OnDeselect(BaseEventData eventData) => input?.OnDeselect(this, eventData);
 	}
 }
