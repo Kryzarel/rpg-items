@@ -36,12 +36,7 @@ namespace Kryz.RPG.Items.Views
 		private void OnEnable()
 		{
 			inventoryActionMap?.Enable();
-
-			if (pickUpAction != null) pickUpAction.action.Enable();
-			if (cancelPickUpAction != null) cancelPickUpAction.action.Disable();
-
-			if (useAction != null) useAction.action.Enable();
-			if (splitStackAction != null) splitStackAction.action.Enable();
+			EndDrag();
 		}
 
 		private void OnDisable()
