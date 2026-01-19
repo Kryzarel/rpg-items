@@ -5,19 +5,18 @@ using UnityEngine.UI;
 
 namespace Kryz.RPG.Items.Views
 {
-	[ExecuteAlways]
 	public class ItemSlotView : BaseItemSlotView, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IBeginDragHandler, IEndDragHandler, IDragHandler, IDropHandler, ISelectHandler, IDeselectHandler
 	{
 		[Header("References")]
 		[SerializeField] Image? raycastImage;
 		[SerializeField] Image? itemImage;
 		[SerializeField] TextMeshProUGUI? text;
+		[SerializeField] Selectable? selectable;
 		[Header("Settings")]
 		[SerializeField] string textFormatString = "{0}";
 		[SerializeField] Color emptyColor = Color.clear;
 		[SerializeField] Color nonEmptyColor = Color.white;
 		[SerializeField] Color disabledColor = Color.gray;
-		[SerializeField] Color draggingColor = Color.gray;
 		[SerializeField] Sprite? disabledSprite;
 
 		private int slotIndex = -1;
@@ -26,7 +25,6 @@ namespace Kryz.RPG.Items.Views
 		private ItemStack itemStack;
 
 		private int cachedCount;
-		private bool isDragging;
 
 		public override int SlotIndex => slotIndex;
 		public override IInventory? Inventory => inventory;
@@ -40,6 +38,7 @@ namespace Kryz.RPG.Items.Views
 			if (raycastImage == null) raycastImage = GetComponentInChildren<Image>(includeInactive: true);
 			if (itemImage == null) itemImage = GetComponentInChildren<Image>(includeInactive: true);
 			if (text == null) text = GetComponentInChildren<TextMeshProUGUI>(includeInactive: true);
+			if (selectable == null) selectable = GetComponentInChildren<Selectable>(includeInactive: true);
 
 			if (raycastImage != null) raycastImage.raycastTarget = input != null;
 			if (itemImage != null && itemImage != raycastImage) itemImage.raycastTarget = false;
@@ -85,12 +84,6 @@ namespace Kryz.RPG.Items.Views
 			}
 		}
 
-		public override void SetDragVisuals(bool isDragging)
-		{
-			this.isDragging = isDragging;
-			RefreshVisuals();
-		}
-
 		private void RefreshVisuals()
 		{
 			if (IsActive) RefreshActive();
@@ -106,15 +99,15 @@ namespace Kryz.RPG.Items.Views
 
 			if (itemImage != null)
 			{
-				if (itemStack.Item == null)
+				if (itemStack.Item != null)
 				{
-					itemImage.sprite = null!;
-					itemImage.color = emptyColor;
+					itemImage.sprite = itemStack.Item.Icon;
+					itemImage.color = nonEmptyColor;
 				}
 				else
 				{
-					itemImage.sprite = itemStack.Item.Icon;
-					itemImage.color = isDragging ? draggingColor : nonEmptyColor;
+					itemImage.sprite = null!;
+					itemImage.color = emptyColor;
 				}
 			}
 
@@ -126,8 +119,13 @@ namespace Kryz.RPG.Items.Views
 					cachedCount = itemStack.Count;
 				}
 
-				text.color = isDragging ? draggingColor : nonEmptyColor;
+				text.color = nonEmptyColor;
 				text.enabled = itemStack.Count > 1;
+			}
+
+			if (selectable != null)
+			{
+				selectable.interactable = true;
 			}
 		}
 
@@ -147,6 +145,11 @@ namespace Kryz.RPG.Items.Views
 			if (text != null)
 			{
 				text.enabled = false;
+			}
+
+			if (selectable != null)
+			{
+				selectable.interactable = false;
 			}
 		}
 

@@ -177,11 +177,13 @@ namespace Kryz.RPG.Items.Views
 
 		public bool OnSelect(IItemSlotView itemSlotView, BaseEventData eventData)
 		{
+			Debug.Log(nameof(OnSelect) + " " + nameof(IItemSlotView) + " " + ((Component)itemSlotView).transform.GetSiblingIndex());
 			return false;
 		}
 
 		public bool OnDeselect(IItemSlotView itemSlotView, BaseEventData eventData)
 		{
+			Debug.Log(nameof(OnDeselect) + " " + nameof(IItemSlotView) + " " + ((Component)itemSlotView).transform.GetSiblingIndex());
 			return false;
 		}
 

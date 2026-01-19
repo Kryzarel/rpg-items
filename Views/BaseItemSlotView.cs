@@ -15,6 +15,5 @@ namespace Kryz.RPG.Items.Views
 		public abstract void Bind(int slotIndex, IInventory inventory, IItemSlotInput? input = null);
 		public abstract void Unbind();
 		public abstract void SetItemStack(ItemStack stack);
-		public abstract void SetDragVisuals(bool isDragging);
 	}
 }
