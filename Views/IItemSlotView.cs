@@ -4,7 +4,7 @@ namespace Kryz.RPG.Items.Views
 	{
 		int SlotIndex { get; }
 		IInventory? Inventory { get; }
-		IItemSlotInput? Input { get; }
+		IItemSlotController? Controller { get; }
 		ItemStack ItemStack { get; }
 	}
 }

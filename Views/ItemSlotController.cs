@@ -6,11 +6,10 @@ using UnityEngine.InputSystem;
 
 namespace Kryz.RPG.Items.Views
 {
-	public class ItemSlotInput : MonoBehaviour, IItemSlotInput
+	public class ItemSlotController : MonoBehaviour, IItemSlotController
 	{
 		[Header("References")]
-		[SerializeField] SerializeInterface<IItemTooltip> itemTooltip;
-		[SerializeField] SerializeInterface<IItemSlotDragManager> dragManager;
+		[SerializeField] SerializeInterface<IItemSlotDragController> dragController;
 		[Header("Input Actions")]
 		// [SerializeField] InputActionReference? pickUpAction;
 		// [SerializeField] InputActionReference? cancelPickUpAction;
@@ -40,7 +39,7 @@ namespace Kryz.RPG.Items.Views
 
 		private bool StartDrag(IItemSlotView slotView, int count)
 		{
-			if (dragManager.Value == null || !dragManager.Value.StartDrag(slotView, count))
+			if (dragController.Value == null || !dragController.Value.StartDrag(slotView, count))
 			{
 				return false;
 			}
@@ -57,7 +56,7 @@ namespace Kryz.RPG.Items.Views
 
 		private void EndDrag()
 		{
-			dragManager.Value?.StopDrag();
+			dragController.Value?.StopDrag();
 
 			// if (pickUpAction != null) pickUpAction.action.Enable();
 			// if (cancelPickUpAction != null) cancelPickUpAction.action.Disable();
@@ -90,17 +89,17 @@ namespace Kryz.RPG.Items.Views
 
 		public bool OnPointerEnter(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
-			if (ValidateSlot(itemSlotView, out _, out _))
-			{
-				itemTooltip.Value?.Show(itemSlotView.ItemStack, eventData);
-				return true;
-			}
-			return false;
+			// if (ValidateSlot(itemSlotView, out _, out _))
+			// {
+			// 	itemTooltip.Value?.Show(itemSlotView.ItemStack, eventData);
+			// 	return true;
+			// }
+			return true;
 		}
 
 		public bool OnPointerExit(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
-			itemTooltip.Value?.Hide();
+			// itemTooltip.Value?.Hide();
 			return true;
 		}
 
@@ -179,10 +178,10 @@ namespace Kryz.RPG.Items.Views
 			if (!ValidateSlot(itemSlotView, out int dropIndex, out IInventory? dropInventory))
 				return false;
 
-			if (dragManager.Value == null || dragManager.Value.CursorSlot == null)
+			if (dragController.Value == null || dragController.Value.CursorSlot == null)
 				return false;
 
-			if (!ValidateSlot(dragManager.Value.CursorSlot, out int dragIndex, out IInventory? dragInventory))
+			if (!ValidateSlot(dragController.Value.CursorSlot, out int dragIndex, out IInventory? dragInventory))
 				return false;
 
 			return dropInventory.TryMove(dropIndex, dragInventory, dragIndex, allowSwap: true);

@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 
 namespace Kryz.RPG.Items.Views
 {
-	public class ItemSlotDragManager : MonoBehaviour, IItemSlotDragManager
+	public class ItemSlotDragController : MonoBehaviour, IItemSlotDragController
 	{
 		[SerializeField]
 		private Canvas? canvas;

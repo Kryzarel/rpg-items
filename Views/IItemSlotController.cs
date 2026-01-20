@@ -2,7 +2,7 @@ using UnityEngine.EventSystems;
 
 namespace Kryz.RPG.Items.Views
 {
-	public interface IItemSlotInput
+	public interface IItemSlotController
 	{
 		bool OnPointerClick(IItemSlotView itemSlotView, PointerEventData eventData);
 		bool OnPointerEnter(IItemSlotView itemSlotView, PointerEventData eventData);

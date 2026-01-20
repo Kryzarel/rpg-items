@@ -22,12 +22,12 @@ namespace Kryz.RPG.Items.Views
 		private int cachedCount;
 		private int slotIndex = -1;
 		private IInventory? inventory;
-		private IItemSlotInput? input;
+		private IItemSlotController? controller;
 		private ItemStack itemStack;
 
 		public override int SlotIndex => slotIndex;
 		public override IInventory? Inventory => inventory;
-		public override IItemSlotInput? Input => input;
+		public override IItemSlotController? Controller => controller;
 		public override ItemStack ItemStack => itemStack;
 
 		public bool IsActive => itemStack != default || inventory != null && slotIndex >= 0 && slotIndex < inventory.Size;
@@ -39,23 +39,23 @@ namespace Kryz.RPG.Items.Views
 			if (text == null) text = GetComponentInChildren<TextMeshProUGUI>(includeInactive: true);
 			if (selectable == null) selectable = GetComponentInChildren<Selectable>(includeInactive: true);
 
-			if (raycastImage != null) raycastImage.raycastTarget = input != null;
+			if (raycastImage != null) raycastImage.raycastTarget = controller != null;
 			if (itemImage != null && itemImage != raycastImage) itemImage.raycastTarget = false;
 			if (text != null) text.raycastTarget = false;
 
 			RefreshVisuals();
 		}
 
-		public override void Bind(int slotIndex, IInventory inventory, IItemSlotInput? input = null)
+		public override void Bind(int slotIndex, IInventory inventory, IItemSlotController? controller = null)
 		{
-			if (this.slotIndex == slotIndex && this.inventory == inventory && this.input == input)
+			if (this.slotIndex == slotIndex && this.inventory == inventory && this.controller == controller)
 			{
 				return;
 			}
 
 			this.slotIndex = slotIndex;
 			this.inventory = inventory;
-			this.input = input;
+			this.controller = controller;
 
 			if (inventory != null && slotIndex >= 0 && slotIndex < inventory.Size)
 			{
@@ -69,7 +69,7 @@ namespace Kryz.RPG.Items.Views
 		{
 			slotIndex = -1;
 			inventory = null;
-			input = null;
+			controller = null;
 			itemStack = default;
 			RefreshVisuals();
 		}
@@ -93,7 +93,7 @@ namespace Kryz.RPG.Items.Views
 		{
 			if (raycastImage != null)
 			{
-				raycastImage.raycastTarget = input != null;
+				raycastImage.raycastTarget = controller != null;
 			}
 
 			if (itemImage != null)
@@ -124,7 +124,7 @@ namespace Kryz.RPG.Items.Views
 
 			if (selectable != null)
 			{
-				selectable.interactable = true;
+				selectable.interactable = controller != null;
 			}
 		}
 
@@ -152,14 +152,14 @@ namespace Kryz.RPG.Items.Views
 			}
 		}
 
-		public void OnPointerClick(PointerEventData eventData) => input?.OnPointerClick(this, eventData);
-		public void OnPointerEnter(PointerEventData eventData) => input?.OnPointerEnter(this, eventData);
-		public void OnPointerExit(PointerEventData eventData) => input?.OnPointerExit(this, eventData);
-		public void OnBeginDrag(PointerEventData eventData) => input?.OnBeginDrag(this, eventData);
-		public void OnEndDrag(PointerEventData eventData) => input?.OnEndDrag(this, eventData);
-		public void OnDrag(PointerEventData eventData) => input?.OnDrag(this, eventData);
-		public void OnDrop(PointerEventData eventData) => input?.OnDrop(this, eventData);
-		public void OnSelect(BaseEventData eventData) => input?.OnSelect(this, eventData);
-		public void OnDeselect(BaseEventData eventData) => input?.OnDeselect(this, eventData);
+		public void OnPointerClick(PointerEventData eventData) => controller?.OnPointerClick(this, eventData);
+		public void OnPointerEnter(PointerEventData eventData) => controller?.OnPointerEnter(this, eventData);
+		public void OnPointerExit(PointerEventData eventData) => controller?.OnPointerExit(this, eventData);
+		public void OnBeginDrag(PointerEventData eventData) => controller?.OnBeginDrag(this, eventData);
+		public void OnEndDrag(PointerEventData eventData) => controller?.OnEndDrag(this, eventData);
+		public void OnDrag(PointerEventData eventData) => controller?.OnDrag(this, eventData);
+		public void OnDrop(PointerEventData eventData) => controller?.OnDrop(this, eventData);
+		public void OnSelect(BaseEventData eventData) => controller?.OnSelect(this, eventData);
+		public void OnDeselect(BaseEventData eventData) => controller?.OnDeselect(this, eventData);
 	}
 }

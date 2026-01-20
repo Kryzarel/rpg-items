@@ -18,7 +18,7 @@ namespace Kryz.RPG.Items.Views
 		[SerializeField]
 		private List<BaseItemSlotView> itemSlots = new();
 		[SerializeField]
-		private SerializeInterface<IItemSlotInput> itemSlotInput;
+		private SerializeInterface<IItemSlotController> itemSlotController;
 
 		[Header("Settings")]
 		[SerializeField, Tooltip("The minimum number of slots to display. If the assigned " + nameof(IInventory) + " is smaller, extra slots are shown but disabled.")]
@@ -45,7 +45,7 @@ namespace Kryz.RPG.Items.Views
 		{
 			if (itemSlotsParent == null) itemSlotsParent = (RectTransform)transform;
 			itemSlotsParent.GetComponentsInChildren(includeInactive: true, itemSlots);
-			itemSlotInput.Value ??= GetComponentInParent<IItemSlotInput>();
+			itemSlotController.Value ??= GetComponentInParent<IItemSlotController>();
 		}
 
 		private void Awake()
@@ -111,7 +111,7 @@ namespace Kryz.RPG.Items.Views
 				BaseItemSlotView itemSlotView = itemSlots[i];
 				if (inventory != null)
 				{
-					itemSlotView.Bind(i, inventory, itemSlotInput.Value);
+					itemSlotView.Bind(i, inventory, itemSlotController.Value);
 				}
 				else
 				{
