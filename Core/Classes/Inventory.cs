@@ -391,8 +391,14 @@ namespace Kryz.RPG.Items
 
 		public void Dispose()
 		{
-			Array.Clear(slots, 0, size);
-			arrayPool.Return(slots);
+			if (slots != null)
+			{
+				Array.Clear(slots, 0, size);
+				arrayPool.Return(slots);
+				slots = null!;
+				size = 0;
+				occupiedSlots = 0;
+			}
 		}
 
 		public ReadOnlySpan<ItemStack> AsSpan() => new(slots, 0, size);
