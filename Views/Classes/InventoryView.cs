@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
-using Kryz.UnityUtils;
 using UnityEngine;
 
 namespace Kryz.RPG.Items.Views
 {
 	[RequireComponent(typeof(RectTransform))]
-	public partial class InventoryView : MonoBehaviour
+	public partial class InventoryView : MonoBehaviour, IInventoryView
 	{
 		[Header("Project References")]
 		[SerializeField]
@@ -18,7 +17,7 @@ namespace Kryz.RPG.Items.Views
 		[SerializeField]
 		private List<BaseItemSlotView> itemSlots = new();
 		[SerializeField]
-		private SerializeInterface<IItemSlotController> itemSlotController;
+		private BaseItemSlotController? itemSlotController;
 
 		[Header("Settings")]
 		[SerializeField, Tooltip("The minimum number of slots to display. If the assigned " + nameof(IInventory) + " is smaller, extra slots are shown but disabled.")]
@@ -29,9 +28,12 @@ namespace Kryz.RPG.Items.Views
 		private IInventory.OnSlotChangedDelegate? onSlotChangedAction;
 		private IInventory.OnSizeChangedDelegate? onSizeChangedAction;
 		private IInventory? inventory;
+		private IItemSlotController? controller;
 
-		public IInventory? Inventory => inventory;
+		public IInventory? Inventory { get => inventory; set => SetInventory(value); }
 		public IReadOnlyList<BaseItemSlotView> ItemSlots => itemSlots;
+
+		IReadOnlyList<IItemSlotView> IInventoryView.ItemSlots => ItemSlots;
 
 		partial void OnValidateEditor();
 
@@ -45,14 +47,14 @@ namespace Kryz.RPG.Items.Views
 		{
 			if (itemSlotsParent == null) itemSlotsParent = (RectTransform)transform;
 			itemSlotsParent.GetComponentsInChildren(includeInactive: true, itemSlots);
-			itemSlotController.Value ??= GetComponentInParent<IItemSlotController>();
+			if (itemSlotController == null) itemSlotController = FindAnyObjectByType<BaseItemSlotController>();
 		}
 
 		private void Awake()
 		{
 			onSlotChangedAction = OnSlotChanged;
 			onSizeChangedAction = OnSizeChanged;
-			OnValidateRuntime();
+			controller = itemSlotController;
 			HandleSlotViews();
 		}
 
@@ -78,6 +80,30 @@ namespace Kryz.RPG.Items.Views
 			}
 
 			HandleSlotViews();
+		}
+
+		public void SetItemSlotController(IItemSlotController? controller)
+		{
+			if (this.controller == controller)
+			{
+				return;
+			}
+
+			this.controller = controller;
+			itemSlotController = controller as BaseItemSlotController;
+
+			for (int i = 0; i < itemSlots.Count; i++)
+			{
+				BaseItemSlotView itemSlotView = itemSlots[i];
+				if (inventory != null)
+				{
+					itemSlotView.Bind(i, inventory, controller);
+				}
+				else
+				{
+					itemSlotView.Unbind();
+				}
+			}
 		}
 
 		private void HandleSlotViews()
@@ -111,7 +137,7 @@ namespace Kryz.RPG.Items.Views
 				BaseItemSlotView itemSlotView = itemSlots[i];
 				if (inventory != null)
 				{
-					itemSlotView.Bind(i, inventory, itemSlotController.Value);
+					itemSlotView.Bind(i, inventory, controller);
 				}
 				else
 				{

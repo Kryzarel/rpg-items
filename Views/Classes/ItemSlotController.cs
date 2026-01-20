@@ -1,20 +1,24 @@
 using System.Diagnostics.CodeAnalysis;
-using Kryz.UnityUtils;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace Kryz.RPG.Items.Views
 {
-	public class ItemSlotController : MonoBehaviour, IItemSlotController
+	public class ItemSlotController : BaseItemSlotController
 	{
 		[Header("References")]
-		[SerializeField] SerializeInterface<IItemSlotDragController> dragController;
+		[SerializeField] protected BaseItemSlotDragController? dragController;
 		[Header("Input Actions")]
 		// [SerializeField] InputActionReference? pickUpAction;
 		// [SerializeField] InputActionReference? cancelPickUpAction;
-		[SerializeField] InputActionReference? useAction;
-		[SerializeField] InputActionReference? splitStackAction;
+		[SerializeField] protected InputActionReference? useAction;
+		[SerializeField] protected InputActionReference? splitStackAction;
+
+		protected virtual void OnValidate()
+		{
+			if (dragController == null) dragController = FindAnyObjectByType<BaseItemSlotDragController>();
+		}
 
 		// private void Start()
 		// {
@@ -24,12 +28,13 @@ namespace Kryz.RPG.Items.Views
 		// 	}
 		// }
 
-		private void OnEnable()
+		protected virtual void OnEnable()
 		{
-			EndDrag();
+			if (useAction != null) useAction.action.Enable();
+			if (splitStackAction != null) splitStackAction.action.Enable();
 		}
 
-		private void OnDisable()
+		protected virtual void OnDisable()
 		{
 			// if (pickUpAction != null) pickUpAction.action.Disable();
 			// if (cancelPickUpAction != null) cancelPickUpAction.action.Disable();
@@ -37,9 +42,9 @@ namespace Kryz.RPG.Items.Views
 			if (splitStackAction != null) splitStackAction.action.Disable();
 		}
 
-		private bool StartDrag(IItemSlotView slotView, int count)
+		protected virtual bool StartDrag(IItemSlotView slotView, int count)
 		{
-			if (dragController.Value == null || !dragController.Value.StartDrag(slotView, count))
+			if (dragController == null || !dragController.StartDrag(slotView, count))
 			{
 				return false;
 			}
@@ -54,9 +59,9 @@ namespace Kryz.RPG.Items.Views
 			return true;
 		}
 
-		private void EndDrag()
+		protected virtual void EndDrag()
 		{
-			dragController.Value?.StopDrag();
+			if (dragController != null) dragController.StopDrag();
 
 			// if (pickUpAction != null) pickUpAction.action.Enable();
 			// if (cancelPickUpAction != null) cancelPickUpAction.action.Disable();
@@ -65,7 +70,28 @@ namespace Kryz.RPG.Items.Views
 			if (splitStackAction != null) splitStackAction.action.Enable();
 		}
 
-		public bool OnPointerClick(IItemSlotView itemSlotView, PointerEventData eventData)
+		protected virtual bool TryDrop(IItemSlotView itemSlotView)
+		{
+			if (!ValidateSlot(itemSlotView, out int dropIndex, out IInventory? dropInventory))
+				return false;
+
+			if (dragController == null || dragController.CursorSlot == null)
+				return false;
+
+			if (!ValidateSlot(dragController.CursorSlot, out int dragIndex, out IInventory? dragInventory))
+				return false;
+
+			return dropInventory.TryMove(dropIndex, dragInventory, dragIndex, allowSwap: true);
+		}
+
+		protected static bool ValidateSlot(IItemSlotView itemSlotView, out int index, [MaybeNullWhen(returnValue: false)] out IInventory inventory)
+		{
+			index = itemSlotView.SlotIndex;
+			inventory = itemSlotView.Inventory;
+			return inventory != null && index >= 0 && index < inventory.Size;
+		}
+
+		public override bool OnPointerClick(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
 			// if (HandleItemPickup(itemSlotView))
 			// {
@@ -87,7 +113,7 @@ namespace Kryz.RPG.Items.Views
 			return false;
 		}
 
-		public bool OnPointerEnter(IItemSlotView itemSlotView, PointerEventData eventData)
+		public override bool OnPointerEnter(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
 			// if (ValidateSlot(itemSlotView, out _, out _))
 			// {
@@ -97,13 +123,13 @@ namespace Kryz.RPG.Items.Views
 			return true;
 		}
 
-		public bool OnPointerExit(IItemSlotView itemSlotView, PointerEventData eventData)
+		public override bool OnPointerExit(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
 			// itemTooltip.Value?.Hide();
 			return true;
 		}
 
-		public bool OnBeginDrag(IItemSlotView itemSlotView, PointerEventData eventData)
+		public override bool OnBeginDrag(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
 			if (eventData.button == PointerEventData.InputButton.Left && ValidateSlot(itemSlotView, out _, out _))
 			{
@@ -147,51 +173,30 @@ namespace Kryz.RPG.Items.Views
 		// 	return StartDrag(itemSlotView, itemSlotView.ItemStack.Count);
 		// }
 
-		public bool OnEndDrag(IItemSlotView itemSlotView, PointerEventData eventData)
+		public override bool OnEndDrag(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
 			EndDrag();
 			return true;
 		}
 
-		public bool OnDrag(IItemSlotView itemSlotView, PointerEventData eventData)
+		public override bool OnDrag(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
 			return true;
 		}
 
-		public bool OnDrop(IItemSlotView itemSlotView, PointerEventData eventData)
+		public override bool OnDrop(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
 			return TryDrop(itemSlotView);
 		}
 
-		public bool OnSelect(IItemSlotView itemSlotView, BaseEventData eventData)
+		public override bool OnSelect(IItemSlotView itemSlotView, BaseEventData eventData)
 		{
 			return true;
 		}
 
-		public bool OnDeselect(IItemSlotView itemSlotView, BaseEventData eventData)
+		public override bool OnDeselect(IItemSlotView itemSlotView, BaseEventData eventData)
 		{
 			return true;
-		}
-
-		private bool TryDrop(IItemSlotView itemSlotView)
-		{
-			if (!ValidateSlot(itemSlotView, out int dropIndex, out IInventory? dropInventory))
-				return false;
-
-			if (dragController.Value == null || dragController.Value.CursorSlot == null)
-				return false;
-
-			if (!ValidateSlot(dragController.Value.CursorSlot, out int dragIndex, out IInventory? dragInventory))
-				return false;
-
-			return dropInventory.TryMove(dropIndex, dragInventory, dragIndex, allowSwap: true);
-		}
-
-		private static bool ValidateSlot(IItemSlotView itemSlotView, out int index, [MaybeNullWhen(returnValue: false)] out IInventory inventory)
-		{
-			index = itemSlotView.SlotIndex;
-			inventory = itemSlotView.Inventory;
-			return inventory != null && index >= 0 && index < inventory.Size;
 		}
 	}
 }

@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 
 namespace Kryz.RPG.Items.Views
 {
-	public class ItemSlotDragController : MonoBehaviour, IItemSlotDragController
+	public class ItemSlotDragController : BaseItemSlotDragController
 	{
 		[SerializeField]
 		private Canvas? canvas;
@@ -12,8 +12,8 @@ namespace Kryz.RPG.Items.Views
 
 		private IItemSlotView? sourceSlot;
 
-		public IItemSlotView? CursorSlot => cursorSlot;
-		public IItemSlotView? SourceSlot => sourceSlot;
+		public override IItemSlotView? CursorSlot => cursorSlot;
+		public override IItemSlotView? SourceSlot => sourceSlot;
 
 		private void OnValidate()
 		{
@@ -27,52 +27,6 @@ namespace Kryz.RPG.Items.Views
 			{
 				cursorSlot.gameObject.SetActive(false);
 			}
-		}
-
-		public bool StartDrag(IItemSlotView slotView, int count)
-		{
-			if (slotView.Inventory == null || cursorSlot == null || cursorSlot.Inventory == null)
-			{
-				return false;
-			}
-
-			if (!slotView.Inventory.CanRemove(slotView.SlotIndex, count, out _, out ItemStack removed) || !cursorSlot.Inventory.CanAdd(removed, out _))
-			{
-				return false;
-			}
-
-			sourceSlot = slotView;
-			sourceSlot.Inventory.TryRemove(sourceSlot.SlotIndex, count, out _, out _);
-			cursorSlot.Inventory.TryAdd(removed, out _);
-
-			if (slotView is BaseItemSlotView baseView)
-			{
-				Vector3 source = baseView.RectTransform.lossyScale;
-				Vector3 target = cursorSlot.RectTransform.parent.lossyScale;
-
-				if (source != target)
-				{
-					cursorSlot.RectTransform.localScale = new Vector3(source.x / target.x, source.y / target.y, source.z / target.z);
-				}
-
-				cursorSlot.RectTransform.sizeDelta = baseView.RectTransform.sizeDelta;
-			}
-
-			cursorSlot.gameObject.SetActive(true);
-			return true;
-		}
-
-		public bool StopDrag()
-		{
-			if (cursorSlot == null || sourceSlot == null)
-			{
-				return false;
-			}
-
-			ReturnCursorItem(cursorSlot, sourceSlot);
-			cursorSlot.gameObject.SetActive(false);
-			sourceSlot = null;
-			return true;
 		}
 
 		private void LateUpdate()
@@ -119,6 +73,52 @@ namespace Kryz.RPG.Items.Views
 			{
 				dragSlot.Inventory.TryRemove(dragSlot.SlotIndex, out _, out _);
 			}
+		}
+
+		public override bool StartDrag(IItemSlotView slotView, int count)
+		{
+			if (slotView.Inventory == null || cursorSlot == null || cursorSlot.Inventory == null)
+			{
+				return false;
+			}
+
+			if (!slotView.Inventory.CanRemove(slotView.SlotIndex, count, out _, out ItemStack removed) || !cursorSlot.Inventory.CanAdd(removed, out _))
+			{
+				return false;
+			}
+
+			sourceSlot = slotView;
+			sourceSlot.Inventory.TryRemove(sourceSlot.SlotIndex, count, out _, out _);
+			cursorSlot.Inventory.TryAdd(removed, out _);
+
+			if (slotView is BaseItemSlotView baseView)
+			{
+				Vector3 source = baseView.RectTransform.lossyScale;
+				Vector3 target = cursorSlot.RectTransform.parent.lossyScale;
+
+				if (source != target)
+				{
+					cursorSlot.RectTransform.localScale = new Vector3(source.x / target.x, source.y / target.y, source.z / target.z);
+				}
+
+				cursorSlot.RectTransform.sizeDelta = baseView.RectTransform.sizeDelta;
+			}
+
+			cursorSlot.gameObject.SetActive(true);
+			return true;
+		}
+
+		public override bool StopDrag()
+		{
+			if (cursorSlot == null || sourceSlot == null)
+			{
+				return false;
+			}
+
+			ReturnCursorItem(cursorSlot, sourceSlot);
+			cursorSlot.gameObject.SetActive(false);
+			sourceSlot = null;
+			return true;
 		}
 	}
 }
