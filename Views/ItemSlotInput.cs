@@ -12,36 +12,30 @@ namespace Kryz.RPG.Items.Views
 		[SerializeField] SerializeInterface<IItemTooltip> itemTooltip;
 		[SerializeField] SerializeInterface<IItemSlotDragManager> dragManager;
 		[Header("Input Actions")]
-		[SerializeField] InputActionAsset? actionAsset;
-		[SerializeField] InputActionReference? pickUpAction;
-		[SerializeField] InputActionReference? cancelPickUpAction;
+		// [SerializeField] InputActionReference? pickUpAction;
+		// [SerializeField] InputActionReference? cancelPickUpAction;
 		[SerializeField] InputActionReference? useAction;
 		[SerializeField] InputActionReference? splitStackAction;
 
-		private InputActionMap? inventoryActionMap;
-
-		private void Start()
-		{
-			if (actionAsset != null)
-			{
-				inventoryActionMap = actionAsset.FindActionMap("Inventory");
-			}
-
-			if (cancelPickUpAction != null)
-			{
-				cancelPickUpAction.action.performed += ctx => EndDrag();
-			}
-		}
+		// private void Start()
+		// {
+		// 	if (cancelPickUpAction != null)
+		// 	{
+		// 		cancelPickUpAction.action.performed += ctx => EndDrag();
+		// 	}
+		// }
 
 		private void OnEnable()
 		{
-			inventoryActionMap?.Enable();
 			EndDrag();
 		}
 
 		private void OnDisable()
 		{
-			inventoryActionMap?.Disable();
+			// if (pickUpAction != null) pickUpAction.action.Disable();
+			// if (cancelPickUpAction != null) cancelPickUpAction.action.Disable();
+			if (useAction != null) useAction.action.Disable();
+			if (splitStackAction != null) splitStackAction.action.Disable();
 		}
 
 		private bool StartDrag(IItemSlotView slotView, int count)
@@ -51,9 +45,9 @@ namespace Kryz.RPG.Items.Views
 				return false;
 			}
 
-			// Pick Up Action should not be disabled because we need it to drop the picked up item
-			if (pickUpAction != null) pickUpAction.action.Enable();
-			if (cancelPickUpAction != null) cancelPickUpAction.action.Enable();
+			// // Pick Up Action should not be disabled because we need it to drop the picked up item
+			// if (pickUpAction != null) pickUpAction.action.Enable();
+			// if (cancelPickUpAction != null) cancelPickUpAction.action.Enable();
 
 			if (useAction != null) useAction.action.Disable();
 			if (splitStackAction != null) splitStackAction.action.Disable();
@@ -65,8 +59,8 @@ namespace Kryz.RPG.Items.Views
 		{
 			dragManager.Value?.StopDrag();
 
-			if (pickUpAction != null) pickUpAction.action.Enable();
-			if (cancelPickUpAction != null) cancelPickUpAction.action.Disable();
+			// if (pickUpAction != null) pickUpAction.action.Enable();
+			// if (cancelPickUpAction != null) cancelPickUpAction.action.Disable();
 
 			if (useAction != null) useAction.action.Enable();
 			if (splitStackAction != null) splitStackAction.action.Enable();
@@ -74,10 +68,10 @@ namespace Kryz.RPG.Items.Views
 
 		public bool OnPointerClick(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
-			if (HandleItemPickup(itemSlotView))
-			{
-				return true;
-			}
+			// if (HandleItemPickup(itemSlotView))
+			// {
+			// 	return true;
+			// }
 
 			if (ValidateSlot(itemSlotView, out _, out _) && itemSlotView.ItemStack.Item != null)
 			{
@@ -124,35 +118,35 @@ namespace Kryz.RPG.Items.Views
 			return false;
 		}
 
-		private bool HandleItemPickup(IItemSlotView itemSlotView)
-		{
-			if (dragManager.Value == null || pickUpAction == null || !pickUpAction.action.WasPerformedThisFrame())
-			{
-				return false;
-			}
+		// private bool HandleItemPickup(IItemSlotView itemSlotView)
+		// {
+		// 	if (dragManager.Value == null || pickUpAction == null || !pickUpAction.action.WasPerformedThisFrame())
+		// 	{
+		// 		return false;
+		// 	}
 
-			IItemSlotView? dragSlot = dragManager.Value.CursorSlot;
-			ItemStack dragBefore = dragSlot?.ItemStack ?? default;
-			ItemStack dropBefore = itemSlotView.ItemStack;
+		// 	IItemSlotView? dragSlot = dragManager.Value.CursorSlot;
+		// 	ItemStack dragBefore = dragSlot?.ItemStack ?? default;
+		// 	ItemStack dropBefore = itemSlotView.ItemStack;
 
-			if (TryDrop(itemSlotView))
-			{
-				ItemStack dragAfter = dragSlot?.ItemStack ?? default;
-				ItemStack dropAfter = itemSlotView.ItemStack;
-				bool notEmpty = dragBefore != default && dragAfter != default;
-				bool swapped = notEmpty && dragBefore == dropAfter && dropBefore == dragAfter;
+		// 	if (TryDrop(itemSlotView))
+		// 	{
+		// 		ItemStack dragAfter = dragSlot?.ItemStack ?? default;
+		// 		ItemStack dropAfter = itemSlotView.ItemStack;
+		// 		bool notEmpty = dragBefore != default && dragAfter != default;
+		// 		bool swapped = notEmpty && dragBefore == dropAfter && dropBefore == dragAfter;
 
-				EndDrag();
+		// 		EndDrag();
 
-				if (swapped)
-				{
-					StartDrag(itemSlotView, itemSlotView.ItemStack.Count);
-				}
-				return true;
-			}
+		// 		if (swapped)
+		// 		{
+		// 			StartDrag(itemSlotView, itemSlotView.ItemStack.Count);
+		// 		}
+		// 		return true;
+		// 	}
 
-			return StartDrag(itemSlotView, itemSlotView.ItemStack.Count);
-		}
+		// 	return StartDrag(itemSlotView, itemSlotView.ItemStack.Count);
+		// }
 
 		public bool OnEndDrag(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
@@ -172,14 +166,12 @@ namespace Kryz.RPG.Items.Views
 
 		public bool OnSelect(IItemSlotView itemSlotView, BaseEventData eventData)
 		{
-			Debug.Log(nameof(OnSelect) + " " + nameof(IItemSlotView) + " " + ((Component)itemSlotView).transform.GetSiblingIndex());
-			return false;
+			return true;
 		}
 
 		public bool OnDeselect(IItemSlotView itemSlotView, BaseEventData eventData)
 		{
-			Debug.Log(nameof(OnDeselect) + " " + nameof(IItemSlotView) + " " + ((Component)itemSlotView).transform.GetSiblingIndex());
-			return false;
+			return true;
 		}
 
 		private bool TryDrop(IItemSlotView itemSlotView)
