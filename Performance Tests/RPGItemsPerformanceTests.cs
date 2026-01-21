@@ -15,6 +15,7 @@ public class RPGItemsPerformanceTests : MonoBehaviour
 		public string Description => "An item just for testing";
 		public int MaxStacks => 20;
 
+		public IItemSaveData ToSaveData() => null!;
 		public int CompareTo(IItem other) => other is TestItem test ? index.CompareTo(test.index) : 0;
 		public override string ToString() => Name;
 		public TestItem(int index)

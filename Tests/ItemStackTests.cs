@@ -15,8 +15,10 @@ namespace Kryz.RPG.Items.Tests
 			public Sprite Icon => null!;
 			public int MaxStacks => maxStacks;
 
+			public IItemSaveData ToSaveData() => null!;
 			public int CompareTo(IItem other) => Name.CompareTo(other.Name);
 			public override string ToString() => Name;
+
 			public TestItem(string name) => this.name = name;
 		}
 
