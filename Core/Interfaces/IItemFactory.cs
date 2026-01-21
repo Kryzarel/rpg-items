@@ -2,6 +2,7 @@ namespace Kryz.RPG.Items
 {
 	public interface IItemFactory
 	{
-		IItem GetOrCreate<TDefinition>(TDefinition definition) where TDefinition : IItemDefinition;
+		IItem Create(IItemDefinition definition);
+		IItem CreateFromSave(IItemSaveData saveData);
 	}
 }

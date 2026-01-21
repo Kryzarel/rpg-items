@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Kryz.RPG.Items
@@ -6,15 +7,32 @@ namespace Kryz.RPG.Items
 	{
 		private readonly Dictionary<TDefinition, IItem> items = new();
 
-		public IItem GetOrCreate(TDefinition definition)
+		public bool CanCreate(IItemDefinition definition)
 		{
-			if (!items.TryGetValue(definition, out IItem item))
+			return definition is TDefinition;
+		}
+
+		public bool CanCreate(IItemDefinition definition, IItemSaveData saveData)
+		{
+			return definition is TDefinition;
+		}
+
+		public IItem Create(IItemDefinition definition)
+		{
+			if (definition is not TDefinition itemDefinition)
 			{
-				item = items[definition] = Create(definition);
+				throw new InvalidOperationException($"{GetType().Name} does not support {definition.GetType().Name}");
+			}
+
+			if (!items.TryGetValue(itemDefinition, out IItem item))
+			{
+				item = items[itemDefinition] = Create(itemDefinition);
 			}
 			return item;
 		}
 
-		protected abstract IItem Create(TDefinition definition);
+		public IItem Create(IItemDefinition definition, IItemSaveData saveData) => Create(definition);
+
+		public abstract IItem Create(TDefinition definition);
 	}
 }

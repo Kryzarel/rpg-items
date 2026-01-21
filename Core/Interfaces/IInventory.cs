@@ -151,6 +151,7 @@ namespace Kryz.RPG.Items
 		void CopyFrom(IReadOnlyList<ItemStack> stacks);
 
 		void Sort();
+
 		void Sort<TComparer>(TComparer comparer) where TComparer : IComparer<ItemStack>;
 
 		void Clear();
