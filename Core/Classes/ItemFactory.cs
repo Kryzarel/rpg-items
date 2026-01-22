@@ -31,7 +31,7 @@ namespace Kryz.RPG.Items
 
 		public IItem CreateFromSave(IItemSaveData saveData)
 		{
-			if (!definitionDatabase.TryGet(saveData.DefinitionId, out IItemDefinition definition))
+			if (!definitionDatabase.TryGet(saveData.DefinitionId, out IItemDefinition? definition))
 			{
 				throw new InvalidOperationException($"Invalid {saveData.GetType().Name}: Definition \"{saveData.DefinitionId}\" not registered in database");
 			}

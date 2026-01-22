@@ -14,7 +14,7 @@ namespace Kryz.RPG.Items
 
 		public bool CanCreate(IItemDefinition definition, IItemSaveData saveData)
 		{
-			return definition is TDefinition && saveData is ItemSaveDataSingleton;
+			return definition is TDefinition;
 		}
 
 		public IItem Create(IItemDefinition definition)
@@ -33,7 +33,7 @@ namespace Kryz.RPG.Items
 
 		public IItem Create(IItemDefinition definition, IItemSaveData saveData)
 		{
-			if (definition is not TDefinition || saveData is not ItemSaveDataSingleton)
+			if (definition is not TDefinition)
 			{
 				throw new InvalidOperationException($"{GetType().Name} does not support {definition.GetType().Name}");
 			}
