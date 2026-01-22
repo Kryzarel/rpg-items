@@ -4,12 +4,12 @@ using UnityEngine;
 namespace Kryz.RPG.Items
 {
 	[Serializable]
-	public abstract class BaseItemSaveData : IItemSaveData
+	public abstract class ItemSaveDataBase : IItemSaveData
 	{
 		[field: SerializeField]
 		public string DefinitionId { get; private set; }
 
-		public BaseItemSaveData(string definitionId)
+		public ItemSaveDataBase(string definitionId)
 		{
 			DefinitionId = definitionId;
 		}
