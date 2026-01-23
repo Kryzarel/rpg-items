@@ -426,10 +426,9 @@ namespace Kryz.RPG.Items
 			if (slots == null || value > slots.Length)
 			{
 				ItemStack[]? oldSlots = slots;
-				// If 'value' is 0, ArrayPool SHOULD return Array.Empty<T>().
-				slots = arrayPool.Rent(value);
+				slots = value > 0 ? arrayPool.Rent(value) : Array.Empty<ItemStack>();
 
-				// We SHOULD NOT return the empty array to the pool.
+				// We SHOULD NOT return an empty array to the pool
 				if (oldSlots != null && oldSlots.Length > 0)
 				{
 					Array.Copy(oldSlots, slots, size);
