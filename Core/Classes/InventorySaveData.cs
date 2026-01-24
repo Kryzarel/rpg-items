@@ -12,16 +12,6 @@ namespace Kryz.RPG.Items
 		[SerializeField]
 		public List<ItemStackSaveData> ItemStacks = new();
 
-		public string ToJson()
-		{
-			return JsonUtility.ToJson(this, prettyPrint: true);
-		}
-
-		public void FromJson(string json)
-		{
-			JsonUtility.FromJsonOverwrite(json, this);
-		}
-
 		public void FromItems(IItemFactory itemFactory, ReadOnlySpan<ItemStack> items)
 		{
 			ItemStacks.EnsureCapacity(items.Length);
