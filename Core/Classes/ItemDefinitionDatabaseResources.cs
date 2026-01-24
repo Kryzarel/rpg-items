@@ -8,39 +8,20 @@ namespace Kryz.RPG.Items
 	{
 		public IItemDefinition Get(string id)
 		{
-			UnityEngine.Object obj = Resources.Load(id);
+			UnityEngine.Object obj = Resources.Load(id, typeof(IItemDefinition));
 
 			if (obj == null)
 			{
 				throw new InvalidOperationException($"No {nameof(IItemDefinition)} for ID \"{id}\" was found in {nameof(Resources)}");
 			}
 
-			if (obj is not IItemDefinition definition)
-			{
-				throw new InvalidCastException($"Loaded asset {obj.name} cannot be cast to {nameof(IItemDefinition)}");
-			}
-
-			return definition;
+			return (IItemDefinition)obj;
 		}
 
 		public bool TryGet(string id, [MaybeNullWhen(returnValue: false)] out IItemDefinition definition)
 		{
-			UnityEngine.Object obj = Resources.Load(id);
-
-			if (obj == null)
-			{
-				definition = null;
-				return false;
-			}
-
-			if (obj is not IItemDefinition def)
-			{
-				definition = null;
-				return false;
-			}
-
-			definition = def;
-			return true;
+			definition = Resources.Load(id, typeof(IItemDefinition)) as IItemDefinition;
+			return definition != null;
 		}
 	}
 }
