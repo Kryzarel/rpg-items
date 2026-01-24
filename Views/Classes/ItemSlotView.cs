@@ -48,11 +48,6 @@ namespace Kryz.RPG.Items.Views
 
 		public override void Bind(int slotIndex, IInventory inventory, IItemSlotController? controller = null)
 		{
-			if (this.slotIndex == slotIndex && this.inventory == inventory && this.controller == controller)
-			{
-				return;
-			}
-
 			this.slotIndex = slotIndex;
 			this.inventory = inventory;
 			this.controller = controller;
