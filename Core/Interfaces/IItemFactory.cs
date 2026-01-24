@@ -4,5 +4,6 @@ namespace Kryz.RPG.Items
 	{
 		IItem Create(IItemDefinition definition);
 		IItem CreateFromSave(IItemSaveData saveData);
+		IItemSaveData ToSaveData(IItem item);
 	}
 }

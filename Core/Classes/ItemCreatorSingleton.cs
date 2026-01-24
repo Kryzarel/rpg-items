@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Kryz.RPG.Items
 {
-	public abstract class ItemCreatorSingleton<TDefinition> : IItemCreator<TDefinition> where TDefinition : IItemDefinition
+	public abstract class ItemCreatorSingleton<TDefinition, TItem, TSaveData> : IItemCreator<TDefinition>, IItemSaver<TItem, TSaveData> where TDefinition : IItemDefinition where TItem : IItem where TSaveData : IItemSaveData
 	{
 		private readonly Dictionary<TDefinition, IItem> items = new();
 
@@ -15,6 +15,11 @@ namespace Kryz.RPG.Items
 		public bool CanCreate(IItemDefinition definition, IItemSaveData saveData)
 		{
 			return definition is TDefinition;
+		}
+
+		public bool CanSave(IItem item)
+		{
+			return item is TItem;
 		}
 
 		public IItem Create(IItemDefinition definition)
@@ -41,6 +46,18 @@ namespace Kryz.RPG.Items
 			return Create(definition);
 		}
 
+		public IItemSaveData ToSaveData(IItem item)
+		{
+			if (item is not TItem itemCast)
+			{
+				throw new InvalidOperationException($"{GetType().Name} does not support saving {item.GetType().Name}");
+			}
+
+			return ToSaveData(itemCast);
+		}
+
 		public abstract IItem Create(TDefinition definition);
+
+		public abstract TSaveData ToSaveData(TItem item);
 	}
 }

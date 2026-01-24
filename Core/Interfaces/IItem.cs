@@ -10,7 +10,5 @@ namespace Kryz.RPG.Items
 		Sprite Icon { get; }
 		string Name { get; }
 		int MaxStacks { get; }
-
-		IItemSaveData ToSaveData();
 	}
 }

@@ -22,7 +22,7 @@ namespace Kryz.RPG.Items
 			JsonUtility.FromJsonOverwrite(json, this);
 		}
 
-		public void FromItems(ReadOnlySpan<ItemStack> items)
+		public void FromItems(IItemFactory itemFactory, ReadOnlySpan<ItemStack> items)
 		{
 			if (items.Length > ItemStacks.Length)
 			{
@@ -38,7 +38,11 @@ namespace Kryz.RPG.Items
 			for (int i = 0; i < items.Length; i++)
 			{
 				ItemStack stack = items[i];
-				ItemStacks[i] = new ItemStackSaveData(stack.Item?.ToSaveData(), stack.Count);
+
+				if (stack.Item != null && stack.Count > 0)
+				{
+					ItemStacks[i] = new ItemStackSaveData(itemFactory.ToSaveData(stack.Item), stack.Count);
+				}
 			}
 		}
 

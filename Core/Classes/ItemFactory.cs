@@ -49,6 +49,21 @@ namespace Kryz.RPG.Items
 			return creator.Create(definition, saveData);
 		}
 
+		public IItemSaveData ToSaveData(IItem item)
+		{
+			if (!TryGetCreator(item.Definition, out IItemCreator? creator))
+			{
+				throw new InvalidOperationException($"No {nameof(IItemCreator)} registered for {item.Definition.GetType().Name}");
+			}
+
+			if (!creator.CanSave(item))
+			{
+				throw new InvalidOperationException($"{creator.GetType()} does not support saving {item.GetType().Name}");
+			}
+
+			return creator.ToSaveData(item);
+		}
+
 		public void Register<TDefinition>(IItemCreator<TDefinition> creator) where TDefinition : IItemDefinition
 		{
 			itemCreators[typeof(TDefinition)] = creator;

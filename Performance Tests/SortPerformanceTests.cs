@@ -20,7 +20,6 @@ public class SortPerformanceTests : MonoBehaviour
 		public Sprite Icon => null!;
 		public int MaxStacks => 20;
 
-		public IItemSaveData ToSaveData() => null!;
 		public int CompareTo(IItem other) => name.CompareTo(other.Name);
 		// public int CompareTo(TestItem other) => index.CompareTo(other.index);
 		public override string ToString() => Name;
