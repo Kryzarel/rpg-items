@@ -1,16 +1,16 @@
 using System;
 using System.Buffers;
+using System.Collections.Generic;
+using Kryz.Utils;
 using UnityEngine;
 
 namespace Kryz.RPG.Items
 {
 	[Serializable]
-	public class InventorySaveData : ISerializationCallbackReceiver
+	public class InventorySaveData
 	{
 		[SerializeField]
-		public ItemStackSaveData[] ItemStacks = Array.Empty<ItemStackSaveData>();
-		[SerializeField]
-		public int Count;
+		public List<ItemStackSaveData> ItemStacks = new();
 
 		public string ToJson()
 		{
@@ -24,16 +24,8 @@ namespace Kryz.RPG.Items
 
 		public void FromItems(IItemFactory itemFactory, ReadOnlySpan<ItemStack> items)
 		{
-			if (items.Length > ItemStacks.Length)
-			{
-				if (ItemStacks.Length > 0)
-				{
-					ArrayPool<ItemStackSaveData>.Shared.Return(ItemStacks, clearArray: true);
-				}
-				ItemStacks = ArrayPool<ItemStackSaveData>.Shared.Rent(items.Length);
-			}
-
-			Count = items.Length;
+			ItemStacks.EnsureCapacity(items.Length);
+			ItemStacks.Clear();
 
 			for (int i = 0; i < items.Length; i++)
 			{
@@ -41,20 +33,23 @@ namespace Kryz.RPG.Items
 
 				if (stack.Item != null && stack.Count > 0)
 				{
-					ItemStacks[i] = new ItemStackSaveData(itemFactory.ToSaveData(stack.Item), stack.Count);
+					ItemStacks.Add(new ItemStackSaveData(itemFactory.ToSaveData(stack.Item), stack.Count));
+				}
+				else
+				{
+					ItemStacks.Add(default);
 				}
 			}
 		}
 
 		public void ToInventory(IItemFactory itemFactory, IInventory inventory)
 		{
-			ItemStack[] stacksArray = ArrayPool<ItemStack>.Shared.Rent(Count);
-			Span<ItemStack> stacks = stacksArray.AsSpan(0, Count);
-			Span<ItemStackSaveData> saveDatas = ItemStacks.AsSpan(0, Count);
+			ItemStack[] stacksArray = ArrayPool<ItemStack>.Shared.Rent(ItemStacks.Count);
+			Span<ItemStack> stacks = stacksArray.AsSpan(0, ItemStacks.Count);
 
 			for (int i = 0; i < stacks.Length; i++)
 			{
-				ItemStackSaveData saveData = saveDatas[i];
+				ItemStackSaveData saveData = ItemStacks[i];
 
 				if (saveData.Item != null && saveData.Count > 0)
 				{
@@ -66,16 +61,6 @@ namespace Kryz.RPG.Items
 
 			stacks.Clear();
 			ArrayPool<ItemStack>.Shared.Return(stacksArray);
-		}
-
-		public void OnAfterDeserialize()
-		{
-			Count = Math.Clamp(Count, 0, ItemStacks.Length);
-		}
-
-		public void OnBeforeSerialize()
-		{
-			Count = Math.Clamp(Count, 0, ItemStacks.Length);
 		}
 	}
 }
