@@ -56,7 +56,12 @@ namespace Kryz.RPG.Items
 			return ToSaveData(itemCast);
 		}
 
-		public abstract IItem Create(TDefinition definition);
+		IItem IItemCreator<TDefinition>.Create(TDefinition definition)
+		{
+			return Create(definition);
+		}
+
+		public abstract TItem Create(TDefinition definition);
 
 		public abstract TSaveData ToSaveData(TItem item);
 	}
