@@ -81,10 +81,6 @@ namespace Kryz.RPG.Items.Views
 					Debug.Log($"Item Used: {itemSlotView.ItemStack.Item.Name}");
 					return true;
 				}
-				else if (splitStackAction != null && splitStackAction.action.WasPerformedThisFrame())
-				{
-					return StartDrag(itemSlotView, itemSlotView.ItemStack.Count / 2);
-				}
 			}
 			return false;
 		}
