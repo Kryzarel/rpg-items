@@ -5,10 +5,9 @@ namespace Kryz.RPG.Items.Views
 {
 	public class ItemSlotDragController : BaseItemSlotDragController
 	{
-		[SerializeField]
-		private Canvas? canvas;
-		[SerializeField]
-		private BaseItemSlotView? cursorSlot;
+		[SerializeField] Canvas? canvas;
+		[SerializeField] BaseItemSlotView? cursorSlot;
+		[SerializeField] bool copySourceSlotSize = true;
 
 		private IItemSlotView? sourceSlot;
 
@@ -91,7 +90,7 @@ namespace Kryz.RPG.Items.Views
 			sourceSlot.Inventory.TryRemove(sourceSlot.SlotIndex, count, out _, out _);
 			cursorSlot.Inventory.TryAdd(removed, out _);
 
-			if (slotView is BaseItemSlotView baseView)
+			if (copySourceSlotSize && slotView is BaseItemSlotView baseView)
 			{
 				Vector3 source = baseView.RectTransform.lossyScale;
 				Vector3 target = cursorSlot.RectTransform.parent.lossyScale;
