@@ -14,10 +14,11 @@ namespace Kryz.RPG.Items.Views
 		[SerializeField] protected Selectable? selectable;
 		[Header("Settings")]
 		[SerializeField] protected string textFormatString = "{0}";
+		[SerializeField] protected Sprite? emptySprite;
 		[SerializeField] protected Color emptyColor = Color.clear;
 		[SerializeField] protected Color nonEmptyColor = Color.white;
-		[SerializeField] protected Color disabledColor = Color.gray;
-		[SerializeField] protected Sprite? disabledSprite;
+		[SerializeField] protected Sprite? unboundSprite;
+		[SerializeField] protected Color unboundColor = Color.gray;
 
 		protected int cachedCount;
 		protected int slotIndex = -1;
@@ -30,7 +31,7 @@ namespace Kryz.RPG.Items.Views
 		public override IItemSlotController? Controller => controller;
 		public override ItemStack ItemStack => itemStack;
 
-		public bool IsActive => itemStack != default || inventory != null && slotIndex >= 0 && slotIndex < inventory.Size;
+		public bool IsBound => itemStack != default || inventory != null && slotIndex >= 0 && slotIndex < inventory.Size;
 
 		private void OnValidate()
 		{
@@ -80,11 +81,11 @@ namespace Kryz.RPG.Items.Views
 
 		private void RefreshVisuals()
 		{
-			if (IsActive) RefreshActive();
-			else RefreshInactive();
+			if (IsBound) RefreshBound();
+			else RefreshUnbound();
 		}
 
-		protected virtual void RefreshActive()
+		protected virtual void RefreshBound()
 		{
 			if (raycastImage != null)
 			{
@@ -100,7 +101,7 @@ namespace Kryz.RPG.Items.Views
 				}
 				else
 				{
-					itemImage.sprite = null!;
+					itemImage.sprite = emptySprite!;
 					itemImage.color = emptyColor;
 				}
 			}
@@ -123,7 +124,7 @@ namespace Kryz.RPG.Items.Views
 			}
 		}
 
-		protected virtual void RefreshInactive()
+		protected virtual void RefreshUnbound()
 		{
 			if (raycastImage != null)
 			{
@@ -132,8 +133,8 @@ namespace Kryz.RPG.Items.Views
 
 			if (itemImage != null)
 			{
-				itemImage.sprite = disabledSprite!;
-				itemImage.color = disabledColor;
+				itemImage.sprite = unboundSprite!;
+				itemImage.color = unboundColor;
 			}
 
 			if (text != null)
