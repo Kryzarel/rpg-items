@@ -8,22 +8,22 @@ namespace Kryz.RPG.Items.Views
 	public class ItemSlotView : BaseItemSlotView, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IBeginDragHandler, IEndDragHandler, IDragHandler, IDropHandler, ISelectHandler, IDeselectHandler
 	{
 		[Header("References")]
-		[SerializeField] Image? raycastImage;
-		[SerializeField] Image? itemImage;
-		[SerializeField] TextMeshProUGUI? text;
-		[SerializeField] Selectable? selectable;
+		[SerializeField] protected Image? raycastImage;
+		[SerializeField] protected Image? itemImage;
+		[SerializeField] protected TextMeshProUGUI? text;
+		[SerializeField] protected Selectable? selectable;
 		[Header("Settings")]
-		[SerializeField] string textFormatString = "{0}";
-		[SerializeField] Color emptyColor = Color.clear;
-		[SerializeField] Color nonEmptyColor = Color.white;
-		[SerializeField] Color disabledColor = Color.gray;
-		[SerializeField] Sprite? disabledSprite;
+		[SerializeField] protected string textFormatString = "{0}";
+		[SerializeField] protected Color emptyColor = Color.clear;
+		[SerializeField] protected Color nonEmptyColor = Color.white;
+		[SerializeField] protected Color disabledColor = Color.gray;
+		[SerializeField] protected Sprite? disabledSprite;
 
-		private int cachedCount;
-		private int slotIndex = -1;
-		private IInventory? inventory;
-		private IItemSlotController? controller;
-		private ItemStack itemStack;
+		protected int cachedCount;
+		protected int slotIndex = -1;
+		protected IInventory? inventory;
+		protected IItemSlotController? controller;
+		protected ItemStack itemStack;
 
 		public override int SlotIndex => slotIndex;
 		public override IInventory? Inventory => inventory;
@@ -84,7 +84,7 @@ namespace Kryz.RPG.Items.Views
 			else RefreshInactive();
 		}
 
-		private void RefreshActive()
+		protected virtual void RefreshActive()
 		{
 			if (raycastImage != null)
 			{
@@ -123,7 +123,7 @@ namespace Kryz.RPG.Items.Views
 			}
 		}
 
-		private void RefreshInactive()
+		protected virtual void RefreshInactive()
 		{
 			if (raycastImage != null)
 			{
