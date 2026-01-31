@@ -92,7 +92,8 @@ namespace Kryz.RPG.Items.Tests
 		{
 			// Arrange
 			ItemStack[] itemStacks = new ItemStack[] { default, new(items[1]), new(items[2]) };
-			Inventory inventory = new(itemStacks);
+			Inventory inventory = new(0);
+			inventory.CopyFrom(itemStacks);
 
 			// Act
 			inventory.Size = size;
@@ -612,7 +613,8 @@ namespace Kryz.RPG.Items.Tests
 		[Test]
 		public void Move_SameInventory()
 		{
-			Inventory inventory = new(new ItemStack[] { new(items[1]), new(items[1]), new(items[2]) });
+			Inventory inventory = new(0);
+			inventory.CopyFrom(new ItemStack[] { new(items[1]), new(items[1]), new(items[2]) });
 
 			Assert.AreEqual(0, inventory.FreeSlots);
 			Assert.AreEqual(3, inventory.OccupiedSlots);
@@ -650,8 +652,11 @@ namespace Kryz.RPG.Items.Tests
 		[Test]
 		public void Move_DifferentInventories()
 		{
-			Inventory inventory1 = new(new ItemStack[] { new(items[1]), new(items[1]), new(items[2]) });
-			Inventory inventory2 = new(new ItemStack[] { new(items[1]), new(items[1], items[1].MaxStacks), new(items[2]) });
+			Inventory inventory1 = new(0);
+			inventory1.CopyFrom(new ItemStack[] { new(items[1]), new(items[1]), new(items[2]) });
+
+			Inventory inventory2 = new(0);
+			inventory2.CopyFrom(new ItemStack[] { new(items[1]), new(items[1], items[1].MaxStacks), new(items[2]) });
 
 			Assert.AreEqual(0, inventory1.FreeSlots);
 			Assert.AreEqual(3, inventory1.OccupiedSlots);

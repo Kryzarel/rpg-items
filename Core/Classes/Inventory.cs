@@ -41,13 +41,9 @@ namespace Kryz.RPG.Items
 			SetSize(numSlots);
 		}
 
-		public Inventory(ItemStack[] items, ArrayPool<ItemStack>? pool = null) : this(items.Length, pool) => CopyFrom(items);
-		public Inventory(ReadOnlySpan<ItemStack> items, ArrayPool<ItemStack>? pool = null) : this(items.Length, pool) => CopyFrom(items);
-		public Inventory(IReadOnlyList<ItemStack> items, ArrayPool<ItemStack>? pool = null) : this(items.Count, pool) => CopyFrom(items);
+		public virtual int GetMaxStacks(IItem item) => item.MaxStacks;
 
-		public int GetMaxStacks(IItem item) => item.MaxStacks;
-
-		public bool CanSwap(int index, in ItemStack stack, out ItemStack removed)
+		public virtual bool CanSwap(int index, in ItemStack stack, out ItemStack removed)
 		{
 			if (index >= 0 && index < size && (stack.Item == null || stack.Count <= GetMaxStacks(stack.Item)))
 			{
@@ -58,7 +54,7 @@ namespace Kryz.RPG.Items
 			return false;
 		}
 
-		public bool CanAdd(in ItemStack stack, out ItemStack remainder, bool allowPartial = false)
+		public virtual bool CanAdd(in ItemStack stack, out ItemStack remainder, bool allowPartial = false)
 		{
 			remainder = stack;
 
@@ -85,7 +81,7 @@ namespace Kryz.RPG.Items
 			return false;
 		}
 
-		public bool CanAdd(int index, in ItemStack stack, out ItemStack result, out ItemStack remainder, bool allowPartial = false)
+		public virtual bool CanAdd(int index, in ItemStack stack, out ItemStack result, out ItemStack remainder, bool allowPartial = false)
 		{
 			if (index < 0 || index >= size)
 			{
@@ -111,7 +107,7 @@ namespace Kryz.RPG.Items
 			return false;
 		}
 
-		public bool CanRemove(in ItemStack stack)
+		public virtual bool CanRemove(in ItemStack stack)
 		{
 			if (stack.Item == null)
 			{
@@ -131,12 +127,12 @@ namespace Kryz.RPG.Items
 			return false;
 		}
 
-		public bool CanRemove(int index, out ItemStack result, out ItemStack removed)
+		public virtual bool CanRemove(int index, out ItemStack result, out ItemStack removed)
 		{
 			return CanRemove(index, -1, out result, out removed);
 		}
 
-		public bool CanRemove(int index, int count, out ItemStack result, out ItemStack removed)
+		public virtual bool CanRemove(int index, int count, out ItemStack result, out ItemStack removed)
 		{
 			if (index < 0 || index >= size)
 			{
@@ -150,7 +146,7 @@ namespace Kryz.RPG.Items
 			return slot.TryRemove(count, out result, out removed);
 		}
 
-		public bool TrySwap(int index, in ItemStack stack, out ItemStack removed, bool forceSwap = false)
+		public virtual bool TrySwap(int index, in ItemStack stack, out ItemStack removed, bool forceSwap = false)
 		{
 			if (index >= 0 && index < size && (forceSwap || CanSwap(index, stack, out _)))
 			{
@@ -168,7 +164,7 @@ namespace Kryz.RPG.Items
 			return false;
 		}
 
-		public bool TryAdd(in ItemStack stack, out ItemStack remainder, bool allowPartial = false)
+		public virtual bool TryAdd(in ItemStack stack, out ItemStack remainder, bool allowPartial = false)
 		{
 			remainder = stack;
 
@@ -204,7 +200,7 @@ namespace Kryz.RPG.Items
 			return remainder.Count < stack.Count; // Return true if we added at least 1 item
 		}
 
-		public bool TryAdd(int index, in ItemStack stack, out ItemStack result, out ItemStack remainder, bool allowPartial = false)
+		public virtual bool TryAdd(int index, in ItemStack stack, out ItemStack result, out ItemStack remainder, bool allowPartial = false)
 		{
 			if (index < 0 || index >= size)
 			{
@@ -231,7 +227,7 @@ namespace Kryz.RPG.Items
 			return false;
 		}
 
-		public bool TryRemove(in ItemStack stack)
+		public virtual bool TryRemove(in ItemStack stack)
 		{
 			if (!CanRemove(stack))
 			{
@@ -252,12 +248,12 @@ namespace Kryz.RPG.Items
 			return true;
 		}
 
-		public bool TryRemove(int index, out ItemStack result, out ItemStack removed)
+		public virtual bool TryRemove(int index, out ItemStack result, out ItemStack removed)
 		{
 			return TryRemove(index, -1, out result, out removed);
 		}
 
-		public bool TryRemove(int index, int count, out ItemStack result, out ItemStack removed)
+		public virtual bool TryRemove(int index, int count, out ItemStack result, out ItemStack removed)
 		{
 			if (index < 0 || index >= size)
 			{
@@ -280,12 +276,12 @@ namespace Kryz.RPG.Items
 			return false;
 		}
 
-		public bool CanMove(int toIndex, IInventory fromInv, int fromIndex, bool allowSwap = false)
+		public virtual bool CanMove(int toIndex, IInventory fromInv, int fromIndex, bool allowSwap = false)
 		{
 			return IInventory.CanMove(this, toIndex, fromInv, fromIndex, allowSwap);
 		}
 
-		public bool TryMove(int toIndex, IInventory fromInv, int fromIndex, bool allowSwap = false)
+		public virtual bool TryMove(int toIndex, IInventory fromInv, int fromIndex, bool allowSwap = false)
 		{
 			return IInventory.TryMove(this, toIndex, fromInv, fromIndex, allowSwap);
 		}
