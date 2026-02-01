@@ -34,11 +34,11 @@ namespace Kryz.RPG.Items
 		public int FreeSlots => size - occupiedSlots;
 		public int OccupiedSlots => occupiedSlots;
 
-		public Inventory(int numSlots, ArrayPool<ItemStack>? pool = null)
+		public Inventory(int size, ArrayPool<ItemStack>? pool = null)
 		{
 			arrayPool = pool ?? ArrayPool<ItemStack>.Shared;
 			slots = null!;
-			SetSize(numSlots);
+			SetSize(size);
 		}
 
 		public virtual int GetMaxStacks(IItem item) => item.MaxStacks;
@@ -405,7 +405,7 @@ namespace Kryz.RPG.Items
 		IEnumerator IEnumerable.GetEnumerator() => new ArrayEnumerator<ItemStack>(slots, size);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void SetSlot(ref ItemStack slot, int index, in ItemStack stack)
+		protected void SetSlot(ref ItemStack slot, int index, in ItemStack stack)
 		{
 			if (slot.Count <= 0 && stack.Count > 0) occupiedSlots++;
 			else if (slot.Count > 0 && stack.Count <= 0) occupiedSlots--;

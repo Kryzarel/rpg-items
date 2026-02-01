@@ -79,7 +79,7 @@ namespace Kryz.RPG.Items.Views
 			}
 		}
 
-		private void RefreshVisuals()
+		protected void RefreshVisuals()
 		{
 			if (IsBound) RefreshBound();
 			else RefreshUnbound();
