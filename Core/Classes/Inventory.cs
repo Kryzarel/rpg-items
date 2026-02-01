@@ -9,11 +9,11 @@ namespace Kryz.RPG.Items
 {
 	public class Inventory : IInventory, IDisposable
 	{
-		private readonly ArrayPool<ItemStack> arrayPool;
+		protected readonly ArrayPool<ItemStack> arrayPool;
 
-		private ItemStack[] slots;
-		private int size;
-		private int occupiedSlots;
+		protected ItemStack[] slots;
+		protected int size;
+		protected int occupiedSlots;
 
 		public event IInventory.OnSlotChangedDelegate OnSlotChanged = delegate { };
 		public event IInventory.OnSizeChangedDelegate OnSizeChanged = delegate { };
