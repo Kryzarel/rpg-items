@@ -56,13 +56,19 @@ namespace Kryz.RPG.Items.Views
 			if (!ValidateSlot(itemSlotView, out int dropIndex, out IInventory? dropInventory))
 				return false;
 
-			if (dragController == null || dragController.CursorSlot == null)
+			if (dragController == null /* || dragController.CursorSlot == null */ || dragController.SourceSlot == null)
 				return false;
 
-			if (!ValidateSlot(dragController.CursorSlot, out int dragIndex, out IInventory? dragInventory))
+			// if (!ValidateSlot(dragController.CursorSlot, out int cursorIndex, out IInventory? cursorInventory))
+			// 	return false;
+
+			if (!ValidateSlot(dragController.SourceSlot, out int sourceIndex, out IInventory? sourceInventory))
 				return false;
 
-			return dropInventory.TryMove(dropIndex, dragInventory, dragIndex, allowSwap: true);
+			if (!dragController.StopDrag())
+				return false;
+
+			return dropInventory.TryMove(dropIndex, sourceInventory, sourceIndex, allowSwap: true);
 		}
 
 		protected static bool ValidateSlot(IItemSlotView itemSlotView, out int index, [MaybeNullWhen(returnValue: false)] out IInventory inventory)
