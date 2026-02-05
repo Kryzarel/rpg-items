@@ -6,7 +6,7 @@ namespace Kryz.RPG.Items
 	public interface IItemContainer : IReadOnlyList<ItemStack>
 	{
 		public delegate void OnSlotChangedDelegate(int index, ItemStack oldStack, ItemStack newStack);
-		public delegate void OnSizeChangedDelegate(int previousSize, int newSize);
+		public delegate void OnSizeChangedDelegate(int oldSize, int newSize);
 
 		event OnSlotChangedDelegate OnSlotChanged;
 		event OnSizeChangedDelegate OnSizeChanged;
@@ -23,5 +23,6 @@ namespace Kryz.RPG.Items
 
 		void ApplySlot(int index, ItemStack stack);
 		void NotifySlotChanged(int index, ItemStack oldStack, ItemStack newStack);
+		void NotifySizeChanged(int oldSize, int newSize);
 	}
 }
