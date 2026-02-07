@@ -8,6 +8,8 @@ namespace Kryz.RPG.Items
 		public readonly IItem? Item;
 		public readonly int Count;
 
+		public bool IsEmpty => Item == null || Count <= 0;
+
 		public ItemStack(IItem item) : this(item, 1) { }
 
 		public ItemStack(IItem item, int count)
