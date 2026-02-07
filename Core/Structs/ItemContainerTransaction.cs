@@ -1,4 +1,3 @@
-using System;
 using System.Diagnostics;
 using Kryz.Utils;
 
@@ -6,75 +5,35 @@ namespace Kryz.RPG.Items
 {
 	public ref struct ItemContainerTransaction
 	{
+		private readonly PooledList<IItemContainer> containers;
+		private readonly PooledList<ItemContainerTransactionContext> transactions;
 		private bool completed;
-		private ValuePooledList<SizeEdit> sizeEdits;
-		private ValuePooledList<SlotEdit> slotEdits;
 
-		public readonly ReadOnlySpan<SizeEdit> SizeEdits => sizeEdits;
-		public readonly ReadOnlySpan<SlotEdit> SlotEdits => slotEdits;
-
-		public ItemContainerTransaction(Span<SizeEdit> sizeBuffer, Span<SlotEdit> slotBuffer)
+		private ItemContainerTransaction(PooledList<IItemContainer> containers, PooledList<ItemContainerTransactionContext> transactions)
 		{
+			this.containers = containers;
+			this.transactions = transactions;
 			completed = false;
-			sizeEdits = new ValuePooledList<SizeEdit>(sizeBuffer);
-			slotEdits = new ValuePooledList<SlotEdit>(slotBuffer);
 		}
 
-		public readonly int GetSize(IItemContainer container)
+		public static ItemContainerTransaction Begin()
 		{
-			ReadOnlySpan<SizeEdit> sizeEdits = this.sizeEdits;
+			return new(PooledList<IItemContainer>.Rent(), PooledList<ItemContainerTransactionContext>.Rent());
+		}
 
-			for (int i = 0; i < sizeEdits.Length; i++)
+		public readonly ref ItemContainerTransactionContext GetContext(IItemContainer container)
+		{
+			for (int i = 0; i < containers.Count; i++)
 			{
-				ref readonly SizeEdit e = ref sizeEdits[i];
-
-				if (e.Container == container)
+				if (containers[i] == container)
 				{
-					return e.NewSize;
+					return ref transactions[i];
 				}
 			}
 
-			return container.Size;
-		}
-
-		public void SetSize(IItemContainer container, int value)
-		{
-			Span<SizeEdit> sizeEdits = this.sizeEdits;
-
-			for (int i = 0; i < sizeEdits.Length; i++)
-			{
-				ref SizeEdit e = ref sizeEdits[i];
-
-				if (e.Container == container)
-				{
-					e = new SizeEdit(container, container.Size, value);
-					return;
-				}
-			}
-
-			this.sizeEdits.Add(new SizeEdit(container, container.Size, value));
-		}
-
-		public readonly ItemStack GetSlot(IItemContainer container, int index)
-		{
-			ReadOnlySpan<SlotEdit> slotEdits = this.slotEdits;
-
-			for (int i = slotEdits.Length - 1; i >= 0; i--)
-			{
-				ref readonly SlotEdit e = ref slotEdits[i];
-
-				if (e.Container == container && e.Index == index)
-				{
-					return e.NewStack;
-				}
-			}
-
-			return container[index];
-		}
-
-		public void SetSlot(IItemContainer container, int index, ItemStack value)
-		{
-			slotEdits.Add(new SlotEdit(container, index, container[index], value));
+			containers.Add(container);
+			transactions.Add(new ItemContainerTransactionContext(container));
+			return ref transactions[^1];
 		}
 
 		public void Commit()
@@ -86,64 +45,24 @@ namespace Kryz.RPG.Items
 			}
 
 			completed = true;
-			Commit(sizeEdits, slotEdits);
+
+			for (int i = 0; i < containers.Count; i++)
+			{
+				ref readonly ItemContainerTransactionContext context = ref transactions[i];
+				containers[i].Commit(context.SlotEdits, context.SizeEdit);
+			}
 		}
 
 		public void Dispose()
 		{
 			completed = true;
-			slotEdits.Dispose();
-		}
 
-		private static void Commit(ReadOnlySpan<SizeEdit> sizeEdits, ReadOnlySpan<SlotEdit> slotEdits)
-		{
-			// First pass: apply edits
-			for (int i = 0; i < sizeEdits.Length; i++)
+			for (int i = 0; i < transactions.Count; i++)
 			{
-				ref readonly SizeEdit edit = ref sizeEdits[i];
-				edit.Container.Size = edit.NewSize;
+				transactions[i].Dispose();
 			}
-
-			for (int i = 0; i < slotEdits.Length; i++)
-			{
-				ref readonly SlotEdit edit = ref slotEdits[i];
-				edit.Container.ApplySlot(edit.Index, edit.NewStack);
-			}
-
-			// Second pass: fire events
-			for (int i = 0; i < sizeEdits.Length; i++)
-			{
-				ref readonly SizeEdit edit = ref sizeEdits[i];
-				edit.Container.NotifySizeChanged(edit.OldSize, edit.NewSize);
-			}
-
-			using ValuePooledList<(IItemContainer, int)> notified = new(slotEdits.Length);
-
-			// Handle slot events in reverse order to ensure only the last write is notified
-			for (int i = slotEdits.Length - 1; i >= 0; i--)
-			{
-				ref readonly SlotEdit edit = ref slotEdits[i];
-
-				if (!AlreadyNotified(edit, notified.AsSpan()))
-				{
-					notified.Add((edit.Container, edit.Index));
-					edit.Container.NotifySlotChanged(edit.Index, edit.OldStack, edit.NewStack);
-				}
-			}
-		}
-
-		private static bool AlreadyNotified(in SlotEdit current, ReadOnlySpan<(IItemContainer, int)> notified)
-		{
-			for (int i = 0; i < notified.Length; i++)
-			{
-				ref readonly (IItemContainer, int) other = ref notified[i];
-
-				if (other.Item1 == current.Container && other.Item2 == current.Index)
-				{
-					return true;
-				}
-			}
-			return false;
+			containers.Dispose();
+			transactions.Dispose();
 		}
 	}
 }
