@@ -24,7 +24,7 @@ namespace Kryz.RPG.Items
 			}
 		}
 
-		public ReadOnlySpan<ItemStack> Slots => slots[..size];
+		public ReadOnlySpan<ItemStack> Slots => slots.AsSpan(0, size);
 
 		public int Count => size;
 		public int Size { get => size; set => SetSize(value); }
@@ -266,10 +266,10 @@ namespace Kryz.RPG.Items
 		public virtual void Sort<TComparer>(TComparer comparer) where TComparer : IComparer<ItemStack>
 		{
 			ItemStack[] original = arrayPool.Rent(size);
-			Array.Copy(slots, 0, original, 0, size);
+			Array.Copy(slots, original, size);
 
-			// We DON'T use the default Array.Sort because it is unstable. I think a stable sorting algorithm is very valuable here.
-			// Our version also tends to be faster in general, so that's nice.
+			// We DON'T use the default Array.Sort because it is unstable. I think stable sorting is very valuable here.
+			// Our version also tends to be just as fast, if not slightly faster, which is nice.
 			TimSortLite.Sort(slots.AsSpan(0, size), comparer);
 
 			for (int i = 0; i < size; i++)
@@ -279,7 +279,7 @@ namespace Kryz.RPG.Items
 
 				if (slot != originalSlot)
 				{
-					OnSlotChanged(i, slot, originalSlot);
+					OnSlotChanged(i, slot);
 				}
 			}
 
@@ -287,40 +287,42 @@ namespace Kryz.RPG.Items
 			arrayPool.Return(original);
 		}
 
-		public virtual void Commit(ReadOnlySpan<SlotEdit> slotEdits, SizeEdit? sizeEdit)
+		public virtual void Commit(ReadOnlySpan<SlotEdit> slotEdits, int? sizeEdit)
 		{
 			// First pass: Apply edits
 			if (sizeEdit.HasValue)
 			{
-				SetSize(sizeEdit.Value.NewSize);
+				SetSize(sizeEdit.Value);
 			}
 
 			for (int i = 0; i < slotEdits.Length; i++)
 			{
 				ref readonly SlotEdit edit = ref slotEdits[i];
 
-				if (edit.Index < size)
+				if ((uint)edit.Index < (uint)size)
 				{
-					slots[edit.Index] = edit.NewStack;
+					ref ItemStack slot = ref slots[edit.Index];
 
-					if (edit.OldStack.Count <= 0 && edit.NewStack.Count > 0) occupiedSlots++;
-					else if (edit.OldStack.Count > 0 && edit.NewStack.Count <= 0) occupiedSlots--;
+					if (slot.Count <= 0 && edit.NewStack.Count > 0) occupiedSlots++;
+					else if (slot.Count > 0 && edit.NewStack.Count <= 0) occupiedSlots--;
+
+					slot = edit.NewStack;
 				}
 			}
 
 			// Second pass: Notify
 			if (sizeEdit.HasValue)
 			{
-				OnSizeChanged(sizeEdit.Value.OldSize, sizeEdit.Value.NewSize);
+				OnSizeChanged(size);
 			}
 
 			for (int i = 0; i < slotEdits.Length; i++)
 			{
 				ref readonly SlotEdit edit = ref slotEdits[i];
 
-				if (edit.Index < size)
+				if ((uint)edit.Index < (uint)size)
 				{
-					OnSlotChanged(edit.Index, edit.OldStack, edit.NewStack);
+					OnSlotChanged(edit.Index, slots[edit.Index]);
 				}
 			}
 		}

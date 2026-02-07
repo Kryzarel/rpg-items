@@ -8,13 +8,13 @@ namespace Kryz.RPG.Items
 	{
 		private readonly PooledList<int> editIndexes;
 		private readonly PooledList<SlotEdit> slotEdits;
-		private SizeEdit? sizeEdit;
+		private int? sizeEdit;
 		private bool completed;
 
 		public readonly IItemContainer Container;
 
 		public readonly ReadOnlySpan<SlotEdit> SlotEdits => slotEdits.AsSpan();
-		public readonly SizeEdit? SizeEdit => sizeEdit;
+		public readonly int? SizeEdit => sizeEdit;
 
 		public ItemContainerTransaction(IItemContainer container)
 		{
@@ -28,12 +28,15 @@ namespace Kryz.RPG.Items
 
 		public readonly int GetSize()
 		{
-			return sizeEdit.HasValue ? sizeEdit.Value.NewSize : Container.Size;
+			return sizeEdit ?? Container.Size;
 		}
 
 		public void SetSize(int size)
 		{
-			sizeEdit = new SizeEdit(Container.Size, size);
+			if (GetSize() == size)
+				return;
+
+			sizeEdit = size;
 			editIndexes.SetCount(size);
 		}
 
@@ -45,7 +48,10 @@ namespace Kryz.RPG.Items
 
 		public readonly void SetSlot(int index, ItemStack value)
 		{
-			SlotEdit edit = new(index, Container[index], value);
+			if (GetSlot(index) == value)
+				return;
+
+			SlotEdit edit = new(index, value);
 			ref int editIndex = ref editIndexes[index];
 
 			if (editIndex > 0)

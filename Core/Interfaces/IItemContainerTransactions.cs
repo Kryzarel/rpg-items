@@ -51,6 +51,6 @@ namespace Kryz.RPG.Items
 		/// </summary>
 		/// <param name="slotEdits">The changes to make to the item slots.</param>
 		/// <param name="sizeEdit">The change to make to the size of the container.</param>
-		void Commit(ReadOnlySpan<SlotEdit> slotEdits, SizeEdit? sizeEdit);
+		void Commit(ReadOnlySpan<SlotEdit> slotEdits, int? sizeEdit);
 	}
 }
