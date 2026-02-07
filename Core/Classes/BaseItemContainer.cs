@@ -14,16 +14,25 @@ namespace Kryz.RPG.Items
 		protected int size;
 		protected int occupiedSlots;
 
-		public virtual ItemStack this[int index] => index >= 0 && index < size ? slots[index] : throw new IndexOutOfRangeException();
-		public virtual ReadOnlySpan<ItemStack> Slots => slots[..size];
+		public ItemStack this[int index]
+		{
+			get
+			{
+				if ((uint)index >= (uint)size)
+					throw new IndexOutOfRangeException("Index was out of range. Must be non-negative and less than the size of the collection.");
+				return slots[index];
+			}
+		}
 
-		public virtual int Count => size;
-		public virtual int Size { get => size; set => SetSize(value); }
-		public virtual int FreeSlots => size - occupiedSlots;
-		public virtual int OccupiedSlots => occupiedSlots;
+		public ReadOnlySpan<ItemStack> Slots => slots[..size];
 
-		public virtual event IItemContainer.OnSlotChangedDelegate OnSlotChanged = delegate { };
-		public virtual event IItemContainer.OnSizeChangedDelegate OnSizeChanged = delegate { };
+		public int Count => size;
+		public int Size { get => size; set => SetSize(value); }
+		public int FreeSlots => size - occupiedSlots;
+		public int OccupiedSlots => occupiedSlots;
+
+		public event IItemContainer.OnSlotChangedDelegate OnSlotChanged = delegate { };
+		public event IItemContainer.OnSizeChangedDelegate OnSizeChanged = delegate { };
 
 		public BaseItemContainer(int size, ArrayPool<ItemStack>? pool = null)
 		{
@@ -118,7 +127,7 @@ namespace Kryz.RPG.Items
 				return false;
 			}
 
-			if (remainder != default && (!TryAdd(txFrom, fromIndex, remainder, out _, out ItemStack rem) || rem != default))
+			if (!remainder.IsEmpty && (!TryAdd(txFrom, fromIndex, remainder, out _, out ItemStack rem) || !rem.IsEmpty))
 			{
 				return false;
 			}
@@ -140,21 +149,21 @@ namespace Kryz.RPG.Items
 
 			if (to.TryAdd(txTo, toIndex, fromSlot, out _, out ItemStack remainder))
 			{
-				if (remainder == default || TryAdd(txFrom, fromIndex, remainder, out _, out remainder) && remainder == default)
+				if (remainder.IsEmpty || TryAdd(txFrom, fromIndex, remainder, out _, out remainder) && remainder.IsEmpty)
 				{
 					txFrom.Commit();
 					txTo.Commit();
 					return true;
 				}
 			}
-			else if (result == default && to.TryRemove(txTo, toIndex, -1, out _, out ItemStack toSlot))
+			else if (result.IsEmpty && to.TryRemove(txTo, toIndex, -1, out _, out ItemStack toSlot))
 			{
-				if (!TryAdd(txFrom, fromIndex, toSlot, out _, out remainder) || remainder != default)
+				if (!TryAdd(txFrom, fromIndex, toSlot, out _, out remainder) || !remainder.IsEmpty)
 				{
 					return false;
 				}
 
-				if (!to.TryAdd(txTo, toIndex, fromSlot, out _, out remainder) || remainder != default)
+				if (!to.TryAdd(txTo, toIndex, fromSlot, out _, out remainder) || !remainder.IsEmpty)
 				{
 					return false;
 				}
@@ -192,7 +201,7 @@ namespace Kryz.RPG.Items
 			{
 				ItemStack slot = slots[i];
 
-				if (slot != default)
+				if (!slot.IsEmpty)
 				{
 					transaction.SetSlot(i, default);
 				}
@@ -226,7 +235,7 @@ namespace Kryz.RPG.Items
 			{
 				ItemStack slot = slots[i];
 
-				if (slot != default)
+				if (!slot.IsEmpty)
 				{
 					transaction.SetSlot(i, default);
 				}
@@ -243,7 +252,7 @@ namespace Kryz.RPG.Items
 			{
 				ItemStack slot = slots[i];
 
-				if (slot != default)
+				if (!slot.IsEmpty)
 				{
 					transaction.SetSlot(i, default);
 				}
@@ -428,7 +437,7 @@ namespace Kryz.RPG.Items
 				for (int i = value; i < size; i++)
 				{
 					// But there are items in the slots that would be removed
-					if (transaction.GetSlot(i) != default)
+					if (!transaction.GetSlot(i).IsEmpty)
 					{
 						// Don't shrink
 						return false;
