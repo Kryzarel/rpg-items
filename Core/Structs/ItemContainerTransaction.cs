@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using Kryz.Utils;
 
@@ -5,35 +6,57 @@ namespace Kryz.RPG.Items
 {
 	public ref struct ItemContainerTransaction
 	{
-		private readonly PooledList<IItemContainer> containers;
-		private readonly PooledList<ItemContainerTransactionContext> transactions;
+		private readonly PooledList<int> editIndexes;
+		private readonly PooledList<SlotEdit> slotEdits;
+		private SizeEdit? sizeEdit;
 		private bool completed;
 
-		private ItemContainerTransaction(PooledList<IItemContainer> containers, PooledList<ItemContainerTransactionContext> transactions)
+		public readonly IItemContainer Container;
+
+		public readonly ReadOnlySpan<SlotEdit> SlotEdits => slotEdits.AsSpan();
+		public readonly SizeEdit? SizeEdit => sizeEdit;
+
+		public ItemContainerTransaction(IItemContainer container)
 		{
-			this.containers = containers;
-			this.transactions = transactions;
+			Container = container;
+			editIndexes = PooledList<int>.Rent(container.Size);
+			editIndexes.SetCount(container.Size);
+			slotEdits = PooledList<SlotEdit>.Rent();
+			sizeEdit = default;
 			completed = false;
 		}
 
-		public static ItemContainerTransaction Begin()
+		public readonly int GetSize()
 		{
-			return new(PooledList<IItemContainer>.Rent(), PooledList<ItemContainerTransactionContext>.Rent());
+			return sizeEdit.HasValue ? sizeEdit.Value.NewSize : Container.Size;
 		}
 
-		public readonly ref ItemContainerTransactionContext GetContext(IItemContainer container)
+		public void SetSize(int size)
 		{
-			for (int i = 0; i < containers.Count; i++)
-			{
-				if (containers[i] == container)
-				{
-					return ref transactions[i];
-				}
-			}
+			sizeEdit = new SizeEdit(Container.Size, size);
+			editIndexes.SetCount(size);
+		}
 
-			containers.Add(container);
-			transactions.Add(new ItemContainerTransactionContext(container));
-			return ref transactions[^1];
+		public readonly ItemStack GetSlot(int index)
+		{
+			int editIndex = editIndexes[index];
+			return editIndex > 0 ? slotEdits[editIndex - 1].NewStack : Container[index];
+		}
+
+		public readonly void SetSlot(int index, ItemStack value)
+		{
+			SlotEdit edit = new(index, Container[index], value);
+			ref int editIndex = ref editIndexes[index];
+
+			if (editIndex > 0)
+			{
+				slotEdits[editIndex - 1] = edit;
+			}
+			else
+			{
+				slotEdits.Add(edit);
+				editIndex = slotEdits.Count;
+			}
 		}
 
 		public void Commit()
@@ -45,24 +68,14 @@ namespace Kryz.RPG.Items
 			}
 
 			completed = true;
-
-			for (int i = 0; i < containers.Count; i++)
-			{
-				ref readonly ItemContainerTransactionContext context = ref transactions[i];
-				containers[i].Commit(context.SlotEdits, context.SizeEdit);
-			}
+			Container.Commit(SlotEdits, SizeEdit);
 		}
 
 		public void Dispose()
 		{
 			completed = true;
-
-			for (int i = 0; i < transactions.Count; i++)
-			{
-				transactions[i].Dispose();
-			}
-			containers.Dispose();
-			transactions.Dispose();
+			editIndexes.Dispose();
+			slotEdits.Dispose();
 		}
 	}
 }

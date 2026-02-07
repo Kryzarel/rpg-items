@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Kryz.RPG.Items
 {
-	public interface IItemContainer : IReadOnlyList<ItemStack>
+	public interface IItemContainer : IItemContainerTransactions, IReadOnlyList<ItemStack>
 	{
 		public delegate void OnSlotChangedDelegate(int index, ItemStack oldStack, ItemStack newStack);
 		public delegate void OnSizeChangedDelegate(int oldSize, int newSize);
@@ -11,26 +11,51 @@ namespace Kryz.RPG.Items
 		event OnSlotChangedDelegate OnSlotChanged;
 		event OnSizeChangedDelegate OnSizeChanged;
 
-		public IItemContainerStrategy Strategy { get; set; }
-
 		public ReadOnlySpan<ItemStack> Slots { get; }
 
 		int Size { get; }
 		int FreeSlots { get; }
 		int OccupiedSlots { get; }
 
+		/// <summary>
+		/// Get the maximum stack size of a particular item.
+		/// </summary>
+		/// <param name="item">The item to check.</param>
+		/// <returns>The maximum stack size for the <paramref name="item"/>.</returns>
+		int GetMaxStacks(IItem item);
+
+		/// <summary>
+		/// Check if the slot at <paramref name="index"/> can receive the specified <see cref="ItemStack"/>.
+		/// </summary>
+		/// <param name="index">The slot index to check.</param>
+		/// <param name="stack">The <see cref="ItemStack"/> to check.</param>
+		/// <returns><see cref="true"/> if the slot can receive the <paramref name="stack"/>. Otherwise <see cref="false"/>.</returns>
+		bool CanReceive(int index, in ItemStack stack);
+
+		/// <summary>
+		/// Check if the slot at <paramref name="index"/> can remove any of its contents.
+		/// </summary>
+		/// <param name="index">The slot index to check.</param>
+		/// <returns><see cref="true"/> items can be removed from the slot. Otherwise <see cref="false"/>.</returns>
+		bool CanRemove(int index);
+
+		/// <summary>
+		/// Try to set the size of the container.
+		/// </summary>
+		/// <param name="value">The size to set.</param>
+		/// <returns><see cref="true"/> if the size was set successfully. Otherwise <see cref="false"/>.</returns>
 		bool TrySetSize(int value);
 
 		/// <summary>
-		/// Try to add an item stack to any inventory slots that can receive it.
+		/// Try to add an item stack to any slots that can receive it.
 		/// </summary>
 		/// <param name="stack">The item stack to add.</param>
 		/// <param name="remainder">If <paramref name="stack"/> could not be added in its entirety, this will contain how much remains of the original stack.</param>
-		/// <returns><see cref="true"/> if the inventory had enough space for at least 1 item. Otherwise <see cref="false"/>.</returns>
+		/// <returns><see cref="true"/> if the container had enough space for at least 1 item. Otherwise <see cref="false"/>.</returns>
 		bool TryAdd(in ItemStack stack, out ItemStack remainder);
 
 		/// <summary>
-		/// Try to add an item stack to a specific inventory slot.
+		/// Try to add an item stack to a specific slot.
 		/// </summary>
 		/// <param name="index">The slot index to add to.</param>
 		/// <param name="stack">The item stack to add.</param>
@@ -40,14 +65,14 @@ namespace Kryz.RPG.Items
 		bool TryAdd(int index, in ItemStack stack, out ItemStack result, out ItemStack remainder);
 
 		/// <summary>
-		/// Try to remove a certain amount of a specific item from the inventory.
+		/// Try to remove a certain amount of a specific item from the container.
 		/// </summary>
 		/// <param name="stack">The item stack to remove.</param>
-		/// <returns><see cref="true"/> if the inventory had enough of the specified item and it was removed. Otherwise <see cref="false"/>.</returns>
+		/// <returns><see cref="true"/> if the container had enough of the specified item and it was removed. Otherwise <see cref="false"/>.</returns>
 		bool TryRemove(in ItemStack stack);
 
 		/// <summary>
-		/// Try to remove a certain amount of items from a specific inventory slot.
+		/// Try to remove a certain amount of items from a specific slot.
 		/// </summary>
 		/// <param name="index">The slot index to remove from.</param>
 		/// <param name="count">The amount of items to remove. Passing in a negative number removes the entire stack.</param>
@@ -57,7 +82,7 @@ namespace Kryz.RPG.Items
 		bool TryRemove(int index, int count, out ItemStack result, out ItemStack removed);
 
 		/// <summary>
-		/// Try to move a certain amount of items from a specific inventory slot to another <see cref="IItemContainer"/>.
+		/// Try to move a certain amount of items from a specific slot to another <see cref="IItemContainer"/>.
 		/// </summary>
 		/// <param name="fromIndex">The slot index to move from.</param>
 		/// <param name="count">The amount of items to move. Passing in a negative number moves the entire stack.</param>
@@ -66,7 +91,7 @@ namespace Kryz.RPG.Items
 		bool TryMove(int fromIndex, int count, IItemContainer to);
 
 		/// <summary>
-		/// Try to move a certain amount of items from a specific inventory slot to another slot of an <see cref="IItemContainer"/>.
+		/// Try to move a certain amount of items from a specific slot to another slot of an <see cref="IItemContainer"/>.
 		/// </summary>
 		/// <param name="fromIndex">The slot index to move from.</param>
 		/// <param name="count">The amount of items to move. Passing in a negative number moves the entire stack.</param>
@@ -94,7 +119,5 @@ namespace Kryz.RPG.Items
 		void Sort();
 
 		void Sort<TComparer>(TComparer comparer) where TComparer : IComparer<ItemStack>;
-
-		void Commit(ReadOnlySpan<SlotEdit> slotEdits, SizeEdit? sizeEdit);
 	}
 }

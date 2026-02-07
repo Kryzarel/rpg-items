@@ -10,14 +10,12 @@ namespace Kryz.RPG.Items
 	{
 		protected readonly ArrayPool<ItemStack> arrayPool;
 
-		protected IItemContainerStrategy strategy;
 		protected ItemStack[] slots;
 		protected int size;
 		protected int occupiedSlots;
 
 		public virtual ItemStack this[int index] => index >= 0 && index < size ? slots[index] : throw new IndexOutOfRangeException();
 		public virtual ReadOnlySpan<ItemStack> Slots => slots[..size];
-		public virtual IItemContainerStrategy Strategy { get => strategy; set => strategy = value; }
 
 		public virtual int Count => size;
 		public virtual int Size { get => size; set => SetSize(value); }
@@ -27,19 +25,24 @@ namespace Kryz.RPG.Items
 		public virtual event IItemContainer.OnSlotChangedDelegate OnSlotChanged = delegate { };
 		public virtual event IItemContainer.OnSizeChangedDelegate OnSizeChanged = delegate { };
 
-		public BaseItemContainer(int size, IItemContainerStrategy strategy, ArrayPool<ItemStack>? pool = null)
+		public BaseItemContainer(int size, ArrayPool<ItemStack>? pool = null)
 		{
 			arrayPool = pool ?? ArrayPool<ItemStack>.Shared;
-			this.strategy = strategy;
 			slots = null!;
 			SetSize(size);
 		}
 
+		public virtual int GetMaxStacks(IItem item) => item.MaxStacks;
+
+		public virtual bool CanReceive(int index, in ItemStack stack) => true;
+
+		public virtual bool CanRemove(int index) => true;
+
 		public virtual bool TrySetSize(int value)
 		{
-			using ItemContainerTransaction transaction = ItemContainerTransaction.Begin();
+			using ItemContainerTransaction transaction = new(this);
 
-			if (!strategy.TrySetSize(ref transaction.GetContext(this), value))
+			if (!TrySetSize(transaction, value))
 			{
 				return false;
 			}
@@ -50,9 +53,9 @@ namespace Kryz.RPG.Items
 
 		public virtual bool TryAdd(in ItemStack stack, out ItemStack remainder)
 		{
-			using ItemContainerTransaction transaction = ItemContainerTransaction.Begin();
+			using ItemContainerTransaction transaction = new(this);
 
-			if (!strategy.TryAdd(ref transaction.GetContext(this), stack, out remainder))
+			if (!TryAdd(transaction, stack, out remainder))
 			{
 				return false;
 			}
@@ -63,9 +66,9 @@ namespace Kryz.RPG.Items
 
 		public virtual bool TryAdd(int index, in ItemStack stack, out ItemStack result, out ItemStack remainder)
 		{
-			using ItemContainerTransaction transaction = ItemContainerTransaction.Begin();
+			using ItemContainerTransaction transaction = new(this);
 
-			if (!strategy.TryAdd(ref transaction.GetContext(this), index, stack, out result, out remainder))
+			if (!TryAdd(transaction, index, stack, out result, out remainder))
 			{
 				return false;
 			}
@@ -76,9 +79,9 @@ namespace Kryz.RPG.Items
 
 		public virtual bool TryRemove(in ItemStack stack)
 		{
-			using ItemContainerTransaction transaction = ItemContainerTransaction.Begin();
+			using ItemContainerTransaction transaction = new(this);
 
-			if (!strategy.TryRemove(ref transaction.GetContext(this), stack))
+			if (!TryRemove(transaction, stack))
 			{
 				return false;
 			}
@@ -89,9 +92,9 @@ namespace Kryz.RPG.Items
 
 		public virtual bool TryRemove(int index, int count, out ItemStack result, out ItemStack removed)
 		{
-			using ItemContainerTransaction transaction = ItemContainerTransaction.Begin();
+			using ItemContainerTransaction transaction = new(this);
 
-			if (!strategy.TryRemove(ref transaction.GetContext(this), index, count, out result, out removed))
+			if (!TryRemove(transaction, index, count, out result, out removed))
 			{
 				return false;
 			}
@@ -102,61 +105,62 @@ namespace Kryz.RPG.Items
 
 		public virtual bool TryMove(int fromIndex, int count, IItemContainer to)
 		{
-			using ItemContainerTransaction t = ItemContainerTransaction.Begin();
+			using ItemContainerTransaction txFrom = new(this);
+			using ItemContainerTransaction txTo = new(to);
 
-			if (!strategy.TryRemove(ref t.GetContext(this), fromIndex, count, out _, out ItemStack removed))
+			if (!TryRemove(txFrom, fromIndex, count, out _, out ItemStack removed))
 			{
 				return false;
 			}
 
-			if (!to.Strategy.TryAdd(ref t.GetContext(to), removed, out ItemStack remainder))
+			if (!to.TryAdd(txTo, removed, out ItemStack remainder))
 			{
 				return false;
 			}
 
-			if (remainder != default && (!strategy.TryAdd(ref t.GetContext(this), fromIndex, remainder, out _, out ItemStack rem) || rem != default))
+			if (remainder != default && (!TryAdd(txFrom, fromIndex, remainder, out _, out ItemStack rem) || rem != default))
 			{
 				return false;
 			}
 
-			t.Commit();
+			txFrom.Commit();
+			txTo.Commit();
 			return true;
 		}
 
 		public virtual bool TryMove(int fromIndex, int count, IItemContainer to, int toIndex)
 		{
-			using ItemContainerTransaction t = ItemContainerTransaction.Begin();
+			using ItemContainerTransaction txFrom = new(this);
+			using ItemContainerTransaction txTo = new(to);
 
-			ref ItemContainerTransactionContext fromCtx = ref t.GetContext(this);
-
-			if (!strategy.TryRemove(ref fromCtx, fromIndex, count, out ItemStack result, out ItemStack fromSlot))
+			if (!TryRemove(txFrom, fromIndex, count, out ItemStack result, out ItemStack fromSlot))
 			{
 				return false;
 			}
 
-			ref ItemContainerTransactionContext toCtx = ref t.GetContext(to);
-
-			if (to.Strategy.TryAdd(ref toCtx, toIndex, fromSlot, out _, out ItemStack remainder))
+			if (to.TryAdd(txTo, toIndex, fromSlot, out _, out ItemStack remainder))
 			{
-				if (remainder == default || strategy.TryAdd(ref fromCtx, fromIndex, remainder, out _, out remainder) && remainder == default)
+				if (remainder == default || TryAdd(txFrom, fromIndex, remainder, out _, out remainder) && remainder == default)
 				{
-					t.Commit();
+					txFrom.Commit();
+					txTo.Commit();
 					return true;
 				}
 			}
-			else if (result == default && to.Strategy.TryRemove(ref toCtx, toIndex, -1, out _, out ItemStack toSlot))
+			else if (result == default && to.TryRemove(txTo, toIndex, -1, out _, out ItemStack toSlot))
 			{
-				if (!strategy.TryAdd(ref fromCtx, fromIndex, toSlot, out _, out remainder) || remainder != default)
+				if (!TryAdd(txFrom, fromIndex, toSlot, out _, out remainder) || remainder != default)
 				{
 					return false;
 				}
 
-				if (!to.Strategy.TryAdd(ref toCtx, toIndex, fromSlot, out _, out remainder) || remainder != default)
+				if (!to.TryAdd(txTo, toIndex, fromSlot, out _, out remainder) || remainder != default)
 				{
 					return false;
 				}
 
-				t.Commit();
+				txFrom.Commit();
+				txTo.Commit();
 				return true;
 			}
 
@@ -165,13 +169,12 @@ namespace Kryz.RPG.Items
 
 		public virtual void CopyFrom(ReadOnlySpan<ItemStack> stacks)
 		{
-			using ItemContainerTransaction transaction = ItemContainerTransaction.Begin();
-			ref ItemContainerTransactionContext ctx = ref transaction.GetContext(this);
+			using ItemContainerTransaction transaction = new(this);
 			int count = stacks.Length;
 
 			if (size < count)
 			{
-				ctx.SetSize(count);
+				transaction.SetSize(count);
 			}
 
 			for (int i = 0; i < count; i++)
@@ -181,7 +184,7 @@ namespace Kryz.RPG.Items
 
 				if (slot != stack)
 				{
-					ctx.SetSlot(i, stack);
+					transaction.SetSlot(i, stack);
 				}
 			}
 
@@ -191,7 +194,7 @@ namespace Kryz.RPG.Items
 
 				if (slot != default)
 				{
-					ctx.SetSlot(i, default);
+					transaction.SetSlot(i, default);
 				}
 			}
 
@@ -200,13 +203,12 @@ namespace Kryz.RPG.Items
 
 		public virtual void CopyFrom(IReadOnlyList<ItemStack> stacks)
 		{
-			using ItemContainerTransaction transaction = ItemContainerTransaction.Begin();
-			ref ItemContainerTransactionContext ctx = ref transaction.GetContext(this);
+			using ItemContainerTransaction transaction = new(this);
 			int count = stacks.Count;
 
 			if (size < count)
 			{
-				ctx.SetSize(count);
+				transaction.SetSize(count);
 			}
 
 			for (int i = 0; i < count; i++)
@@ -216,7 +218,7 @@ namespace Kryz.RPG.Items
 
 				if (slot != stack)
 				{
-					ctx.SetSlot(i, stack);
+					transaction.SetSlot(i, stack);
 				}
 			}
 
@@ -226,7 +228,7 @@ namespace Kryz.RPG.Items
 
 				if (slot != default)
 				{
-					ctx.SetSlot(i, default);
+					transaction.SetSlot(i, default);
 				}
 			}
 
@@ -235,8 +237,7 @@ namespace Kryz.RPG.Items
 
 		public virtual void Clear()
 		{
-			using ItemContainerTransaction transaction = ItemContainerTransaction.Begin();
-			ref ItemContainerTransactionContext ctx = ref transaction.GetContext(this);
+			using ItemContainerTransaction transaction = new(this);
 
 			for (int i = 0; i < size; i++)
 			{
@@ -244,7 +245,7 @@ namespace Kryz.RPG.Items
 
 				if (slot != default)
 				{
-					ctx.SetSlot(i, default);
+					transaction.SetSlot(i, default);
 				}
 			}
 
@@ -313,6 +314,130 @@ namespace Kryz.RPG.Items
 					OnSlotChanged(edit.Index, edit.OldStack, edit.NewStack);
 				}
 			}
+		}
+
+		public virtual bool TryAdd(ItemContainerTransaction transaction, in ItemStack stack, out ItemStack remainder)
+		{
+			remainder = stack;
+
+			if (stack.Item == null)
+			{
+				return false;
+			}
+
+			int maxCount = GetMaxStacks(stack.Item);
+			int size = transaction.GetSize();
+
+			// First, try adding to slots that already have the same item
+			for (int i = 0; i < size && remainder.Count > 0; i++)
+			{
+				ItemStack slot = transaction.GetSlot(i);
+
+				if (slot.Item == stack.Item && CanReceive(i, stack) && slot.TryAdd(stack, out ItemStack result, out remainder, maxCount))
+				{
+					transaction.SetSlot(i, result);
+				}
+			}
+
+			// Then, try adding to empty slots
+			for (int i = 0; i < size && remainder.Count > 0; i++)
+			{
+				ItemStack slot = transaction.GetSlot(i);
+
+				if (slot.Item == null && CanReceive(i, stack) && slot.TryAdd(stack, out ItemStack result, out remainder, maxCount))
+				{
+					transaction.SetSlot(i, result);
+				}
+			}
+
+			return remainder.Count < stack.Count; // Return true if we added at least 1 item
+		}
+
+		public virtual bool TryAdd(ItemContainerTransaction transaction, int index, in ItemStack stack, out ItemStack result, out ItemStack remainder)
+		{
+			ItemStack slot = transaction.GetSlot(index);
+
+			if (stack.Item != null && CanReceive(index, stack) && slot.TryAdd(stack, out result, out remainder, GetMaxStacks(stack.Item)))
+			{
+				transaction.SetSlot(index, result);
+				return true;
+			}
+
+			remainder = stack;
+			result = slot;
+			return false;
+		}
+
+		public virtual bool TryRemove(ItemContainerTransaction transaction, in ItemStack stack)
+		{
+			if (stack.Item == null)
+			{
+				return false;
+			}
+
+			int size = transaction.GetSize();
+
+			for (int i = 0, required = stack.Count; i < size; i++)
+			{
+				ItemStack slot = transaction.GetSlot(i);
+
+				if (slot.Item == stack.Item && CanRemove(i) && slot.TryRemove(Math.Min(required, slot.Count), out ItemStack result, out ItemStack removed))
+				{
+					transaction.SetSlot(i, result);
+					required -= removed.Count;
+
+					if (required <= 0)
+					{
+						return true;
+					}
+				}
+			}
+
+			return false;
+		}
+
+		public virtual bool TryRemove(ItemContainerTransaction transaction, int index, int count, out ItemStack result, out ItemStack removed)
+		{
+			ItemStack slot = transaction.GetSlot(index);
+
+			if (count < 0) count = slot.Count;
+
+			if (CanRemove(index) && slot.TryRemove(count, out result, out removed))
+			{
+				transaction.SetSlot(index, result);
+				return true;
+			}
+
+			removed = default;
+			result = slot;
+			return false;
+		}
+
+		public virtual bool TrySetSize(ItemContainerTransaction transaction, int value)
+		{
+			int size = transaction.GetSize();
+
+			if (value == size)
+			{
+				return false;
+			}
+
+			// If we're shrinking the container
+			if (value < size)
+			{
+				for (int i = value; i < size; i++)
+				{
+					// But there are items in the slots that would be removed
+					if (transaction.GetSlot(i) != default)
+					{
+						// Don't shrink
+						return false;
+					}
+				}
+			}
+
+			transaction.SetSize(value);
+			return true;
 		}
 
 		public virtual ArrayEnumerator<ItemStack> GetEnumerator() => new(slots, size);
