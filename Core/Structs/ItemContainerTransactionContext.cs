@@ -6,6 +6,7 @@ namespace Kryz.RPG.Items
 	public struct ItemContainerTransactionContext
 	{
 		private readonly IItemContainer container;
+		private readonly PooledList<int> editIndexes;
 		private readonly PooledList<SlotEdit> slotEdits;
 		private SizeEdit? sizeEdit;
 
@@ -15,6 +16,8 @@ namespace Kryz.RPG.Items
 		public ItemContainerTransactionContext(IItemContainer container)
 		{
 			this.container = container;
+			editIndexes = PooledList<int>.Rent(container.Size);
+			editIndexes.SetCount(container.Size);
 			slotEdits = PooledList<SlotEdit>.Rent();
 			sizeEdit = default;
 		}
@@ -27,44 +30,34 @@ namespace Kryz.RPG.Items
 		public void SetSize(int size)
 		{
 			sizeEdit = new SizeEdit(container.Size, size);
+			editIndexes.SetCount(size);
 		}
 
 		public readonly ItemStack GetSlot(int index)
 		{
-			ReadOnlySpan<SlotEdit> slotEdits = this.slotEdits.AsSpan();
-
-			for (int i = 0; i < slotEdits.Length; i++)
-			{
-				ref readonly SlotEdit edit = ref slotEdits[i];
-				if (edit.Index == index)
-				{
-					return edit.NewStack;
-				}
-			}
-
-			return container[index];
+			int editIndex = editIndexes[index];
+			return editIndex > 0 ? slotEdits[editIndex - 1].NewStack : container[index];
 		}
 
 		public readonly void SetSlot(int index, ItemStack value)
 		{
-			SlotEdit slotEdit = new(index, container[index], value);
-			Span<SlotEdit> slotEdits = this.slotEdits.AsSpan();
+			SlotEdit edit = new(index, container[index], value);
+			ref int editIndex = ref editIndexes[index];
 
-			for (int i = 0; i < slotEdits.Length; i++)
+			if (editIndex > 0)
 			{
-				ref SlotEdit edit = ref slotEdits[i];
-				if (edit.Index == index)
-				{
-					edit = slotEdit;
-					return;
-				}
+				slotEdits[editIndex - 1] = edit;
 			}
-
-			this.slotEdits.Add(slotEdit);
+			else
+			{
+				slotEdits.Add(edit);
+				editIndex = slotEdits.Count;
+			}
 		}
 
 		public readonly void Dispose()
 		{
+			editIndexes.Dispose();
 			slotEdits.Dispose();
 		}
 	}

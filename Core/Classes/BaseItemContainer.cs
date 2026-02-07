@@ -9,15 +9,15 @@ namespace Kryz.RPG.Items
 	public abstract class BaseItemContainer : IItemContainer
 	{
 		protected readonly ArrayPool<ItemStack> arrayPool;
-		protected readonly IItemContainerStrategy strategy;
 
+		protected IItemContainerStrategy strategy;
 		protected ItemStack[] slots;
 		protected int size;
 		protected int occupiedSlots;
 
 		public virtual ItemStack this[int index] => index >= 0 && index < size ? slots[index] : throw new IndexOutOfRangeException();
 		public virtual ReadOnlySpan<ItemStack> Slots => slots[..size];
-		public virtual IItemContainerStrategy Strategy => strategy;
+		public virtual IItemContainerStrategy Strategy { get => strategy; set => strategy = value; }
 
 		public virtual int Count => size;
 		public virtual int Size { get => size; set => SetSize(value); }
@@ -33,6 +33,19 @@ namespace Kryz.RPG.Items
 			this.strategy = strategy;
 			slots = null!;
 			SetSize(size);
+		}
+
+		public virtual bool TrySetSize(int value)
+		{
+			using ItemContainerTransaction transaction = ItemContainerTransaction.Begin();
+
+			if (!strategy.TrySetSize(ref transaction.GetContext(this), value))
+			{
+				return false;
+			}
+
+			transaction.Commit();
+			return true;
 		}
 
 		public virtual bool TryAdd(in ItemStack stack, out ItemStack remainder)
@@ -125,20 +138,20 @@ namespace Kryz.RPG.Items
 
 			if (to.Strategy.TryAdd(ref toCtx, toIndex, fromSlot, out _, out ItemStack remainder))
 			{
-				if (remainder == default || strategy.TryAdd(ref fromCtx, fromIndex, remainder, out _, out ItemStack rem) && rem == default)
+				if (remainder == default || strategy.TryAdd(ref fromCtx, fromIndex, remainder, out _, out remainder) && remainder == default)
 				{
 					t.Commit();
 					return true;
 				}
 			}
-			else if (result == default)
+			else if (result == default && to.Strategy.TryRemove(ref toCtx, toIndex, -1, out _, out ItemStack toSlot))
 			{
-				if (!to.Strategy.TryRemove(ref toCtx, toIndex, -1, out _, out ItemStack toSlot))
+				if (!strategy.TryAdd(ref fromCtx, fromIndex, toSlot, out _, out remainder) || remainder != default)
 				{
 					return false;
 				}
 
-				if (!strategy.TryAdd(ref fromCtx, toSlot, out ItemStack rem) || rem != default)
+				if (!to.Strategy.TryAdd(ref toCtx, toIndex, fromSlot, out _, out remainder) || remainder != default)
 				{
 					return false;
 				}
@@ -148,6 +161,120 @@ namespace Kryz.RPG.Items
 			}
 
 			return false;
+		}
+
+		public virtual void CopyFrom(ReadOnlySpan<ItemStack> stacks)
+		{
+			using ItemContainerTransaction transaction = ItemContainerTransaction.Begin();
+			ref ItemContainerTransactionContext ctx = ref transaction.GetContext(this);
+			int count = stacks.Length;
+
+			if (size < count)
+			{
+				ctx.SetSize(count);
+			}
+
+			for (int i = 0; i < count; i++)
+			{
+				ItemStack slot = slots[i];
+				ItemStack stack = stacks[i];
+
+				if (slot != stack)
+				{
+					ctx.SetSlot(i, stack);
+				}
+			}
+
+			for (int i = count; i < size; i++)
+			{
+				ItemStack slot = slots[i];
+
+				if (slot != default)
+				{
+					ctx.SetSlot(i, default);
+				}
+			}
+
+			transaction.Commit();
+		}
+
+		public virtual void CopyFrom(IReadOnlyList<ItemStack> stacks)
+		{
+			using ItemContainerTransaction transaction = ItemContainerTransaction.Begin();
+			ref ItemContainerTransactionContext ctx = ref transaction.GetContext(this);
+			int count = stacks.Count;
+
+			if (size < count)
+			{
+				ctx.SetSize(count);
+			}
+
+			for (int i = 0; i < count; i++)
+			{
+				ItemStack slot = slots[i];
+				ItemStack stack = stacks[i];
+
+				if (slot != stack)
+				{
+					ctx.SetSlot(i, stack);
+				}
+			}
+
+			for (int i = count; i < size; i++)
+			{
+				ItemStack slot = slots[i];
+
+				if (slot != default)
+				{
+					ctx.SetSlot(i, default);
+				}
+			}
+
+			transaction.Commit();
+		}
+
+		public virtual void Clear()
+		{
+			using ItemContainerTransaction transaction = ItemContainerTransaction.Begin();
+			ref ItemContainerTransactionContext ctx = ref transaction.GetContext(this);
+
+			for (int i = 0; i < size; i++)
+			{
+				ItemStack slot = slots[i];
+
+				if (slot != default)
+				{
+					ctx.SetSlot(i, default);
+				}
+			}
+
+			transaction.Commit();
+		}
+
+		public virtual void Sort() => Sort(ValueComparer<ItemStack>.Default);
+
+		public virtual void Sort<TComparer>(TComparer comparer) where TComparer : IComparer<ItemStack>
+		{
+			ItemStack[] original = arrayPool.Rent(size);
+			Array.Copy(slots, 0, original, 0, size);
+
+			// We DON'T use the default Array.Sort because it is unstable. I think a stable sorting algorithm is very valuable here.
+			// Our version also tends to be faster in general, so that's nice.
+			TimSortLite.Sort(slots.AsSpan(0, size), comparer);
+
+			for (int i = 0; i < size; i++)
+			{
+				ItemStack slot = slots[i];
+				ItemStack originalSlot = original[i];
+
+				if (slot != originalSlot)
+				{
+					OnSlotChanged(i, slot, originalSlot);
+				}
+			}
+
+			Array.Clear(original, 0, size);
+			arrayPool.Return(original);
 		}
 
 		public virtual void Commit(ReadOnlySpan<SlotEdit> slotEdits, SizeEdit? sizeEdit)
@@ -165,6 +292,9 @@ namespace Kryz.RPG.Items
 				if (edit.Index < size)
 				{
 					slots[edit.Index] = edit.NewStack;
+
+					if (edit.OldStack.Count <= 0 && edit.NewStack.Count > 0) occupiedSlots++;
+					else if (edit.OldStack.Count > 0 && edit.NewStack.Count <= 0) occupiedSlots--;
 				}
 			}
 

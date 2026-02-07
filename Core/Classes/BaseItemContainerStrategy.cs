@@ -105,5 +105,32 @@ namespace Kryz.RPG.Items
 			result = slot;
 			return false;
 		}
+
+		public virtual bool TrySetSize(ref ItemContainerTransactionContext ctx, int value)
+		{
+			int size = ctx.GetSize();
+
+			if (value == size)
+			{
+				return false;
+			}
+
+			// If we're shrinking the container
+			if (value < size)
+			{
+				for (int i = value; i < size; i++)
+				{
+					// But there are items in the slots that would be removed
+					if (ctx.GetSlot(i) != default)
+					{
+						// Don't shrink
+						return false;
+					}
+				}
+			}
+
+			ctx.SetSize(value);
+			return true;
+		}
 	}
 }

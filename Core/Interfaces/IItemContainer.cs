@@ -11,13 +11,15 @@ namespace Kryz.RPG.Items
 		event OnSlotChangedDelegate OnSlotChanged;
 		event OnSizeChangedDelegate OnSizeChanged;
 
-		public IItemContainerStrategy Strategy { get; }
+		public IItemContainerStrategy Strategy { get; set; }
 
 		public ReadOnlySpan<ItemStack> Slots { get; }
 
-		int Size { get; set; }
+		int Size { get; }
 		int FreeSlots { get; }
 		int OccupiedSlots { get; }
+
+		bool TrySetSize(int value);
 
 		/// <summary>
 		/// Try to add an item stack to any inventory slots that can receive it.
@@ -72,6 +74,26 @@ namespace Kryz.RPG.Items
 		/// <param name="toIndex">The slot index of the target <see cref="IItemContainer"/> to move to.</param>
 		/// <returns><see cref="true"/> if it was possible to move the specified amount of items. Otherwise <see cref="false"/>.</returns>
 		bool TryMove(int fromIndex, int count, IItemContainer to, int toIndex);
+
+		/// <summary>
+		/// <para>Overwrite all slots by copying from a <see cref="ReadOnlySpan{T}"/> of <see cref="ItemStack"/>.</para>
+		/// <para>If the current <see cref="Size"/> is smaller than the provided <see cref="ReadOnlySpan{T}.Length"/>, <see cref="Size"/> will increase to match the span's size, otherwise it will stay the same.</para>
+		/// </summary>
+		/// <param name="stacks">The <see cref="ItemStack"/>s to copy from.</param>
+		void CopyFrom(ReadOnlySpan<ItemStack> stacks);
+
+		/// <summary>
+		/// <para>Overwrite all slots by copying from a <see cref="IReadOnlyList{T}"/> of <see cref="ItemStack"/>.</para>
+		/// <para>If the current <see cref="Size"/> is smaller than the provided IReadOnlyList.Count, <see cref="Size"/> will increase to match the list's size, otherwise it will stay the same.</para>
+		/// </summary>
+		/// <param name="stacks">The <see cref="ItemStack"/>s to copy from.</param>
+		void CopyFrom(IReadOnlyList<ItemStack> stacks);
+
+		void Clear();
+
+		void Sort();
+
+		void Sort<TComparer>(TComparer comparer) where TComparer : IComparer<ItemStack>;
 
 		void Commit(ReadOnlySpan<SlotEdit> slotEdits, SizeEdit? sizeEdit);
 	}

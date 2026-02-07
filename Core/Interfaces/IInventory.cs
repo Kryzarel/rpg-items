@@ -138,14 +138,14 @@ namespace Kryz.RPG.Items
 
 		/// <summary>
 		/// <para>Overwrite all slots by copying from a <see cref="ReadOnlySpan{T}"/> of <see cref="ItemStack"/>.</para>
-		/// <para>If the current <see cref="Size"/> is smaller than the provided <see cref="Span{T}.Length"/>, <see cref="Size"/> will increase to match the span's size, otherwise it will stay the same.</para>
+		/// <para>If the current <see cref="Size"/> is smaller than the provided <see cref="ReadOnlySpan{T}.Length"/>, <see cref="Size"/> will increase to match the span's size, otherwise it will stay the same.</para>
 		/// </summary>
 		/// <param name="stacks">The <see cref="ItemStack"/>s to copy from.</param>
 		void CopyFrom(ReadOnlySpan<ItemStack> stacks);
 
 		/// <summary>
 		/// <para>Overwrite all slots by copying from a <see cref="IReadOnlyList{T}"/> of <see cref="ItemStack"/>.</para>
-		/// <para>If the current <see cref="Size"/> is smaller than the provided IReadOnlyList.Count, it will increase to match the list's size, otherwise <see cref="Size"/> will stay the same.</para>
+		/// <para>If the current <see cref="Size"/> is smaller than the provided IReadOnlyList.Count, <see cref="Size"/> will increase to match the list's size, otherwise it will stay the same.</para>
 		/// </summary>
 		/// <param name="stacks">The <see cref="ItemStack"/>s to copy from.</param>
 		void CopyFrom(IReadOnlyList<ItemStack> stacks);
