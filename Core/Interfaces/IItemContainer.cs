@@ -3,17 +3,14 @@ using System.Collections.Generic;
 
 namespace Kryz.RPG.Items
 {
-	public interface IItemContainer : IItemContainerTransactions, IReadOnlyList<ItemStack>
+	public interface IItemContainer : IItemContainerTransactional
 	{
-		public delegate void OnSlotChangedDelegate(int index, ItemStack stack);
-		public delegate void OnSizeChangedDelegate(int size);
+		public delegate void OnSlotChangedDelegate(int index, ItemStack oldStack, ItemStack newStack);
+		public delegate void OnSizeChangedDelegate(int oldSize, int newSize);
 
 		event OnSlotChangedDelegate OnSlotChanged;
 		event OnSizeChangedDelegate OnSizeChanged;
 
-		public ReadOnlySpan<ItemStack> Slots { get; }
-
-		int Size { get; }
 		int FreeSlots { get; }
 		int OccupiedSlots { get; }
 

@@ -1,85 +1,54 @@
 using System;
-using System.Diagnostics;
 using Kryz.Utils;
 
 namespace Kryz.RPG.Items
 {
-	public ref struct ItemContainerTransaction
+	public struct ItemContainerTransaction
 	{
 		private readonly PooledList<int> editIndexes;
 		private readonly PooledList<SlotEdit> slotEdits;
-		private int? sizeEdit;
-		private bool completed;
 
-		public readonly IItemContainer Container;
+		private SizeEdit? sizeEdit;
+
+		public readonly IItemContainerMutable Container;
 
 		public readonly ReadOnlySpan<SlotEdit> SlotEdits => slotEdits.AsSpan();
-		public readonly int? SizeEdit => sizeEdit;
+		public readonly SizeEdit? SizeEdit => sizeEdit;
 
-		public ItemContainerTransaction(IItemContainer container)
+		public ItemContainerTransaction(IItemContainerMutable container)
 		{
 			Container = container;
 			editIndexes = PooledList<int>.Rent(container.Size);
 			editIndexes.SetCount(container.Size);
 			slotEdits = PooledList<SlotEdit>.Rent();
 			sizeEdit = default;
-			completed = false;
 		}
 
-		public readonly int GetSize()
+		public void RecordSize(int size)
 		{
-			return sizeEdit ?? Container.Size;
-		}
-
-		public void SetSize(int size)
-		{
-			if (GetSize() == size)
-				return;
-
-			sizeEdit = size;
+			int oldSize = sizeEdit.HasValue ? sizeEdit.Value.OldSize : Container.Size;
+			sizeEdit = new SizeEdit(oldSize, size);
 			editIndexes.SetCount(size);
 		}
 
-		public readonly ItemStack GetSlot(int index)
+		public readonly void RecordSlot(int index, ItemStack newStack)
 		{
-			int editIndex = editIndexes[index];
-			return editIndex > 0 ? slotEdits[editIndex - 1].NewStack : Container[index];
-		}
-
-		public readonly void SetSlot(int index, ItemStack value)
-		{
-			if (GetSlot(index) == value)
-				return;
-
-			SlotEdit edit = new(index, value);
 			ref int editIndex = ref editIndexes[index];
 
 			if (editIndex > 0)
 			{
-				slotEdits[editIndex - 1] = edit;
+				ref SlotEdit edit = ref slotEdits[editIndex - 1];
+				edit = new SlotEdit(index, edit.OldStack, newStack);
 			}
 			else
 			{
-				slotEdits.Add(edit);
+				slotEdits.Add(new SlotEdit(index, Container[index], newStack));
 				editIndex = slotEdits.Count;
 			}
 		}
 
-		public void Commit()
+		public readonly void Dispose()
 		{
-			if (completed)
-			{
-				Debug.Fail("Transaction already completed.");
-				return;
-			}
-
-			completed = true;
-			Container.Commit(SlotEdits, SizeEdit);
-		}
-
-		public void Dispose()
-		{
-			completed = true;
 			editIndexes.Dispose();
 			slotEdits.Dispose();
 		}
