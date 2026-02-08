@@ -6,44 +6,44 @@ namespace Kryz.RPG.Items
 {
 	public ref struct ItemTransaction
 	{
-		private readonly PooledList<ItemContainerTransaction> transactions;
+		private readonly PooledList<ItemContainerEdits> edits;
 
 		private bool completed;
 		private bool commited;
 
-		public ItemTransaction(IItemContainerMutable container)
+		public ItemTransaction(IItemContainerTransactional container)
 		{
-			transactions = PooledList<ItemContainerTransaction>.Rent();
-			transactions.Add(new ItemContainerTransaction(container));
+			edits = PooledList<ItemContainerEdits>.Rent();
+			edits.Add(new ItemContainerEdits(container));
 			completed = false;
 			commited = false;
 		}
 
-		public readonly void RecordSize(IItemContainerMutable container, int size)
+		public readonly void RecordSize(IItemContainerTransactional container, int size)
 		{
 			GetOrAddTransaction(container).RecordSize(size);
 		}
 
-		public readonly void RecordSlot(IItemContainerMutable container, int index, ItemStack newStack)
+		public readonly void RecordSlot(IItemContainerTransactional container, int index, ItemStack newStack)
 		{
 			GetOrAddTransaction(container).RecordSlot(index, newStack);
 		}
 
-		private readonly ref ItemContainerTransaction GetOrAddTransaction(IItemContainerMutable container)
+		private readonly ref ItemContainerEdits GetOrAddTransaction(IItemContainerTransactional container)
 		{
-			Span<ItemContainerTransaction> span = transactions.AsSpan();
+			Span<ItemContainerEdits> span = edits.AsSpan();
 
 			for (int i = 0; i < span.Length; i++)
 			{
-				ref ItemContainerTransaction transaction = ref span[i];
+				ref ItemContainerEdits transaction = ref span[i];
 				if (transaction.Container == container)
 				{
 					return ref transaction;
 				}
 			}
 
-			transactions.Add(new ItemContainerTransaction(container));
-			return ref transactions[^1];
+			edits.Add(new ItemContainerEdits(container));
+			return ref edits[^1];
 		}
 
 		public void Commit()
@@ -57,12 +57,11 @@ namespace Kryz.RPG.Items
 			completed = true;
 			commited = true;
 
-			ReadOnlySpan<ItemContainerTransaction> t = transactions.AsSpan();
-
-			for (int i = 0; i < t.Length; i++)
+			ReadOnlySpan<ItemContainerEdits> editSpan = edits.AsSpan();
+			for (int i = 0; i < editSpan.Length; i++)
 			{
-				ref readonly ItemContainerTransaction transaction = ref t[i];
-				Notify(transaction);
+				ref readonly ItemContainerEdits edit = ref editSpan[i];
+				edit.Notify();
 			}
 		}
 
@@ -70,57 +69,18 @@ namespace Kryz.RPG.Items
 		{
 			completed = true;
 
-			ReadOnlySpan<ItemContainerTransaction> t = transactions.AsSpan();
-
-			for (int i = 0; i < t.Length; i++)
+			ReadOnlySpan<ItemContainerEdits> editSpan = edits.AsSpan();
+			for (int i = 0; i < editSpan.Length; i++)
 			{
-				ref readonly ItemContainerTransaction transaction = ref t[i];
+				ref readonly ItemContainerEdits edit = ref editSpan[i];
 				if (!commited)
 				{
-					Rollback(transaction);
+					edit.Rollback();
 				}
-				transaction.Dispose();
+				edit.Dispose();
 			}
 
-			transactions.Dispose();
-		}
-
-		private static void Notify(in ItemContainerTransaction transaction)
-		{
-			if (transaction.SizeEdit.HasValue)
-			{
-				SizeEdit edit = transaction.SizeEdit.Value;
-				transaction.Container.NotifySizeChanged(edit.OldSize, edit.NewSize);
-			}
-
-			ReadOnlySpan<SlotEdit> edits = transaction.SlotEdits;
-
-			for (int i = 0; i < edits.Length; i++)
-			{
-				ref readonly SlotEdit edit = ref edits[i];
-				transaction.Container.NotifySlotChanged(edit.Index, edit.OldStack, edit.NewStack);
-			}
-		}
-
-		private static void Rollback(in ItemContainerTransaction transaction)
-		{
-			if (transaction.SizeEdit.HasValue)
-			{
-				transaction.Container.Size = transaction.SizeEdit.Value.OldSize;
-			}
-
-			ReadOnlySpan<SlotEdit> edits = transaction.SlotEdits;
-			Span<ItemStack> slots = transaction.Container.Slots;
-
-			for (int i = 0; i < edits.Length; i++)
-			{
-				ref readonly SlotEdit edit = ref edits[i];
-
-				if ((uint)edit.Index < (uint)slots.Length)
-				{
-					slots[edit.Index] = edit.OldStack;
-				}
-			}
+			edits.Dispose();
 		}
 	}
 }

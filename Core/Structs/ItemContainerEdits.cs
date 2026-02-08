@@ -1,21 +1,17 @@
-using System;
 using Kryz.Utils;
 
 namespace Kryz.RPG.Items
 {
-	public struct ItemContainerTransaction
+	public struct ItemContainerEdits
 	{
 		private readonly PooledList<int> editIndexes;
 		private readonly PooledList<SlotEdit> slotEdits;
 
 		private SizeEdit? sizeEdit;
 
-		public readonly IItemContainerMutable Container;
+		public readonly IItemContainerTransactional Container;
 
-		public readonly ReadOnlySpan<SlotEdit> SlotEdits => slotEdits.AsSpan();
-		public readonly SizeEdit? SizeEdit => sizeEdit;
-
-		public ItemContainerTransaction(IItemContainerMutable container)
+		public ItemContainerEdits(IItemContainerTransactional container)
 		{
 			Container = container;
 			editIndexes = PooledList<int>.Rent(container.Size);
@@ -46,6 +42,9 @@ namespace Kryz.RPG.Items
 				editIndex = slotEdits.Count;
 			}
 		}
+
+		public readonly void Notify() => Container.Notify(slotEdits.AsSpan(), sizeEdit);
+		public readonly void Rollback() => Container.Rollback(slotEdits.AsSpan(), sizeEdit);
 
 		public readonly void Dispose()
 		{

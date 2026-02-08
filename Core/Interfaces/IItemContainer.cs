@@ -3,39 +3,8 @@ using System.Collections.Generic;
 
 namespace Kryz.RPG.Items
 {
-	public interface IItemContainer : IItemContainerTransactional
+	public interface IItemContainer : IItemContainerTransactional, IReadOnlyList<ItemStack>
 	{
-		public delegate void OnSlotChangedDelegate(int index, ItemStack oldStack, ItemStack newStack);
-		public delegate void OnSizeChangedDelegate(int oldSize, int newSize);
-
-		event OnSlotChangedDelegate OnSlotChanged;
-		event OnSizeChangedDelegate OnSizeChanged;
-
-		int FreeSlots { get; }
-		int OccupiedSlots { get; }
-
-		/// <summary>
-		/// Get the maximum stack size of a particular item.
-		/// </summary>
-		/// <param name="item">The item to check.</param>
-		/// <returns>The maximum stack size for the <paramref name="item"/>.</returns>
-		int GetMaxStacks(IItem item);
-
-		/// <summary>
-		/// Check if the slot at <paramref name="index"/> can receive the specified <see cref="ItemStack"/>.
-		/// </summary>
-		/// <param name="index">The slot index to check.</param>
-		/// <param name="stack">The <see cref="ItemStack"/> to check.</param>
-		/// <returns><see cref="true"/> if the slot can receive the <paramref name="stack"/>. Otherwise <see cref="false"/>.</returns>
-		bool CanReceive(int index, in ItemStack stack);
-
-		/// <summary>
-		/// Check if the slot at <paramref name="index"/> can remove any of its contents.
-		/// </summary>
-		/// <param name="index">The slot index to check.</param>
-		/// <returns><see cref="true"/> items can be removed from the slot. Otherwise <see cref="false"/>.</returns>
-		bool CanRemove(int index);
-
 		/// <summary>
 		/// Try to set the size of the container.
 		/// </summary>
@@ -111,6 +80,9 @@ namespace Kryz.RPG.Items
 		/// <param name="stacks">The <see cref="ItemStack"/>s to copy from.</param>
 		void CopyFrom(IReadOnlyList<ItemStack> stacks);
 
+		/// <summary>
+		/// Clear the container, emptying all slots.
+		/// </summary>
 		void Clear();
 
 		void Sort();
