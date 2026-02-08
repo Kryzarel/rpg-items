@@ -6,11 +6,10 @@ namespace Kryz.RPG.Items
 	{
 		public delegate void OnSlotChangedDelegate(int index, ItemStack oldStack, ItemStack newStack);
 		public delegate void OnSizeChangedDelegate(int oldSize, int newSize);
-		public delegate void OnChangesFinishedDelegate();
 
 		event OnSlotChangedDelegate OnSlotChanged;
 		event OnSizeChangedDelegate OnSizeChanged;
-		event OnChangesFinishedDelegate OnChangesFinished;
+		event Action OnChangesFinished;
 
 		ItemStack this[int index] { get; }
 

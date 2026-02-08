@@ -16,7 +16,7 @@ namespace Kryz.RPG.Items
 
 		public event IItemContainerTransactional.OnSlotChangedDelegate? OnSlotChanged;
 		public event IItemContainerTransactional.OnSizeChangedDelegate? OnSizeChanged;
-		public event IItemContainerTransactional.OnChangesFinishedDelegate? OnChangesFinished;
+		public event Action? OnChangesFinished;
 
 		public ItemStack this[int index] => (uint)index >= (uint)size ? throw new IndexOutOfRangeException(indexOutOfRange) : slots[index];
 		public ReadOnlySpan<ItemStack> Slots => new(slots, 0, size);
