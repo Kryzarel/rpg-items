@@ -200,7 +200,7 @@ namespace Kryz.RPG.Items
 		{
 			if (sizeEdit.HasValue)
 			{
-				SetSize(sizeEdit.Value.NewSize);
+				SetSize(sizeEdit.Value.OldSize);
 			}
 
 			for (int i = 0; i < slotEdits.Length; i++)
