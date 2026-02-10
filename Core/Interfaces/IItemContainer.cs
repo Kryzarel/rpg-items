@@ -3,8 +3,12 @@ using System.Collections.Generic;
 
 namespace Kryz.RPG.Items
 {
-	public interface IItemContainer : IItemContainerTransactional, IReadOnlyList<ItemStack>
+	public interface IItemContainer : IReadOnlyList<ItemStack>
 	{
+		IItemContainerTransactional Transactions { get; }
+
+		int Size { get; }
+
 		/// <summary>
 		/// Try to set the size of the container.
 		/// </summary>

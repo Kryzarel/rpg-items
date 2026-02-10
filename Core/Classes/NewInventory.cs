@@ -1,9 +1,9 @@
-using System.Buffers;
-
 namespace Kryz.RPG.Items
 {
-	public sealed class NewInventory : ItemContainer
+	public sealed class NewInventory : ItemContainer<StandardTransactions>
 	{
-		public NewInventory(int size, ArrayPool<ItemStack>? pool = null) : base(size, pool) { }
+		public NewInventory(int size) : base(new StandardTransactions(size))
+		{
+		}
 	}
 }

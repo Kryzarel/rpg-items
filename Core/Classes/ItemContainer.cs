@@ -6,18 +6,27 @@ using Kryz.Utils;
 
 namespace Kryz.RPG.Items
 {
-	public abstract class ItemContainer : ItemContainerTransactional, IItemContainer
+	public abstract class ItemContainer<T> : IItemContainer where T : IItemContainerTransactional
 	{
-		int IReadOnlyCollection<ItemStack>.Count => size;
+		protected readonly T transactions;
 
-		public ItemContainer(int size, ArrayPool<ItemStack>? pool = null) : base(size, pool)
+		public T Transactions => transactions;
+
+		public ItemStack this[int index] => transactions[index];
+		public int Size => transactions.Size;
+
+		IItemContainerTransactional IItemContainer.Transactions => Transactions;
+		int IReadOnlyCollection<ItemStack>.Count => transactions.Size;
+
+		public ItemContainer(T transactions)
 		{
+			this.transactions = transactions;
 		}
 
 		public bool TrySetSize(int value)
 		{
-			using ItemTransaction transaction = new(this);
-			if (!TrySetSize(transaction, value))
+			using ItemTransaction transaction = new(transactions);
+			if (!transactions.TrySetSize(transaction, value))
 			{
 				return false;
 			}
@@ -27,8 +36,8 @@ namespace Kryz.RPG.Items
 
 		public bool TryAdd(in ItemStack stack, out ItemStack remainder)
 		{
-			using ItemTransaction transaction = new(this);
-			if (!TryAdd(transaction, stack, out remainder))
+			using ItemTransaction transaction = new(transactions);
+			if (!transactions.TryAdd(transaction, stack, out remainder))
 			{
 				return false;
 			}
@@ -38,8 +47,8 @@ namespace Kryz.RPG.Items
 
 		public bool TryAdd(int index, in ItemStack stack, out ItemStack result, out ItemStack remainder)
 		{
-			using ItemTransaction transaction = new(this);
-			if (!TryAdd(transaction, index, stack, out result, out remainder))
+			using ItemTransaction transaction = new(transactions);
+			if (!transactions.TryAdd(transaction, index, stack, out result, out remainder))
 			{
 				return false;
 			}
@@ -49,8 +58,8 @@ namespace Kryz.RPG.Items
 
 		public bool TryRemove(in ItemStack stack)
 		{
-			using ItemTransaction transaction = new(this);
-			if (!TryRemove(transaction, stack))
+			using ItemTransaction transaction = new(transactions);
+			if (!transactions.TryRemove(transaction, stack))
 			{
 				return false;
 			}
@@ -60,8 +69,8 @@ namespace Kryz.RPG.Items
 
 		public bool TryRemove(int index, int count, out ItemStack result, out ItemStack removed)
 		{
-			using ItemTransaction transaction = new(this);
-			if (!TryRemove(transaction, index, count, out result, out removed))
+			using ItemTransaction transaction = new(transactions);
+			if (!transactions.TryRemove(transaction, index, count, out result, out removed))
 			{
 				return false;
 			}
@@ -71,19 +80,19 @@ namespace Kryz.RPG.Items
 
 		public bool TryMove(int fromIndex, int count, IItemContainer to)
 		{
-			using ItemTransaction transaction = new(this);
+			using ItemTransaction transaction = new(transactions);
 
-			if (!TryRemove(transaction, fromIndex, count, out _, out ItemStack removed))
+			if (!transactions.TryRemove(transaction, fromIndex, count, out _, out ItemStack removed))
 			{
 				return false;
 			}
 
-			if (!to.TryAdd(transaction, removed, out ItemStack remainder))
+			if (!to.Transactions.TryAdd(transaction, removed, out ItemStack remainder))
 			{
 				return false;
 			}
 
-			if (!remainder.IsEmpty && (!TryAdd(transaction, fromIndex, remainder, out _, out ItemStack rem) || !rem.IsEmpty))
+			if (!remainder.IsEmpty && (!transactions.TryAdd(transaction, fromIndex, remainder, out _, out ItemStack rem) || !rem.IsEmpty))
 			{
 				return false;
 			}
@@ -94,29 +103,29 @@ namespace Kryz.RPG.Items
 
 		public bool TryMove(int fromIndex, int count, IItemContainer to, int toIndex)
 		{
-			using ItemTransaction transaction = new(this);
+			using ItemTransaction transaction = new(transactions);
 
-			if (!TryRemove(transaction, fromIndex, count, out ItemStack result, out ItemStack fromSlot))
+			if (!transactions.TryRemove(transaction, fromIndex, count, out ItemStack result, out ItemStack fromSlot))
 			{
 				return false;
 			}
 
-			if (to.TryAdd(transaction, toIndex, fromSlot, out _, out ItemStack remainder))
+			if (to.Transactions.TryAdd(transaction, toIndex, fromSlot, out _, out ItemStack remainder))
 			{
-				if (remainder.IsEmpty || TryAdd(transaction, fromIndex, remainder, out _, out remainder) && remainder.IsEmpty)
+				if (remainder.IsEmpty || transactions.TryAdd(transaction, fromIndex, remainder, out _, out remainder) && remainder.IsEmpty)
 				{
 					transaction.Commit();
 					return true;
 				}
 			}
-			else if (result.IsEmpty && to.TryRemove(transaction, toIndex, -1, out _, out ItemStack toSlot))
+			else if (result.IsEmpty && to.Transactions.TryRemove(transaction, toIndex, -1, out _, out ItemStack toSlot))
 			{
-				if (!TryAdd(transaction, fromIndex, toSlot, out _, out remainder) || !remainder.IsEmpty)
+				if (!transactions.TryAdd(transaction, fromIndex, toSlot, out _, out remainder) || !remainder.IsEmpty)
 				{
 					return false;
 				}
 
-				if (!to.TryAdd(transaction, toIndex, fromSlot, out _, out remainder) || !remainder.IsEmpty)
+				if (!to.Transactions.TryAdd(transaction, toIndex, fromSlot, out _, out remainder) || !remainder.IsEmpty)
 				{
 					return false;
 				}
@@ -130,23 +139,18 @@ namespace Kryz.RPG.Items
 
 		public void CopyFrom(ReadOnlySpan<ItemStack> stacks)
 		{
-			using ItemTransaction transaction = new(this);
+			using ItemTransaction transaction = new(transactions);
 			int count = stacks.Length;
 
-			if (size < count)
+			if (transactions.Size < count)
 			{
-				SetSize(transaction, count);
+				transactions.TrySetSize(transaction, count);
 			}
 
 			for (int i = 0; i < count; i++)
 			{
 				ItemStack stack = stacks[i];
-				ref ItemStack slot = ref slots[i];
-
-				if (slot != stack)
-				{
-					SetSlot(transaction, ref slot, i, stack);
-				}
+				transactions.SetSlot(transaction, i, stack);
 			}
 
 			transaction.Commit();
@@ -154,23 +158,18 @@ namespace Kryz.RPG.Items
 
 		public void CopyFrom(IReadOnlyList<ItemStack> stacks)
 		{
-			using ItemTransaction transaction = new(this);
+			using ItemTransaction transaction = new(transactions);
 			int count = stacks.Count;
 
-			if (size < count)
+			if (transactions.Size < count)
 			{
-				SetSize(transaction, count);
+				transactions.TrySetSize(transaction, count);
 			}
 
 			for (int i = 0; i < count; i++)
 			{
 				ItemStack stack = stacks[i];
-				ref ItemStack slot = ref slots[i];
-
-				if (slot != stack)
-				{
-					SetSlot(transaction, ref slot, i, stack);
-				}
+				transactions.SetSlot(transaction, i, stack);
 			}
 
 			transaction.Commit();
@@ -178,18 +177,11 @@ namespace Kryz.RPG.Items
 
 		public void Clear()
 		{
-			using ItemTransaction transaction = new(this);
-
-			for (int i = 0; i < size; i++)
+			using ItemTransaction transaction = new(transactions);
+			for (int i = 0; i < transactions.Size; i++)
 			{
-				ref ItemStack slot = ref slots[i];
-
-				if (slot != default)
-				{
-					SetSlot(transaction, ref slot, i, default);
-				}
+				transactions.SetSlot(transaction, i, default);
 			}
-
 			transaction.Commit();
 		}
 
@@ -197,33 +189,31 @@ namespace Kryz.RPG.Items
 
 		public void Sort<TComparer>(TComparer comparer) where TComparer : IComparer<ItemStack>
 		{
-			using ItemTransaction transaction = new(this);
-			ItemStack[] original = arrayPool.Rent(size);
-			Array.Copy(slots, original, size);
+			using ItemTransaction transaction = new(transactions);
+
+			ReadOnlySpan<ItemStack> slots = transactions.Slots;
+
+			ItemStack[] sortedArray = ArrayPool<ItemStack>.Shared.Rent(slots.Length);
+			Span<ItemStack> sorted = sortedArray;
+			slots.CopyTo(sorted);
 
 			// We DON'T use the default Array.Sort because it is unstable. I think stable sorting is very valuable here.
 			// Our version also tends to be just as fast, if not slightly faster, which is nice.
-			TimSortLite.Sort(slots.AsSpan(0, size), comparer);
+			TimSortLite.Sort(sorted, comparer);
 
-			for (int i = 0; i < size; i++)
+			for (int i = 0; i < slots.Length; i++)
 			{
-				ItemStack slot = slots[i];
-				ItemStack originalSlot = original[i];
-
-				if (slot != originalSlot)
-				{
-					transaction.RecordSlot(this, i, slot);
-				}
+				transactions.SetSlot(transaction, i, sorted[i]);
 			}
 
-			Array.Clear(original, 0, size);
-			arrayPool.Return(original);
+			sorted.Clear();
+			ArrayPool<ItemStack>.Shared.Return(sortedArray);
 			transaction.Commit();
 		}
 
-		public ArraySegment<ItemStack>.Enumerator GetEnumerator() => new ArraySegment<ItemStack>(slots, 0, size).GetEnumerator();
+		public ReadOnlySpan<ItemStack>.Enumerator GetEnumerator() => transactions.Slots.GetEnumerator();
 
-		IEnumerator<ItemStack> IEnumerable<ItemStack>.GetEnumerator() => GetEnumerator();
-		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+		IEnumerator<ItemStack> IEnumerable<ItemStack>.GetEnumerator() => transactions.GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => transactions.GetEnumerator();
 	}
 }

@@ -1,12 +1,14 @@
 using System;
 using System.Buffers;
+using System.Collections;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace Kryz.RPG.Items
 {
 	public abstract class ItemContainerTransactional : IItemContainerTransactional
 	{
-		private const string indexOutOfRange = "Index was out of range. Must be non-negative and less than the size of the collection.";
+		private const string indexOutOfRangeMsg = "Index was out of range. Must be non-negative and less than the size of the collection.";
 
 		protected readonly ArrayPool<ItemStack> arrayPool;
 
@@ -18,11 +20,13 @@ namespace Kryz.RPG.Items
 		public event IItemContainerTransactional.OnSizeChangedDelegate? OnSizeChanged;
 		public event Action? OnChangesFinished;
 
-		public ItemStack this[int index] => (uint)index >= (uint)size ? throw new IndexOutOfRangeException(indexOutOfRange) : slots[index];
+		public ItemStack this[int index] => (uint)index >= (uint)size ? throw new IndexOutOfRangeException(indexOutOfRangeMsg) : slots[index];
 		public ReadOnlySpan<ItemStack> Slots => new(slots, 0, size);
 		public int Size => size;
 		public int FreeSlots => size - occupiedSlots;
 		public int OccupiedSlots => occupiedSlots;
+
+		int IReadOnlyCollection<ItemStack>.Count => size;
 
 		public ItemContainerTransactional(int size, ArrayPool<ItemStack>? pool = null)
 		{
@@ -55,7 +59,7 @@ namespace Kryz.RPG.Items
 
 				if (slot.Item == stack.Item && CanReceive(i, stack) && slot.TryAdd(stack, out ItemStack result, out remainder, maxCount))
 				{
-					SetSlot(transaction, ref slot, i, result);
+					SetSlotRef(transaction, ref slot, i, result);
 				}
 			}
 
@@ -66,7 +70,7 @@ namespace Kryz.RPG.Items
 
 				if (slot.Item == null && CanReceive(i, stack) && slot.TryAdd(stack, out ItemStack result, out remainder, maxCount))
 				{
-					SetSlot(transaction, ref slot, i, result);
+					SetSlotRef(transaction, ref slot, i, result);
 				}
 			}
 
@@ -79,7 +83,7 @@ namespace Kryz.RPG.Items
 
 			if (stack.Item != null && CanReceive(index, stack) && slot.TryAdd(stack, out result, out remainder, GetMaxStacks(stack.Item)))
 			{
-				SetSlot(transaction, ref slot, index, result);
+				SetSlotRef(transaction, ref slot, index, result);
 				return true;
 			}
 
@@ -101,7 +105,7 @@ namespace Kryz.RPG.Items
 
 				if (slot.Item == stack.Item && CanRemove(i) && slot.TryRemove(Math.Min(required, slot.Count), out ItemStack result, out ItemStack removed))
 				{
-					SetSlot(transaction, ref slot, i, result);
+					SetSlotRef(transaction, ref slot, i, result);
 
 					required -= removed.Count;
 					if (required <= 0)
@@ -121,7 +125,7 @@ namespace Kryz.RPG.Items
 
 			if (CanRemove(index) && slot.TryRemove(count, out result, out removed))
 			{
-				SetSlot(transaction, ref slot, index, result);
+				SetSlotRef(transaction, ref slot, index, result);
 				return true;
 			}
 
@@ -156,15 +160,19 @@ namespace Kryz.RPG.Items
 		{
 			if (CanReceive(index, stack))
 			{
-				ref ItemStack slot = ref slots[index];
-				if (slot != stack)
-				{
-					transaction.RecordSlot(this, index, stack);
-					slot = stack;
-				}
+				SetSlot(transaction, index, stack);
 				return true;
 			}
 			return false;
+		}
+
+		public void SetSlot(ItemTransaction transaction, int index, in ItemStack stack)
+		{
+			ref ItemStack slot = ref slots[index];
+			if (slot != stack)
+			{
+				SetSlotRef(transaction, ref slot, index, stack);
+			}
 		}
 
 		public void Notify(ReadOnlySpan<SlotEdit> slotEdits, SizeEdit? sizeEdit)
@@ -207,7 +215,7 @@ namespace Kryz.RPG.Items
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected void SetSlot(ItemTransaction transaction, ref ItemStack slot, int index, in ItemStack value)
+		protected void SetSlotRef(ItemTransaction transaction, ref ItemStack slot, int index, in ItemStack value)
 		{
 			if (slot.Count <= 0 && value.Count > 0) occupiedSlots++;
 			else if (slot.Count > 0 && value.Count <= 0) occupiedSlots--;
@@ -247,5 +255,11 @@ namespace Kryz.RPG.Items
 
 			size = value;
 		}
+
+		public ArraySegment<ItemStack>.Enumerator GetEnumerator() => new ArraySegment<ItemStack>(slots, 0, size).GetEnumerator();
+
+		IEnumerator<ItemStack> IEnumerable<ItemStack>.GetEnumerator() => GetEnumerator();
+
+		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 	}
 }

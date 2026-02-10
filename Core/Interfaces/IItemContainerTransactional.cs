@@ -1,8 +1,9 @@
 using System;
+using System.Collections.Generic;
 
 namespace Kryz.RPG.Items
 {
-	public interface IItemContainerTransactional
+	public interface IItemContainerTransactional : IReadOnlyList<ItemStack>
 	{
 		public delegate void OnSlotChangedDelegate(int index, ItemStack oldStack, ItemStack newStack);
 		public delegate void OnSizeChangedDelegate(int oldSize, int newSize);
@@ -10,8 +11,6 @@ namespace Kryz.RPG.Items
 		event OnSlotChangedDelegate OnSlotChanged;
 		event OnSizeChangedDelegate OnSizeChanged;
 		event Action OnChangesFinished;
-
-		ItemStack this[int index] { get; }
 
 		ReadOnlySpan<ItemStack> Slots { get; }
 
@@ -90,6 +89,14 @@ namespace Kryz.RPG.Items
 		/// <param name="stack">The stack to set the slot to.</param>
 		/// <returns><see cref="true"/> if it was possible to set the slot. Otherwise <see cref="false"/>.</returns>
 		bool TrySetSlot(ItemTransaction transaction, int index, in ItemStack stack);
+
+		/// <summary>
+		/// Set a slot to the specified item stack. Skips most checks other methods do.
+		/// </summary>
+		/// <param name="index">The slot index to set.</param>
+		/// <param name="stack">The stack to set the slot to.</param>
+		/// <returns><see cref="true"/> if it was possible to set the slot. Otherwise <see cref="false"/>.</returns>
+		void SetSlot(ItemTransaction transaction, int index, in ItemStack stack);
 
 		/// <summary>
 		/// Notify observers of changes made after a successful transaction.
