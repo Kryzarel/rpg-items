@@ -32,15 +32,10 @@ namespace Kryz.RPG.Items
 			transactions = itemContainerTransactional;
 		}
 
-		public bool TrySetSize(int value)
+		public bool CanAdd(in ItemStack stack, out ItemStack remainder)
 		{
 			using ItemTransaction transaction = new(transactions);
-			if (!transactions.TrySetSize(transaction, value))
-			{
-				return false;
-			}
-			transaction.Commit();
-			return true;
+			return transactions.TryAdd(transaction, stack, out remainder);
 		}
 
 		public bool TryAdd(in ItemStack stack, out ItemStack remainder)
@@ -54,6 +49,12 @@ namespace Kryz.RPG.Items
 			return true;
 		}
 
+		public bool CanAddSlot(int index, in ItemStack stack, out ItemStack result, out ItemStack remainder)
+		{
+			using ItemTransaction transaction = new(transactions);
+			return transactions.TryAddSlot(transaction, index, stack, out result, out remainder);
+		}
+
 		public bool TryAddSlot(int index, in ItemStack stack, out ItemStack result, out ItemStack remainder)
 		{
 			using ItemTransaction transaction = new(transactions);
@@ -63,6 +64,12 @@ namespace Kryz.RPG.Items
 			}
 			transaction.Commit();
 			return true;
+		}
+
+		public bool CanRemove(in ItemStack stack)
+		{
+			using ItemTransaction transaction = new(transactions);
+			return transactions.TryRemove(transaction, stack);
 		}
 
 		public bool TryRemove(in ItemStack stack)
@@ -76,6 +83,12 @@ namespace Kryz.RPG.Items
 			return true;
 		}
 
+		public bool CanRemoveSlot(int index, int count, out ItemStack result, out ItemStack removed)
+		{
+			using ItemTransaction transaction = new(transactions);
+			return transactions.TryRemoveSlot(transaction, index, count, out result, out removed);
+		}
+
 		public bool TryRemoveSlot(int index, int count, out ItemStack result, out ItemStack removed)
 		{
 			using ItemTransaction transaction = new(transactions);
@@ -87,63 +100,55 @@ namespace Kryz.RPG.Items
 			return true;
 		}
 
+		public bool CanMove(int fromIndex, int count, IItemContainer to)
+		{
+			using ItemTransaction transaction = new(transactions);
+			return IItemContainer.TryMove(transaction, this, fromIndex, count, to);
+		}
+
 		public bool TryMove(int fromIndex, int count, IItemContainer to)
 		{
 			using ItemTransaction transaction = new(transactions);
-
-			if (!transactions.TryRemoveSlot(transaction, fromIndex, count, out _, out ItemStack removed))
+			if (!IItemContainer.TryMove(transaction, this, fromIndex, count, to))
 			{
 				return false;
 			}
-
-			if (!to.Transactions.TryAdd(transaction, removed, out ItemStack remainder))
-			{
-				return false;
-			}
-
-			if (!remainder.IsEmpty && (!transactions.TryAddSlot(transaction, fromIndex, remainder, out _, out ItemStack rem) || !rem.IsEmpty))
-			{
-				return false;
-			}
-
 			transaction.Commit();
 			return true;
+		}
+
+		public bool CanMoveSlot(int fromIndex, int count, IItemContainer to, int toIndex)
+		{
+			using ItemTransaction transaction = new(transactions);
+			return IItemContainer.TryMoveSlot(transaction, this, fromIndex, count, to, toIndex);
 		}
 
 		public bool TryMoveSlot(int fromIndex, int count, IItemContainer to, int toIndex)
 		{
 			using ItemTransaction transaction = new(transactions);
-
-			if (!transactions.TryRemoveSlot(transaction, fromIndex, count, out ItemStack result, out ItemStack fromSlot))
+			if (!IItemContainer.TryMoveSlot(transaction, this, fromIndex, count, to, toIndex))
 			{
 				return false;
 			}
+			transaction.Commit();
+			return true;
+		}
 
-			if (to.Transactions.TryAddSlot(transaction, toIndex, fromSlot, out _, out ItemStack remainder))
+		public bool CanSetSize(int value)
+		{
+			using ItemTransaction transaction = new(transactions);
+			return transactions.TrySetSize(transaction, value);
+		}
+
+		public bool TrySetSize(int value)
+		{
+			using ItemTransaction transaction = new(transactions);
+			if (!transactions.TrySetSize(transaction, value))
 			{
-				if (remainder.IsEmpty || transactions.TryAddSlot(transaction, fromIndex, remainder, out _, out remainder) && remainder.IsEmpty)
-				{
-					transaction.Commit();
-					return true;
-				}
+				return false;
 			}
-			else if (result.IsEmpty && to.Transactions.TryRemoveSlot(transaction, toIndex, -1, out _, out ItemStack toSlot))
-			{
-				if (!transactions.TryAddSlot(transaction, fromIndex, toSlot, out _, out remainder) || !remainder.IsEmpty)
-				{
-					return false;
-				}
-
-				if (!to.Transactions.TryAddSlot(transaction, toIndex, fromSlot, out _, out remainder) || !remainder.IsEmpty)
-				{
-					return false;
-				}
-
-				transaction.Commit();
-				return true;
-			}
-
-			return false;
+			transaction.Commit();
+			return true;
 		}
 
 		public void CopyFrom(ReadOnlySpan<ItemStack> stacks)

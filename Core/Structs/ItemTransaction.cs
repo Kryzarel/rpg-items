@@ -4,7 +4,7 @@ using Kryz.Utils;
 
 namespace Kryz.RPG.Items
 {
-	public ref struct ItemTransaction
+	public struct ItemTransaction : IItemTransaction, IDisposable
 	{
 		private readonly PooledList<ItemContainerEdits> edits;
 
