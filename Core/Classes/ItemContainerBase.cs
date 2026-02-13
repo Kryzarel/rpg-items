@@ -16,10 +16,20 @@ namespace Kryz.RPG.Items
 		IItemContainerTransactional IItemContainer.Transactions => Transactions;
 		int IReadOnlyCollection<ItemStack>.Count => transactions.Size;
 
+		/// <summary>
+		/// Even though 'new T()' is extremely convenient, it actually uses reflection at runtime - it calls 'Activator.CreateInstance()'.
+		/// Consider using the other constructor and manually instantiating the <see cref="IItemContainerTransactional"/> if that's a concern.
+		/// </summary>
+		/// <param name="size">The initial size of the internal <see cref="IItemContainerTransactional"/>.</param>
 		public ItemContainerBase(int size)
 		{
 			transactions = new T();
 			TrySetSize(size);
+		}
+
+		public ItemContainerBase(T itemContainerTransactional)
+		{
+			transactions = itemContainerTransactional;
 		}
 
 		public bool TrySetSize(int value)
