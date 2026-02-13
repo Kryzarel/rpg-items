@@ -1,8 +1,6 @@
 using System;
-using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
-using Kryz.Utils;
 
 namespace Kryz.RPG.Items
 {
@@ -186,7 +184,12 @@ namespace Kryz.RPG.Items
 			transaction.Commit();
 		}
 
-		public void Sort() => Sort(ValueComparer<ItemStack>.Default);
+		public void Sort()
+		{
+			using ItemTransaction transaction = new(transactions);
+			transactions.Sort(transaction);
+			transaction.Commit();
+		}
 
 		public void Sort<TComparer>(TComparer comparer) where TComparer : IComparer<ItemStack>
 		{
