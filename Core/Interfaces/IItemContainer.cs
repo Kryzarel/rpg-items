@@ -7,7 +7,11 @@ namespace Kryz.RPG.Items
 	{
 		IItemContainerTransactional Transactions { get; }
 
+		ReadOnlySpan<ItemStack> Slots { get; }
+
 		int Size { get; }
+		int FreeSlots { get; }
+		int OccupiedSlots { get; }
 
 		/// <summary>
 		/// Check if it's possible to add an <see cref="ItemStack"/> to the container.

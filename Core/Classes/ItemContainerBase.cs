@@ -11,7 +11,10 @@ namespace Kryz.RPG.Items
 		public T Transactions => transactions;
 
 		public ItemStack this[int index] => transactions[index];
+		public ReadOnlySpan<ItemStack> Slots => transactions.Slots;
 		public int Size => transactions.Size;
+		public int FreeSlots => transactions.FreeSlots;
+		public int OccupiedSlots => transactions.OccupiedSlots;
 
 		IItemContainerTransactional IItemContainer.Transactions => Transactions;
 		int IReadOnlyCollection<ItemStack>.Count => transactions.Size;
@@ -150,6 +153,8 @@ namespace Kryz.RPG.Items
 			transaction.Commit();
 			return true;
 		}
+
+		public void CopyFrom(ItemStack[] stacks) => CopyFrom(stacks.AsSpan());
 
 		public void CopyFrom(ReadOnlySpan<ItemStack> stacks)
 		{
