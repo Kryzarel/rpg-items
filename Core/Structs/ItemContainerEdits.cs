@@ -27,7 +27,7 @@ namespace Kryz.RPG.Items
 			editIndexes.SetCount(size);
 		}
 
-		public readonly void RecordSlot(int index, ItemStack newStack)
+		public readonly void RecordSlot(int index, ItemStack oldStack, ItemStack newStack)
 		{
 			ref int editIndex = ref editIndexes[index];
 
@@ -38,7 +38,7 @@ namespace Kryz.RPG.Items
 			}
 			else
 			{
-				slotEdits.Add(new SlotEdit(index, Container[index], newStack));
+				slotEdits.Add(new SlotEdit(index, oldStack, newStack));
 				editIndex = slotEdits.Count;
 			}
 		}

@@ -29,10 +29,7 @@ namespace Kryz.RPG.Items
 
 		int IReadOnlyCollection<ItemStack>.Count => size;
 
-		public ItemContainerTransactionalBase() : this(0)
-		{
-
-		}
+		public ItemContainerTransactionalBase() : this(0) { }
 
 		public ItemContainerTransactionalBase(int size, ArrayPool<ItemStack>? pool = null)
 		{
@@ -63,7 +60,7 @@ namespace Kryz.RPG.Items
 			{
 				ref ItemStack slot = ref slots[i];
 
-				if (slot.Item == stack.Item && CanReceive(i, stack) && slot.TryAdd(stack, out ItemStack result, out remainder, maxCount))
+				if (slot.Item == stack.Item && CanReceive(i, remainder) && slot.TryAdd(remainder, out ItemStack result, out remainder, maxCount))
 				{
 					SetSlotRef(transaction, ref slot, i, result);
 				}
@@ -74,7 +71,7 @@ namespace Kryz.RPG.Items
 			{
 				ref ItemStack slot = ref slots[i];
 
-				if (slot.Item == null && CanReceive(i, stack) && slot.TryAdd(stack, out ItemStack result, out remainder, maxCount))
+				if (slot.Item == null && CanReceive(i, remainder) && slot.TryAdd(remainder, out ItemStack result, out remainder, maxCount))
 				{
 					SetSlotRef(transaction, ref slot, i, result);
 				}
@@ -142,19 +139,18 @@ namespace Kryz.RPG.Items
 
 		public virtual bool TrySetSize<T>(T transaction, int value) where T : IItemTransaction
 		{
+			if (value < 0) value = 0;
+
 			if (value == size)
 			{
 				return false;
 			}
 
-			if (value < size) // If we're shrinking the container
+			for (int i = value; i < size; i++) // If we're shrinking the container
 			{
-				for (int i = value; i < size; i++)
+				if (!slots[i].IsEmpty) // But there are items in the slots that would be removed
 				{
-					if (!slots[i].IsEmpty) // But there are items in the slots that would be removed
-					{
-						return false; // Don't shrink
-					}
+					return false; // Don't shrink
 				}
 			}
 
@@ -239,7 +235,7 @@ namespace Kryz.RPG.Items
 
 				if ((uint)edit.Index < (uint)slots.Length)
 				{
-					slots[edit.Index] = edit.OldStack;
+					SetSlotRef(ref slots[edit.Index], edit.OldStack);
 				}
 			}
 		}
@@ -247,9 +243,15 @@ namespace Kryz.RPG.Items
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected void SetSlotRef<T>(T transaction, ref ItemStack slot, int index, in ItemStack value) where T : IItemTransaction
 		{
+			transaction.RecordSlot(this, index, slot, value);
+			SetSlotRef(ref slot, value);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected void SetSlotRef(ref ItemStack slot, in ItemStack value)
+		{
 			if (slot.Count <= 0 && value.Count > 0) occupiedSlots++;
 			else if (slot.Count > 0 && value.Count <= 0) occupiedSlots--;
-			transaction.RecordSlot(this, index, value);
 			slot = value;
 		}
 
