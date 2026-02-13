@@ -41,27 +41,27 @@ namespace Kryz.RPG.Items
 		bool CanRemove(int index);
 
 		/// <summary>
-		/// Try to add an item stack to any slots that can receive it.
+		/// Try to add an <see cref="ItemStack"/> to any slots that can receive it.
 		/// </summary>
-		/// <param name="stack">The item stack to add.</param>
+		/// <param name="stack">The <see cref="ItemStack"/> to add.</param>
 		/// <param name="remainder">If <paramref name="stack"/> could not be added in its entirety, this will contain how much remains of the original stack.</param>
 		/// <returns><see cref="true"/> if the container had enough space for at least 1 item. Otherwise <see cref="false"/>.</returns>
 		bool TryAdd(ItemTransaction transaction, in ItemStack stack, out ItemStack remainder);
 
 		/// <summary>
-		/// Try to add an item stack to a specific slot.
+		/// Try to add an <see cref="ItemStack"/> to a specific slot.
 		/// </summary>
 		/// <param name="index">The slot index to add to.</param>
-		/// <param name="stack">The item stack to add.</param>
-		/// <param name="result">The resulting item stack at <paramref name="index"/>, after adding.</param>
+		/// <param name="stack">The <see cref="ItemStack"/> to add.</param>
+		/// <param name="result">The resulting <see cref="ItemStack"/> at <paramref name="index"/>, after adding.</param>
 		/// <param name="remainder">If <paramref name="stack"/> could not be added in its entirety, this will contain how much remains of the original stack.</param>
 		/// <returns><see cref="true"/> if the slot had enough space for at least 1 item. Otherwise <see cref="false"/>.</returns>
-		bool TryAdd(ItemTransaction transaction, int index, in ItemStack stack, out ItemStack result, out ItemStack remainder);
+		bool TryAddSlot(ItemTransaction transaction, int index, in ItemStack stack, out ItemStack result, out ItemStack remainder);
 
 		/// <summary>
 		/// Try to remove a certain amount of a specific item from the container.
 		/// </summary>
-		/// <param name="stack">The item stack to remove.</param>
+		/// <param name="stack">The <see cref="ItemStack"/> to remove.</param>
 		/// <returns><see cref="true"/> if the container had enough of the specified item and it was removed. Otherwise <see cref="false"/>.</returns>
 		bool TryRemove(ItemTransaction transaction, in ItemStack stack);
 
@@ -70,10 +70,10 @@ namespace Kryz.RPG.Items
 		/// </summary>
 		/// <param name="index">The slot index to remove from.</param>
 		/// <param name="count">The amount of items to remove. Passing in a negative number removes the entire stack.</param>
-		/// <param name="result">The resulting item stack at <paramref name="index"/>, after adding.</param>
-		/// <param name="removed">The item stack that was removed.</param>
+		/// <param name="result">The resulting <see cref="ItemStack"/> at <paramref name="index"/>, after adding.</param>
+		/// <param name="removed">The <see cref="ItemStack"/> that was removed.</param>
 		/// <returns><see cref="true"/> if the slot had enough of the specified item and it was removed. Otherwise <see cref="false"/>.</returns>
-		bool TryRemove(ItemTransaction transaction, int index, int count, out ItemStack result, out ItemStack removed);
+		bool TryRemoveSlot(ItemTransaction transaction, int index, int count, out ItemStack result, out ItemStack removed);
 
 		/// <summary>
 		/// Try to set the container to the specified size.
@@ -83,7 +83,7 @@ namespace Kryz.RPG.Items
 		bool TrySetSize(ItemTransaction transaction, int value);
 
 		/// <summary>
-		/// Try to set a slot to the specified item stack.
+		/// Try to set a slot to the specified <see cref="ItemStack"/>.
 		/// </summary>
 		/// <param name="index">The slot index to set.</param>
 		/// <param name="stack">The stack to set the slot to.</param>
@@ -91,7 +91,7 @@ namespace Kryz.RPG.Items
 		bool TrySetSlot(ItemTransaction transaction, int index, in ItemStack stack);
 
 		/// <summary>
-		/// Set a slot to the specified item stack. Skips most checks other methods do.
+		/// Set a slot to the specified <see cref="ItemStack"/>. Skips most checks other methods do.
 		/// </summary>
 		/// <param name="index">The slot index to set.</param>
 		/// <param name="stack">The stack to set the slot to.</param>

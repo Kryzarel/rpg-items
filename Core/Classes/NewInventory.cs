@@ -1,8 +1,8 @@
 namespace Kryz.RPG.Items
 {
-	public sealed class NewInventory : ItemContainer<StandardTransactions>
+	public sealed class NewInventory : ItemContainerBase<ItemContainerTransactional>
 	{
-		public NewInventory(int size) : base(new StandardTransactions(size))
+		public NewInventory(int size) : base(new ItemContainerTransactional(size))
 		{
 		}
 	}

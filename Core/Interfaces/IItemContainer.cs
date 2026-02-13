@@ -17,27 +17,27 @@ namespace Kryz.RPG.Items
 		bool TrySetSize(int value);
 
 		/// <summary>
-		/// Try to add an item stack to any slots that can receive it.
+		/// Try to add an <see cref="ItemStack"/> to any slots that can receive it.
 		/// </summary>
-		/// <param name="stack">The item stack to add.</param>
+		/// <param name="stack">The <see cref="ItemStack"/> to add.</param>
 		/// <param name="remainder">If <paramref name="stack"/> could not be added in its entirety, this will contain how much remains of the original stack.</param>
 		/// <returns><see cref="true"/> if the container had enough space for at least 1 item. Otherwise <see cref="false"/>.</returns>
 		bool TryAdd(in ItemStack stack, out ItemStack remainder);
 
 		/// <summary>
-		/// Try to add an item stack to a specific slot.
+		/// Try to add an <see cref="ItemStack"/> to a specific slot.
 		/// </summary>
 		/// <param name="index">The slot index to add to.</param>
-		/// <param name="stack">The item stack to add.</param>
-		/// <param name="result">The resulting item stack at <paramref name="index"/>, after adding.</param>
+		/// <param name="stack">The <see cref="ItemStack"/> to add.</param>
+		/// <param name="result">The resulting <see cref="ItemStack"/> at <paramref name="index"/>, after adding.</param>
 		/// <param name="remainder">If <paramref name="stack"/> could not be added in its entirety, this will contain how much remains of the original stack.</param>
 		/// <returns><see cref="true"/> if the slot had enough space for at least 1 item. Otherwise <see cref="false"/>.</returns>
-		bool TryAdd(int index, in ItemStack stack, out ItemStack result, out ItemStack remainder);
+		bool TryAddSlot(int index, in ItemStack stack, out ItemStack result, out ItemStack remainder);
 
 		/// <summary>
 		/// Try to remove a certain amount of a specific item from the container.
 		/// </summary>
-		/// <param name="stack">The item stack to remove.</param>
+		/// <param name="stack">The <see cref="ItemStack"/> to remove.</param>
 		/// <returns><see cref="true"/> if the container had enough of the specified item and it was removed. Otherwise <see cref="false"/>.</returns>
 		bool TryRemove(in ItemStack stack);
 
@@ -46,10 +46,10 @@ namespace Kryz.RPG.Items
 		/// </summary>
 		/// <param name="index">The slot index to remove from.</param>
 		/// <param name="count">The amount of items to remove. Passing in a negative number removes the entire stack.</param>
-		/// <param name="result">The resulting item stack at <paramref name="index"/>, after adding.</param>
-		/// <param name="removed">The item stack that was removed.</param>
+		/// <param name="result">The resulting <see cref="ItemStack"/> at <paramref name="index"/>, after adding.</param>
+		/// <param name="removed">The <see cref="ItemStack"/> that was removed.</param>
 		/// <returns><see cref="true"/> if the slot had enough of the specified item and it was removed. Otherwise <see cref="false"/>.</returns>
-		bool TryRemove(int index, int count, out ItemStack result, out ItemStack removed);
+		bool TryRemoveSlot(int index, int count, out ItemStack result, out ItemStack removed);
 
 		/// <summary>
 		/// Try to move a certain amount of items from a specific slot to another <see cref="IItemContainer"/>.
@@ -68,7 +68,7 @@ namespace Kryz.RPG.Items
 		/// <param name="to">The <see cref="IItemContainer"/> to move to.</param>
 		/// <param name="toIndex">The slot index of the target <see cref="IItemContainer"/> to move to.</param>
 		/// <returns><see cref="true"/> if it was possible to move the specified amount of items. Otherwise <see cref="false"/>.</returns>
-		bool TryMove(int fromIndex, int count, IItemContainer to, int toIndex);
+		bool TryMoveSlot(int fromIndex, int count, IItemContainer to, int toIndex);
 
 		/// <summary>
 		/// <para>Overwrite all slots by copying from a <see cref="ReadOnlySpan{T}"/> of <see cref="ItemStack"/>.</para>

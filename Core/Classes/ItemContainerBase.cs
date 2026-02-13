@@ -6,7 +6,7 @@ using Kryz.Utils;
 
 namespace Kryz.RPG.Items
 {
-	public abstract class ItemContainer<T> : IItemContainer where T : IItemContainerTransactional
+	public abstract class ItemContainerBase<T> : IItemContainer where T : IItemContainerTransactional
 	{
 		protected readonly T transactions;
 
@@ -18,7 +18,7 @@ namespace Kryz.RPG.Items
 		IItemContainerTransactional IItemContainer.Transactions => Transactions;
 		int IReadOnlyCollection<ItemStack>.Count => transactions.Size;
 
-		public ItemContainer(T transactions)
+		public ItemContainerBase(T transactions)
 		{
 			this.transactions = transactions;
 		}
@@ -45,10 +45,10 @@ namespace Kryz.RPG.Items
 			return true;
 		}
 
-		public bool TryAdd(int index, in ItemStack stack, out ItemStack result, out ItemStack remainder)
+		public bool TryAddSlot(int index, in ItemStack stack, out ItemStack result, out ItemStack remainder)
 		{
 			using ItemTransaction transaction = new(transactions);
-			if (!transactions.TryAdd(transaction, index, stack, out result, out remainder))
+			if (!transactions.TryAddSlot(transaction, index, stack, out result, out remainder))
 			{
 				return false;
 			}
@@ -67,10 +67,10 @@ namespace Kryz.RPG.Items
 			return true;
 		}
 
-		public bool TryRemove(int index, int count, out ItemStack result, out ItemStack removed)
+		public bool TryRemoveSlot(int index, int count, out ItemStack result, out ItemStack removed)
 		{
 			using ItemTransaction transaction = new(transactions);
-			if (!transactions.TryRemove(transaction, index, count, out result, out removed))
+			if (!transactions.TryRemoveSlot(transaction, index, count, out result, out removed))
 			{
 				return false;
 			}
@@ -82,7 +82,7 @@ namespace Kryz.RPG.Items
 		{
 			using ItemTransaction transaction = new(transactions);
 
-			if (!transactions.TryRemove(transaction, fromIndex, count, out _, out ItemStack removed))
+			if (!transactions.TryRemoveSlot(transaction, fromIndex, count, out _, out ItemStack removed))
 			{
 				return false;
 			}
@@ -92,7 +92,7 @@ namespace Kryz.RPG.Items
 				return false;
 			}
 
-			if (!remainder.IsEmpty && (!transactions.TryAdd(transaction, fromIndex, remainder, out _, out ItemStack rem) || !rem.IsEmpty))
+			if (!remainder.IsEmpty && (!transactions.TryAddSlot(transaction, fromIndex, remainder, out _, out ItemStack rem) || !rem.IsEmpty))
 			{
 				return false;
 			}
@@ -101,31 +101,31 @@ namespace Kryz.RPG.Items
 			return true;
 		}
 
-		public bool TryMove(int fromIndex, int count, IItemContainer to, int toIndex)
+		public bool TryMoveSlot(int fromIndex, int count, IItemContainer to, int toIndex)
 		{
 			using ItemTransaction transaction = new(transactions);
 
-			if (!transactions.TryRemove(transaction, fromIndex, count, out ItemStack result, out ItemStack fromSlot))
+			if (!transactions.TryRemoveSlot(transaction, fromIndex, count, out ItemStack result, out ItemStack fromSlot))
 			{
 				return false;
 			}
 
-			if (to.Transactions.TryAdd(transaction, toIndex, fromSlot, out _, out ItemStack remainder))
+			if (to.Transactions.TryAddSlot(transaction, toIndex, fromSlot, out _, out ItemStack remainder))
 			{
-				if (remainder.IsEmpty || transactions.TryAdd(transaction, fromIndex, remainder, out _, out remainder) && remainder.IsEmpty)
+				if (remainder.IsEmpty || transactions.TryAddSlot(transaction, fromIndex, remainder, out _, out remainder) && remainder.IsEmpty)
 				{
 					transaction.Commit();
 					return true;
 				}
 			}
-			else if (result.IsEmpty && to.Transactions.TryRemove(transaction, toIndex, -1, out _, out ItemStack toSlot))
+			else if (result.IsEmpty && to.Transactions.TryRemoveSlot(transaction, toIndex, -1, out _, out ItemStack toSlot))
 			{
-				if (!transactions.TryAdd(transaction, fromIndex, toSlot, out _, out remainder) || !remainder.IsEmpty)
+				if (!transactions.TryAddSlot(transaction, fromIndex, toSlot, out _, out remainder) || !remainder.IsEmpty)
 				{
 					return false;
 				}
 
-				if (!to.Transactions.TryAdd(transaction, toIndex, fromSlot, out _, out remainder) || !remainder.IsEmpty)
+				if (!to.Transactions.TryAddSlot(transaction, toIndex, fromSlot, out _, out remainder) || !remainder.IsEmpty)
 				{
 					return false;
 				}
