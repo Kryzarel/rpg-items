@@ -121,7 +121,7 @@ namespace Kryz.RPG.Items
 			return false;
 		}
 
-		public virtual bool TryRemoveSlot<T>(T transaction, int index, int count, out ItemStack result, out ItemStack removed) where T : IItemTransaction
+		public virtual bool TryRemoveSlot<T>(T transaction, int index, out ItemStack result, out ItemStack removed, int count = -1) where T : IItemTransaction
 		{
 			ref ItemStack slot = ref slots[index];
 			if (count < 0) count = slot.Count;

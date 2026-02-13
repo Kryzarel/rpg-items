@@ -69,11 +69,11 @@ namespace Kryz.RPG.Items
 		/// Try to remove a certain amount of items from a specific slot.
 		/// </summary>
 		/// <param name="index">The slot index to remove from.</param>
-		/// <param name="count">The amount of items to remove. Passing in a negative number removes the entire stack.</param>
 		/// <param name="result">The resulting <see cref="ItemStack"/> at <paramref name="index"/>, after adding.</param>
 		/// <param name="removed">The <see cref="ItemStack"/> that was removed.</param>
+		/// <param name="count">The amount of items to remove. Passing in a negative number removes the entire stack.</param>
 		/// <returns><see cref="true"/> if the slot had enough of the specified item and it was removed. Otherwise <see cref="false"/>.</returns>
-		bool TryRemoveSlot<T>(T transaction, int index, int count, out ItemStack result, out ItemStack removed) where T : IItemTransaction;
+		bool TryRemoveSlot<T>(T transaction, int index, out ItemStack result, out ItemStack removed, int count = -1) where T : IItemTransaction;
 
 		/// <summary>
 		/// Try to set the container to the specified size.

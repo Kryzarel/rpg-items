@@ -86,16 +86,16 @@ namespace Kryz.RPG.Items
 			return true;
 		}
 
-		public bool CanRemoveSlot(int index, int count, out ItemStack result, out ItemStack removed)
+		public bool CanRemoveSlot(int index, out ItemStack result, out ItemStack removed, int count = -1)
 		{
 			using ItemTransaction transaction = new(transactions);
-			return transactions.TryRemoveSlot(transaction, index, count, out result, out removed);
+			return transactions.TryRemoveSlot(transaction, index, out result, out removed, count);
 		}
 
-		public bool TryRemoveSlot(int index, int count, out ItemStack result, out ItemStack removed)
+		public bool TryRemoveSlot(int index, out ItemStack result, out ItemStack removed, int count = -1)
 		{
 			using ItemTransaction transaction = new(transactions);
-			if (!transactions.TryRemoveSlot(transaction, index, count, out result, out removed))
+			if (!transactions.TryRemoveSlot(transaction, index, out result, out removed, count))
 			{
 				return false;
 			}
@@ -103,16 +103,16 @@ namespace Kryz.RPG.Items
 			return true;
 		}
 
-		public bool CanMove(int fromIndex, int count, IItemContainer to)
+		public bool CanMove(int fromIndex, IItemContainer to, int count = -1)
 		{
 			using ItemTransaction transaction = new(transactions);
-			return IItemContainer.TryMove(transaction, this, fromIndex, count, to);
+			return IItemContainer.TryMove(transaction, this, fromIndex, to, count);
 		}
 
-		public bool TryMove(int fromIndex, int count, IItemContainer to)
+		public bool TryMove(int fromIndex, IItemContainer to, int count = -1)
 		{
 			using ItemTransaction transaction = new(transactions);
-			if (!IItemContainer.TryMove(transaction, this, fromIndex, count, to))
+			if (!IItemContainer.TryMove(transaction, this, fromIndex, to, count))
 			{
 				return false;
 			}
@@ -120,16 +120,16 @@ namespace Kryz.RPG.Items
 			return true;
 		}
 
-		public bool CanMoveSlot(int fromIndex, int count, IItemContainer to, int toIndex)
+		public bool CanMoveSlot(int fromIndex, IItemContainer to, int toIndex, int count = -1)
 		{
 			using ItemTransaction transaction = new(transactions);
-			return IItemContainer.TryMoveSlot(transaction, this, fromIndex, count, to, toIndex);
+			return IItemContainer.TryMoveSlot(transaction, this, fromIndex, to, toIndex, count);
 		}
 
-		public bool TryMoveSlot(int fromIndex, int count, IItemContainer to, int toIndex)
+		public bool TryMoveSlot(int fromIndex, IItemContainer to, int toIndex, int count = -1)
 		{
 			using ItemTransaction transaction = new(transactions);
-			if (!IItemContainer.TryMoveSlot(transaction, this, fromIndex, count, to, toIndex))
+			if (!IItemContainer.TryMoveSlot(transaction, this, fromIndex, to, toIndex, count))
 			{
 				return false;
 			}
