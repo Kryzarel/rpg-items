@@ -6,7 +6,7 @@ using Kryz.Utils;
 
 namespace Kryz.RPG.Items
 {
-	public abstract class ItemContainerBase<T> : IItemContainer where T : IItemContainerTransactional
+	public abstract class ItemContainerBase<T> : IItemContainer where T : IItemContainerTransactional, new()
 	{
 		protected readonly T transactions;
 
@@ -18,9 +18,10 @@ namespace Kryz.RPG.Items
 		IItemContainerTransactional IItemContainer.Transactions => Transactions;
 		int IReadOnlyCollection<ItemStack>.Count => transactions.Size;
 
-		public ItemContainerBase(T transactions)
+		public ItemContainerBase(int size)
 		{
-			this.transactions = transactions;
+			transactions = new T();
+			TrySetSize(size);
 		}
 
 		public bool TrySetSize(int value)
@@ -190,24 +191,7 @@ namespace Kryz.RPG.Items
 		public void Sort<TComparer>(TComparer comparer) where TComparer : IComparer<ItemStack>
 		{
 			using ItemTransaction transaction = new(transactions);
-
-			ReadOnlySpan<ItemStack> slots = transactions.Slots;
-
-			ItemStack[] sortedArray = ArrayPool<ItemStack>.Shared.Rent(slots.Length);
-			Span<ItemStack> sorted = sortedArray;
-			slots.CopyTo(sorted);
-
-			// We DON'T use the default Array.Sort because it is unstable. I think stable sorting is very valuable here.
-			// Our version also tends to be just as fast, if not slightly faster, which is nice.
-			TimSortLite.Sort(sorted, comparer);
-
-			for (int i = 0; i < slots.Length; i++)
-			{
-				transactions.SetSlot(transaction, i, sorted[i]);
-			}
-
-			sorted.Clear();
-			ArrayPool<ItemStack>.Shared.Return(sortedArray);
+			transactions.Sort(transaction, comparer);
 			transaction.Commit();
 		}
 

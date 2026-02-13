@@ -98,6 +98,10 @@ namespace Kryz.RPG.Items
 		/// <returns><see cref="true"/> if it was possible to set the slot. Otherwise <see cref="false"/>.</returns>
 		void SetSlot(ItemTransaction transaction, int index, in ItemStack stack);
 
+		void Sort(ItemTransaction transaction);
+
+		void Sort<TComparer>(ItemTransaction transaction, TComparer comparer) where TComparer : IComparer<ItemStack>;
+
 		/// <summary>
 		/// Notify observers of changes made after a successful transaction.
 		/// </summary>

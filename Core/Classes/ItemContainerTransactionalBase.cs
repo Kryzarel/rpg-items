@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Kryz.Utils;
 
 namespace Kryz.RPG.Items
 {
@@ -27,6 +28,11 @@ namespace Kryz.RPG.Items
 		public int OccupiedSlots => occupiedSlots;
 
 		int IReadOnlyCollection<ItemStack>.Count => size;
+
+		public ItemContainerTransactionalBase() : this(0)
+		{
+
+		}
 
 		public ItemContainerTransactionalBase(int size, ArrayPool<ItemStack>? pool = null)
 		{
@@ -175,6 +181,27 @@ namespace Kryz.RPG.Items
 			}
 		}
 
+		public void Sort(ItemTransaction transaction) => Sort(transaction, ValueComparer<ItemStack>.Default);
+
+		public void Sort<TComparer>(ItemTransaction transaction, TComparer comparer) where TComparer : IComparer<ItemStack>
+		{
+			ItemStack[] sortedArray = arrayPool.Rent(size);
+			Array.Copy(slots, sortedArray, size);
+			Span<ItemStack> sorted = new(sortedArray, 0, size);
+
+			// We DON'T use the default Array.Sort because it is unstable. I think stable sorting is very valuable here.
+			// Our version also tends to be just as fast, if not slightly faster, which is nice.
+			TimSortLite.Sort(sorted, comparer);
+
+			for (int i = 0; i < size; i++)
+			{
+				SetSlot(transaction, i, sorted[i]);
+			}
+
+			sorted.Clear();
+			arrayPool.Return(sortedArray);
+		}
+
 		public void Notify(ReadOnlySpan<SlotEdit> slotEdits, SizeEdit? sizeEdit)
 		{
 			if (sizeEdit.HasValue)
@@ -259,7 +286,6 @@ namespace Kryz.RPG.Items
 		public ArraySegment<ItemStack>.Enumerator GetEnumerator() => new ArraySegment<ItemStack>(slots, 0, size).GetEnumerator();
 
 		IEnumerator<ItemStack> IEnumerable<ItemStack>.GetEnumerator() => GetEnumerator();
-
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 	}
 }
