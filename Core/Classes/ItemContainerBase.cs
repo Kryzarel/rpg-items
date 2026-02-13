@@ -149,14 +149,14 @@ namespace Kryz.RPG.Items
 		public void CopyFrom(ReadOnlySpan<ItemStack> stacks)
 		{
 			using ItemTransaction transaction = new(transactions);
-			int count = stacks.Length;
+			int size = stacks.Length;
 
-			if (transactions.Size < count)
+			if (transactions.Size < size)
 			{
-				transactions.TrySetSize(transaction, count);
+				transactions.TrySetSize(transaction, size);
 			}
 
-			for (int i = 0; i < count; i++)
+			for (int i = 0; i < size; i++)
 			{
 				ItemStack stack = stacks[i];
 				transactions.SetSlot(transaction, i, stack);
@@ -168,14 +168,14 @@ namespace Kryz.RPG.Items
 		public void CopyFrom(IReadOnlyList<ItemStack> stacks)
 		{
 			using ItemTransaction transaction = new(transactions);
-			int count = stacks.Count;
+			int size = stacks.Count;
 
-			if (transactions.Size < count)
+			if (transactions.Size < size)
 			{
-				transactions.TrySetSize(transaction, count);
+				transactions.TrySetSize(transaction, size);
 			}
 
-			for (int i = 0; i < count; i++)
+			for (int i = 0; i < size; i++)
 			{
 				ItemStack stack = stacks[i];
 				transactions.SetSlot(transaction, i, stack);
@@ -187,7 +187,7 @@ namespace Kryz.RPG.Items
 		public void Clear()
 		{
 			using ItemTransaction transaction = new(transactions);
-			for (int i = 0; i < transactions.Size; i++)
+			for (int i = 0, size = transactions.Size; i < size; i++)
 			{
 				transactions.SetSlot(transaction, i, default);
 			}
