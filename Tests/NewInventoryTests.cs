@@ -89,14 +89,22 @@ namespace Kryz.RPG.Items.Tests
 		public void SetSize_PreserveItems([ValueSource(inventorySizesSrc)] int size)
 		{
 			// Arrange
-			ItemStack[] itemStacks = new ItemStack[] { default, new(items[1]), new(items[2]) };
 			NewInventory inventory = new(0);
+			ItemStack[] itemStacks = new ItemStack[] { default, new(items[1]), new(items[2]) };
 			inventory.CopyFrom(itemStacks);
 
 			// Act
-			inventory.TrySetSize(size);
+			bool resized = inventory.TrySetSize(size);
 
 			// Assert
+			if (size < itemStacks.Length)
+			{
+				Assert.IsFalse(resized);
+				return;
+			}
+
+			Assert.IsTrue(resized);
+
 			int expectedSize = Math.Max(0, size);
 			int expectedOccupied = itemStacks[..Math.Min(expectedSize, itemStacks.Length)].Count(s => s != default);
 			int expectedFree = Math.Max(0, expectedSize - expectedOccupied);
