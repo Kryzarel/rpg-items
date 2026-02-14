@@ -19,9 +19,9 @@ namespace Kryz.RPG.Items
 			commited = false;
 		}
 
-		public readonly void RecordSize(IItemContainerTransactional container, int size)
+		public readonly void RecordSize(IItemContainerTransactional container, int oldSize, int newSize)
 		{
-			GetOrAddTransaction(container).RecordSize(size);
+			GetOrAddTransaction(container).RecordSize(oldSize, newSize);
 		}
 
 		public readonly void RecordSlot(IItemContainerTransactional container, int index, ItemStack oldStack, ItemStack newStack)

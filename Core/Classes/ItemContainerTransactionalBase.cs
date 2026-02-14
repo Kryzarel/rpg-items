@@ -256,10 +256,10 @@ namespace Kryz.RPG.Items
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected void SetSize<T>(T transaction, int size) where T : IItemTransaction
+		protected void SetSize<T>(T transaction, int value) where T : IItemTransaction
 		{
-			transaction.RecordSize(this, size);
-			SetSize(size);
+			transaction.RecordSize(this, size, value);
+			SetSize(value);
 		}
 
 		protected void SetSize(int value)

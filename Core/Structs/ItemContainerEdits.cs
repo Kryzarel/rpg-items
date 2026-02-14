@@ -1,34 +1,47 @@
+using System;
+using System.Buffers;
 using Kryz.Utils;
 
 namespace Kryz.RPG.Items
 {
 	public struct ItemContainerEdits
 	{
-		private readonly PooledList<int> editIndexes;
-		private readonly PooledList<SlotEdit> slotEdits;
+		private readonly ArrayPool<int> intPool;
+		private readonly ArrayPool<SlotEdit> slotEditPool;
 
+		private int[] editIndexes;
+		private SlotEdit[] slotEdits;
+		private int editsCount;
 		private SizeEdit? sizeEdit;
 
 		public readonly IItemContainerTransactional Container;
 
 		public ItemContainerEdits(IItemContainerTransactional container)
 		{
-			Container = container;
-			editIndexes = PooledList<int>.Rent(container.Size);
-			editIndexes.SetCount(container.Size);
-			slotEdits = PooledList<SlotEdit>.Rent();
+			intPool = ArrayPool<int>.Shared;
+			slotEditPool = ArrayPool<SlotEdit>.Shared;
+
+			editIndexes = intPool.Rent(container.Size);
+			slotEdits = slotEditPool.Rent(container.Size);
+			editsCount = 0;
 			sizeEdit = default;
+
+			Container = container;
 		}
 
-		public void RecordSize(int size)
+		public void RecordSize(int oldSize, int newSize)
 		{
-			int oldSize = sizeEdit.HasValue ? sizeEdit.Value.OldSize : Container.Size;
-			sizeEdit = new SizeEdit(oldSize, size);
-			editIndexes.SetCount(size);
+			oldSize = sizeEdit.HasValue ? sizeEdit.Value.OldSize : oldSize;
+			sizeEdit = new SizeEdit(oldSize, newSize);
 		}
 
-		public readonly void RecordSlot(int index, ItemStack oldStack, ItemStack newStack)
+		public void RecordSlot(int index, ItemStack oldStack, ItemStack newStack)
 		{
+			if (index >= editIndexes.Length)
+			{
+				ArrayPoolUtils.Resize(ref editIndexes, editIndexes.Length, editIndexes.Length * 2);
+			}
+
 			ref int editIndex = ref editIndexes[index];
 
 			if (editIndex > 0)
@@ -38,18 +51,23 @@ namespace Kryz.RPG.Items
 			}
 			else
 			{
-				slotEdits.Add(new SlotEdit(index, oldStack, newStack));
-				editIndex = slotEdits.Count;
+				if (editsCount >= slotEdits.Length)
+				{
+					ArrayPoolUtils.Resize(ref slotEdits, slotEdits.Length, slotEdits.Length * 2);
+				}
+
+				slotEdits[editsCount++] = new SlotEdit(index, oldStack, newStack);
+				editIndex = editsCount;
 			}
 		}
 
-		public readonly void Notify() => Container.Notify(slotEdits.AsSpan(), sizeEdit);
-		public readonly void Rollback() => Container.Rollback(slotEdits.AsSpan(), sizeEdit);
+		public readonly void Notify() => Container.Notify(slotEdits.AsSpan(0, editsCount), sizeEdit);
+		public readonly void Rollback() => Container.Rollback(slotEdits.AsSpan(0, editsCount), sizeEdit);
 
 		public readonly void Dispose()
 		{
-			editIndexes.Dispose();
-			slotEdits.Dispose();
+			intPool.Return(editIndexes, clearArray: true);
+			slotEditPool.Return(slotEdits, clearArray: true);
 		}
 	}
 }
