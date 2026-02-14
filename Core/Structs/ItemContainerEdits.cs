@@ -39,7 +39,7 @@ namespace Kryz.RPG.Items
 		{
 			if (index >= editIndexes.Length)
 			{
-				ArrayPoolUtils.Resize(ref editIndexes, editIndexes.Length, editIndexes.Length * 2);
+				ArrayPoolUtils.Resize(ref editIndexes, editIndexes.Length, index + 1);
 			}
 
 			ref int editIndex = ref editIndexes[index];
@@ -53,7 +53,7 @@ namespace Kryz.RPG.Items
 			{
 				if (editsCount >= slotEdits.Length)
 				{
-					ArrayPoolUtils.Resize(ref slotEdits, slotEdits.Length, slotEdits.Length * 2);
+					ArrayPoolUtils.Resize(ref slotEdits, slotEdits.Length, editsCount + 1);
 				}
 
 				slotEdits[editsCount++] = new SlotEdit(index, oldStack, newStack);
