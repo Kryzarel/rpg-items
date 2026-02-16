@@ -1,4 +1,3 @@
-using System;
 using System.Buffers;
 using Kryz.Utils;
 
@@ -58,8 +57,34 @@ namespace Kryz.RPG.Items
 			}
 		}
 
-		public readonly void Notify() => Container.Notify(slotEdits.AsSpan(0, slotEditsCount), sizeEdit);
-		public readonly void Rollback() => Container.Rollback(slotEdits.AsSpan(0, slotEditsCount), sizeEdit);
+		public readonly void Notify()
+		{
+			if (sizeEdit.HasValue)
+			{
+				SizeEdit edit = sizeEdit.Value;
+				Container.NotifySize(edit.OldSize, edit.NewSize);
+			}
+
+			for (int i = 0; i < slotEditsCount; i++)
+			{
+				ref readonly SlotEdit edit = ref slotEdits[i];
+				Container.NotifySlot(edit.Index, edit.OldStack, edit.NewStack);
+			}
+		}
+
+		public readonly void Rollback()
+		{
+			if (sizeEdit.HasValue)
+			{
+				Container.RollbackSize(sizeEdit.Value.OldSize);
+			}
+
+			for (int i = 0; i < slotEditsCount; i++)
+			{
+				ref readonly SlotEdit edit = ref slotEdits[i];
+				Container.RollbackSlot(edit.Index, edit.OldStack);
+			}
+		}
 
 		public readonly void Dispose()
 		{

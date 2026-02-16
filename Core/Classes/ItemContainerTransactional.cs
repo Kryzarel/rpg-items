@@ -19,7 +19,6 @@ namespace Kryz.RPG.Items
 
 		public event IItemContainerTransactional.OnSlotChangedDelegate? OnSlotChanged;
 		public event IItemContainerTransactional.OnSizeChangedDelegate? OnSizeChanged;
-		public event Action? OnTransactionComplete;
 
 		public ItemStack this[int index] => (uint)index >= (uint)size ? throw new IndexOutOfRangeException(indexOutOfRangeMsg) : slots[index];
 		public ReadOnlySpan<ItemStack> Slots => new(slots, 0, size);
@@ -284,43 +283,30 @@ namespace Kryz.RPG.Items
 			arrayPool.Return(sortedArray);
 		}
 
-		public void Notify(ReadOnlySpan<SlotEdit> slotEdits, SizeEdit? sizeEdit)
+		public void NotifySlot(int index, ItemStack oldStack, ItemStack newStack)
 		{
-			if (sizeEdit.HasValue)
+			if ((uint)index < (uint)size)
 			{
-				SizeEdit edit = sizeEdit.Value;
-				OnSizeChanged?.Invoke(edit.OldSize, edit.NewSize);
+				OnSlotChanged?.Invoke(index, oldStack, newStack);
 			}
-
-			for (int i = 0; i < slotEdits.Length; i++)
-			{
-				ref readonly SlotEdit edit = ref slotEdits[i];
-
-				if ((uint)edit.Index < (uint)slots.Length)
-				{
-					OnSlotChanged?.Invoke(edit.Index, edit.OldStack, edit.NewStack);
-				}
-			}
-
-			OnTransactionComplete?.Invoke();
 		}
 
-		public void Rollback(ReadOnlySpan<SlotEdit> slotEdits, SizeEdit? sizeEdit)
+		public void NotifySize(int oldSize, int newSize)
 		{
-			if (sizeEdit.HasValue)
-			{
-				SetSize(sizeEdit.Value.OldSize);
-			}
+			OnSizeChanged?.Invoke(oldSize, newSize);
+		}
 
-			for (int i = 0; i < slotEdits.Length; i++)
+		public void RollbackSlot(int index, ItemStack oldStack)
+		{
+			if ((uint)index < (uint)size)
 			{
-				ref readonly SlotEdit edit = ref slotEdits[i];
-
-				if ((uint)edit.Index < (uint)slots.Length)
-				{
-					SetSlotRef(ref slots[edit.Index], edit.OldStack);
-				}
+				SetSlotRef(ref slots[index], oldStack);
 			}
+		}
+
+		public void RollbackSize(int oldSize)
+		{
+			SetSize(oldSize);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace Kryz.RPG.Items
@@ -10,7 +9,6 @@ namespace Kryz.RPG.Items
 
 		event OnSlotChangedDelegate OnSlotChanged;
 		event OnSizeChangedDelegate OnSizeChanged;
-		event Action OnTransactionComplete;
 
 		/// <summary>
 		/// Try to add an <see cref="ItemStack"/> to any slots that can receive it.
@@ -94,17 +92,31 @@ namespace Kryz.RPG.Items
 		void Sort<T, TComparer>(T transaction, TComparer comparer) where TComparer : IComparer<ItemStack> where T : IItemTransaction;
 
 		/// <summary>
-		/// Notify observers of changes made after a successful transaction.
+		/// Notify observers of a slot change after a successful transaction.
 		/// </summary>
-		/// <param name="slotEdits">The slots that were edited by the transaction.</param>
-		/// <param name="sizeEdit">The size of the container, if it was edited by the transaction.</param>
-		void Notify(ReadOnlySpan<SlotEdit> slotEdits, SizeEdit? sizeEdit);
+		/// <param name="index">The changed slot index</param>
+		/// <param name="oldStack">The old slot</param>
+		/// <param name="newStack">The new slot</param>
+		void NotifySlot(int index, ItemStack oldStack, ItemStack newStack);
 
 		/// <summary>
-		/// Rollback changes made after a failed transaction.
+		/// Notify observers of a size change after a successful transaction.
 		/// </summary>
-		/// <param name="slotEdits">The slots that were edited by the transaction.</param>
-		/// <param name="sizeEdit">The size of the container, if it was edited by the transaction.</param>
-		void Rollback(ReadOnlySpan<SlotEdit> slotEdits, SizeEdit? sizeEdit);
+		/// <param name="oldSize">The old size</param>
+		/// <param name="newSize">The new size</param>
+		void NotifySize(int oldSize, int newSize);
+
+		/// <summary>
+		/// Rollback a slot change after a failed transaction.
+		/// </summary>
+		/// <param name="index">The slot index</param>
+		/// <param name="oldStack">The old slot</param>
+		void RollbackSlot(int index, ItemStack oldStack);
+
+		/// <summary>
+		/// Rollback a slot change after a failed transaction.
+		/// </summary>
+		/// <param name="oldSize">The old size</param>
+		void RollbackSize(int oldSize);
 	}
 }
