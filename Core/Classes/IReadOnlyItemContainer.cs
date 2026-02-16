@@ -19,12 +19,12 @@ namespace Kryz.RPG.Items
 		int GetMaxStacks(IItem item);
 
 		/// <summary>
-		/// Check if the slot at <paramref name="index"/> can receive the specified <see cref="ItemStack"/>.
+		/// Check if the slot at <paramref name="index"/> can receive the specified <see cref="IItem"/>.
 		/// </summary>
 		/// <param name="index">The slot index to check.</param>
-		/// <param name="stack">The <see cref="ItemStack"/> to check.</param>
+		/// <param name="item">The <see cref="IItem"/> to check.</param>
 		/// <returns><see cref="true"/> if the slot can receive the <paramref name="stack"/>. Otherwise <see cref="false"/>.</returns>
-		bool CanReceive(int index, in ItemStack stack);
+		bool CanReceive(int index, IItem item);
 
 		/// <summary>
 		/// Check if the slot at <paramref name="index"/> can remove any of its contents.
@@ -69,10 +69,74 @@ namespace Kryz.RPG.Items
 		bool CanRemoveSlot(int index, out ItemStack result, out ItemStack removed, int count = -1);
 
 		/// <summary>
+		/// Check if it's possible to set a slot to the specified <see cref="ItemStack"/>.
+		/// </summary>
+		/// <param name="index">The slot index to set.</param>
+		/// <param name="stack">The stack to set the slot to.</param>
+		/// <returns><see cref="true"/> if it is possible to set the slot. Otherwise <see cref="false"/>.</returns>
+		bool CanSetSlot(int index, in ItemStack stack);
+
+		/// <summary>
 		/// Check if it's possible to set the size of the container.
 		/// </summary>
 		/// <param name="value">The size to set.</param>
 		/// <returns><see cref="true"/> if the size can be set. Otherwise <see cref="false"/>.</returns>
 		bool CanSetSize(int value);
+
+		public static bool CanAddSlot(IReadOnlyItemContainer container, int index, ItemStack slot, ItemStack stack, out ItemStack remainder)
+		{
+			remainder = stack;
+			return stack.Item != null && container.CanReceive(index, stack.Item) && slot.TryAdd(stack, out remainder, out stack, container.GetMaxStacks(stack.Item));
+		}
+
+		/// <summary>
+		/// Check if it's possible to move a certain amount of items from a specific slot to another <see cref="IItemContainer"/>.
+		/// </summary>
+		/// <param name="fromIndex">The slot index to move from.</param>
+		/// <param name="to">The <see cref="IItemContainer"/> to move to.</param>
+		/// <param name="count">The amount of items to move. Passing in a negative number moves the entire stack.</param>
+		/// <returns><see cref="true"/> if it is possible to move the specified amount of items. Otherwise <see cref="false"/>.</returns>
+		public static bool CanMove(IReadOnlyItemContainer from, int fromIndex, IReadOnlyItemContainer to, int count = -1)
+		{
+			if (!from.CanRemoveSlot(fromIndex, out ItemStack result, out ItemStack removed, count))
+			{
+				return false;
+			}
+
+			if (to.CanAdd(removed, out ItemStack rem))
+			{
+				return rem.IsEmpty || CanAddSlot(from, fromIndex, result, rem, out rem) && rem.IsEmpty;
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Check if it's possible to move a certain amount of items from a specific slot to another slot of an <see cref="IItemContainer"/>.
+		/// </summary>
+		/// <param name="fromIndex">The slot index to move from.</param>
+		/// <param name="to">The <see cref="IItemContainer"/> to move to.</param>
+		/// <param name="toIndex">The slot index of the target <see cref="IItemContainer"/> to move to.</param>
+		/// <param name="count">The amount of items to move. Passing in a negative number moves the entire stack.</param>
+		/// <returns><see cref="true"/> if it is possible to move the specified amount of items. Otherwise <see cref="false"/>.</returns>
+		public static bool CanMoveSlot(IReadOnlyItemContainer from, int fromIndex, IReadOnlyItemContainer to, int toIndex, int count = -1)
+		{
+			if (!from.CanRemoveSlot(fromIndex, out ItemStack result, out ItemStack fromSlot, count))
+			{
+				return false;
+			}
+
+			if (to.CanAddSlot(toIndex, fromSlot, out _, out ItemStack rem))
+			{
+				return rem.IsEmpty || CanAddSlot(from, fromIndex, result, rem, out rem) && rem.IsEmpty;
+			}
+			else if (result.IsEmpty && to.CanRemoveSlot(toIndex, out ItemStack toResult, out ItemStack toSlot))
+			{
+				return CanAddSlot(from, fromIndex, result, toSlot, out rem) && rem.IsEmpty
+					&& CanAddSlot(to, toIndex, toResult, fromSlot, out rem) && rem.IsEmpty;
+			}
+
+			return false;
+		}
 	}
 }

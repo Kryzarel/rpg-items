@@ -4,9 +4,9 @@ using System.Collections.Generic;
 
 namespace Kryz.RPG.Items
 {
-	public abstract class ItemContainerBase : ItemContainerTransactionalBase, IItemContainer
+	public abstract class ItemContainer : ItemContainerTransactional, IItemContainer
 	{
-		public ItemContainerBase(int size, ArrayPool<ItemStack>? pool = null) : base(size, pool)
+		public ItemContainer(int size, ArrayPool<ItemStack>? pool = null) : base(size, pool)
 		{
 		}
 
@@ -54,16 +54,10 @@ namespace Kryz.RPG.Items
 			return true;
 		}
 
-		public virtual bool CanMove(int fromIndex, IItemContainer to, int count = -1)
-		{
-			using ItemTransaction transaction = new(this);
-			return IItemContainer.TryMove(transaction, this, fromIndex, to, count);
-		}
-
 		public virtual bool TryMove(int fromIndex, IItemContainer to, int count = -1)
 		{
 			using ItemTransaction transaction = new(this);
-			if (!IItemContainer.TryMove(transaction, this, fromIndex, to, count))
+			if (!IItemContainerTransactional.TryMove(transaction, this, fromIndex, to, count))
 			{
 				return false;
 			}
@@ -71,16 +65,10 @@ namespace Kryz.RPG.Items
 			return true;
 		}
 
-		public virtual bool CanMoveSlot(int fromIndex, IItemContainer to, int toIndex, int count = -1)
-		{
-			using ItemTransaction transaction = new(this);
-			return IItemContainer.TryMoveSlot(transaction, this, fromIndex, to, toIndex, count);
-		}
-
 		public virtual bool TryMoveSlot(int fromIndex, IItemContainer to, int toIndex, int count = -1)
 		{
 			using ItemTransaction transaction = new(this);
-			if (!IItemContainer.TryMoveSlot(transaction, this, fromIndex, to, toIndex, count))
+			if (!IItemContainerTransactional.TryMoveSlot(transaction, this, fromIndex, to, toIndex, count))
 			{
 				return false;
 			}

@@ -41,44 +41,6 @@ namespace Kryz.RPG.Items
 		bool TryRemoveSlot(int index, out ItemStack result, out ItemStack removed, int count = -1);
 
 		/// <summary>
-		/// Check if it's possible to move a certain amount of items from a specific slot to another <see cref="IItemContainer"/>.
-		/// </summary>
-		/// <param name="fromIndex">The slot index to move from.</param>
-		/// <param name="to">The <see cref="IItemContainer"/> to move to.</param>
-		/// <param name="count">The amount of items to move. Passing in a negative number moves the entire stack.</param>
-		/// <returns><see cref="true"/> if it is possible to move the specified amount of items. Otherwise <see cref="false"/>.</returns>
-		bool CanMove(int fromIndex, IItemContainer to, int count = -1);
-
-		/// <summary>
-		/// Try to move a certain amount of items from a specific slot to another <see cref="IItemContainer"/>.
-		/// </summary>
-		/// <param name="fromIndex">The slot index to move from.</param>
-		/// <param name="to">The <see cref="IItemContainer"/> to move to.</param>
-		/// <param name="count">The amount of items to move. Passing in a negative number moves the entire stack.</param>
-		/// <returns><see cref="true"/> if it was possible to move the specified amount of items. Otherwise <see cref="false"/>.</returns>
-		bool TryMove(int fromIndex, IItemContainer to, int count = -1);
-
-		/// <summary>
-		/// Check if it's possible to move a certain amount of items from a specific slot to another slot of an <see cref="IItemContainer"/>.
-		/// </summary>
-		/// <param name="fromIndex">The slot index to move from.</param>
-		/// <param name="to">The <see cref="IItemContainer"/> to move to.</param>
-		/// <param name="toIndex">The slot index of the target <see cref="IItemContainer"/> to move to.</param>
-		/// <param name="count">The amount of items to move. Passing in a negative number moves the entire stack.</param>
-		/// <returns><see cref="true"/> if it is possible to move the specified amount of items. Otherwise <see cref="false"/>.</returns>
-		bool CanMoveSlot(int fromIndex, IItemContainer to, int toIndex, int count = -1);
-
-		/// <summary>
-		/// Try to move a certain amount of items from a specific slot to another slot of an <see cref="IItemContainer"/>.
-		/// </summary>
-		/// <param name="fromIndex">The slot index to move from.</param>
-		/// <param name="to">The <see cref="IItemContainer"/> to move to.</param>
-		/// <param name="toIndex">The slot index of the target <see cref="IItemContainer"/> to move to.</param>
-		/// <param name="count">The amount of items to move. Passing in a negative number moves the entire stack.</param>
-		/// <returns><see cref="true"/> if it was possible to move the specified amount of items. Otherwise <see cref="false"/>.</returns>
-		bool TryMoveSlot(int fromIndex, IItemContainer to, int toIndex, int count = -1);
-
-		/// <summary>
 		/// Try to set the size of the container.
 		/// </summary>
 		/// <param name="value">The size to set.</param>
@@ -105,57 +67,5 @@ namespace Kryz.RPG.Items
 		void Clear();
 
 		void Sort();
-
-		public static bool TryMove<T>(T transaction, IItemContainer from, int fromIndex, IItemContainer to, int count = -1) where T : IItemTransaction
-		{
-			if (!from.TryRemoveSlot(transaction, fromIndex, out _, out ItemStack removed, count))
-			{
-				return false;
-			}
-
-			if (!to.TryAdd(transaction, removed, out ItemStack remainder))
-			{
-				return false;
-			}
-
-			if (!remainder.IsEmpty && (!from.TryAddSlot(transaction, fromIndex, remainder, out _, out ItemStack rem) || !rem.IsEmpty))
-			{
-				return false;
-			}
-
-			return true;
-		}
-
-		public static bool TryMoveSlot<T>(T transaction, IItemContainer from, int fromIndex, IItemContainer to, int toIndex, int count = -1) where T : IItemTransaction
-		{
-			if (!from.TryRemoveSlot(transaction, fromIndex, out ItemStack result, out ItemStack fromSlot, count))
-			{
-				return false;
-			}
-
-			if (to.TryAddSlot(transaction, toIndex, fromSlot, out _, out ItemStack remainder))
-			{
-				if (remainder.IsEmpty || from.TryAddSlot(transaction, fromIndex, remainder, out _, out remainder) && remainder.IsEmpty)
-				{
-					return true;
-				}
-			}
-			else if (result.IsEmpty && to.TryRemoveSlot(transaction, toIndex, out _, out ItemStack toSlot))
-			{
-				if (!from.TryAddSlot(transaction, fromIndex, toSlot, out _, out remainder) || !remainder.IsEmpty)
-				{
-					return false;
-				}
-
-				if (!to.TryAddSlot(transaction, toIndex, fromSlot, out _, out remainder) || !remainder.IsEmpty)
-				{
-					return false;
-				}
-
-				return true;
-			}
-
-			return false;
-		}
 	}
 }

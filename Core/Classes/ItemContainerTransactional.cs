@@ -7,7 +7,7 @@ using Kryz.Utils;
 
 namespace Kryz.RPG.Items
 {
-	public abstract class ItemContainerTransactionalBase : IItemContainerTransactional
+	public abstract class ItemContainerTransactional : IItemContainerTransactional
 	{
 		private const string indexOutOfRangeMsg = "Index was out of range. Must be non-negative and less than the size of the collection.";
 
@@ -29,7 +29,7 @@ namespace Kryz.RPG.Items
 
 		int IReadOnlyCollection<ItemStack>.Count => size;
 
-		public ItemContainerTransactionalBase(int size, ArrayPool<ItemStack>? pool = null)
+		public ItemContainerTransactional(int size, ArrayPool<ItemStack>? pool = null)
 		{
 			arrayPool = pool ?? ArrayPool<ItemStack>.Shared;
 			slots = null!;
@@ -38,7 +38,7 @@ namespace Kryz.RPG.Items
 
 		public virtual int GetMaxStacks(IItem item) => item.MaxStacks;
 
-		public virtual bool CanReceive(int index, in ItemStack stack) => true;
+		public virtual bool CanReceive(int index, IItem item) => true;
 
 		public virtual bool CanRemove(int index) => true;
 
@@ -55,11 +55,9 @@ namespace Kryz.RPG.Items
 
 			for (int i = 0; i < size && remainder.Count > 0; i++)
 			{
-				ref ItemStack slot = ref slots[i];
-
-				if (CanReceive(i, remainder))
+				if (CanReceive(i, stack.Item))
 				{
-					slot.TryAdd(remainder, out _, out remainder, maxCount);
+					slots[i].TryAdd(remainder, out _, out remainder, maxCount);
 				}
 			}
 
@@ -71,7 +69,10 @@ namespace Kryz.RPG.Items
 			ItemStack slot = slots[index];
 			remainder = stack;
 			result = slot;
-			return stack.Item != null && CanReceive(index, stack) && slot.TryAdd(stack, out result, out remainder, GetMaxStacks(stack.Item));
+
+			return stack.Item != null
+				&& CanReceive(index, stack.Item)
+				&& slot.TryAdd(stack, out result, out remainder, GetMaxStacks(stack.Item));
 		}
 
 		public virtual bool CanRemove(in ItemStack stack)
@@ -99,10 +100,14 @@ namespace Kryz.RPG.Items
 		public virtual bool CanRemoveSlot(int index, out ItemStack result, out ItemStack removed, int count = -1)
 		{
 			ItemStack slot = slots[index];
-			if (count < 0) count = slot.Count;
 			removed = default;
 			result = slot;
-			return CanRemove(index) && slot.TryRemove(count, out result, out removed);
+			return CanRemove(index) && slot.TryRemove(count < 0 ? slot.Count : count, out result, out removed);
+		}
+
+		public virtual bool CanSetSlot(int index, in ItemStack stack)
+		{
+			return stack.Item == null || CanReceive(index, stack.Item) && stack.Count < GetMaxStacks(stack.Item);
 		}
 
 		public virtual bool CanSetSize(int value)
@@ -136,7 +141,7 @@ namespace Kryz.RPG.Items
 			{
 				ref ItemStack slot = ref slots[i];
 
-				if (slot.Item == stack.Item && CanReceive(i, remainder) && slot.TryAdd(remainder, out ItemStack result, out remainder, maxCount))
+				if (slot.Item == stack.Item && CanReceive(i, stack.Item) && slot.TryAdd(remainder, out ItemStack result, out remainder, maxCount))
 				{
 					SetSlotRef(transaction, ref slot, i, result);
 				}
@@ -147,7 +152,7 @@ namespace Kryz.RPG.Items
 			{
 				ref ItemStack slot = ref slots[i];
 
-				if (slot.Item == null && CanReceive(i, remainder) && slot.TryAdd(remainder, out ItemStack result, out remainder, maxCount))
+				if (slot.Item == null && CanReceive(i, stack.Item) && slot.TryAdd(remainder, out ItemStack result, out remainder, maxCount))
 				{
 					SetSlotRef(transaction, ref slot, i, result);
 				}
@@ -160,7 +165,7 @@ namespace Kryz.RPG.Items
 		{
 			ref ItemStack slot = ref slots[index];
 
-			if (stack.Item != null && CanReceive(index, stack) && slot.TryAdd(stack, out result, out remainder, GetMaxStacks(stack.Item)))
+			if (stack.Item != null && CanReceive(index, stack.Item) && slot.TryAdd(stack, out result, out remainder, GetMaxStacks(stack.Item)))
 			{
 				SetSlotRef(transaction, ref slot, index, result);
 				return true;
@@ -186,8 +191,8 @@ namespace Kryz.RPG.Items
 
 				if (slot.Item == stack.Item && CanRemove(i) && slot.TryRemove(Math.Min(required, slot.Count), out ItemStack result, out ItemStack removed))
 				{
-					SetSlotRef(transaction, ref slot, i, result);
 					required -= removed.Count;
+					SetSlotRef(transaction, ref slot, i, result);
 				}
 			}
 
@@ -197,9 +202,8 @@ namespace Kryz.RPG.Items
 		public virtual bool TryRemoveSlot<T>(T transaction, int index, out ItemStack result, out ItemStack removed, int count = -1) where T : IItemTransaction
 		{
 			ref ItemStack slot = ref slots[index];
-			if (count < 0) count = slot.Count;
 
-			if (CanRemove(index) && slot.TryRemove(count, out result, out removed))
+			if (CanRemove(index) && slot.TryRemove(count < 0 ? slot.Count : count, out result, out removed))
 			{
 				SetSlotRef(transaction, ref slot, index, result);
 				return true;
@@ -222,7 +226,7 @@ namespace Kryz.RPG.Items
 
 		public virtual bool TrySetSlot<T>(T transaction, int index, in ItemStack stack) where T : IItemTransaction
 		{
-			if (CanReceive(index, stack))
+			if (stack.Item == null || CanReceive(index, stack.Item) && stack.Count < GetMaxStacks(stack.Item))
 			{
 				SetSlot(transaction, index, stack);
 				return true;
