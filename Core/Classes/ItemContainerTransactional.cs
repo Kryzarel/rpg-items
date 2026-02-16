@@ -7,7 +7,7 @@ using Kryz.Utils;
 
 namespace Kryz.RPG.Items
 {
-	public abstract class ItemContainerTransactional : IItemContainerTransactional
+	public abstract class ItemContainerTransactional : IItemContainerTransactional, IDisposable
 	{
 		private const string indexOutOfRangeMsg = "Index was out of range. Must be non-negative and less than the size of the collection.";
 
@@ -369,6 +369,18 @@ namespace Kryz.RPG.Items
 			}
 
 			size = value;
+		}
+
+		public void Dispose()
+		{
+			if (slots != null)
+			{
+				Array.Clear(slots, 0, size);
+				arrayPool.Return(slots);
+				slots = null!;
+				size = 0;
+				occupiedSlots = 0;
+			}
 		}
 
 		public ArraySegment<ItemStack>.Enumerator GetEnumerator() => new ArraySegment<ItemStack>(slots, 0, size).GetEnumerator();
