@@ -6,44 +6,26 @@ namespace Kryz.RPG.Items
 {
 	public struct ItemTransaction : IItemTransaction, IDisposable
 	{
-		private readonly PooledList<ItemContainerEdits> edits;
+		private readonly PooledList<ItemContainerEdit> edits;
 
-		private bool completed;
 		private bool commited;
+		private bool completed;
 
 		public ItemTransaction(IItemContainerTransactional container)
 		{
-			edits = PooledList<ItemContainerEdits>.Rent();
-			edits.Add(new ItemContainerEdits(container));
-			completed = false;
+			edits = PooledList<ItemContainerEdit>.Rent();
 			commited = false;
+			completed = false;
 		}
 
 		public readonly void RecordSize(IItemContainerTransactional container, int oldSize, int newSize)
 		{
-			GetOrAddTransaction(container).RecordSize(oldSize, newSize);
+			edits.Add(new ItemContainerEdit(container, new SizeEdit(oldSize, newSize)));
 		}
 
 		public readonly void RecordSlot(IItemContainerTransactional container, int index, ItemStack oldStack, ItemStack newStack)
 		{
-			GetOrAddTransaction(container).RecordSlot(index, oldStack, newStack);
-		}
-
-		private readonly ref ItemContainerEdits GetOrAddTransaction(IItemContainerTransactional container)
-		{
-			Span<ItemContainerEdits> span = edits.AsSpan();
-
-			for (int i = 0; i < span.Length; i++)
-			{
-				ref ItemContainerEdits transaction = ref span[i];
-				if (transaction.Container == container)
-				{
-					return ref transaction;
-				}
-			}
-
-			edits.Add(new ItemContainerEdits(container));
-			return ref edits[^1];
+			edits.Add(new ItemContainerEdit(container, new SlotEdit(index, oldStack, newStack)));
 		}
 
 		public void Commit()
@@ -54,30 +36,59 @@ namespace Kryz.RPG.Items
 				return;
 			}
 
-			completed = true;
 			commited = true;
-
-			for (int i = 0; i < edits.Count; i++)
-			{
-				edits[i].Notify();
-			}
+			completed = true;
+			Notify();
 		}
 
 		public void Dispose()
 		{
 			completed = true;
 
-			for (int i = 0; i < edits.Count; i++)
+			if (!commited)
 			{
-				ref readonly ItemContainerEdits edit = ref edits[i];
-				if (!commited)
-				{
-					edit.Rollback();
-				}
-				edit.Dispose();
+				Rollback();
 			}
 
 			edits.Dispose();
+		}
+
+		private readonly void Notify()
+		{
+			ReadOnlySpan<ItemContainerEdit> edits = this.edits.AsSpan();
+
+			for (int i = 0; i < edits.Length; i++)
+			{
+				ref readonly ItemContainerEdit edit = ref edits[i];
+
+				if (edit.IsSizeEdit)
+				{
+					edit.Container.NotifySize(edit.SizeEdit.OldSize, edit.SizeEdit.NewSize);
+				}
+				else
+				{
+					edit.Container.NotifySlot(edit.SlotEdit.Index, edit.SlotEdit.OldStack, edit.SlotEdit.NewStack);
+				}
+			}
+		}
+
+		private readonly void Rollback()
+		{
+			ReadOnlySpan<ItemContainerEdit> edits = this.edits.AsSpan();
+
+			for (int i = edits.Length - 1; i >= 0; i--)
+			{
+				ref readonly ItemContainerEdit edit = ref edits[i];
+
+				if (edit.IsSizeEdit)
+				{
+					edit.Container.RollbackSize(edit.SizeEdit.OldSize);
+				}
+				else
+				{
+					edit.Container.RollbackSlot(edit.SlotEdit.Index, edit.SlotEdit.OldStack);
+				}
+			}
 		}
 	}
 }
