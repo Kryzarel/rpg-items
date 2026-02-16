@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Kryz.RPG.Items
 {
 	[Serializable]
-	public class InventorySaveData
+	public class ItemContainerSaveData
 	{
 		[SerializeField]
 		public List<ItemStackSaveData> ItemStacks = new();
@@ -32,7 +32,7 @@ namespace Kryz.RPG.Items
 			}
 		}
 
-		public void ToInventory(IItemFactory itemFactory, IInventory inventory)
+		public void ToItemContainer(IItemFactory itemFactory, IInventory inventory)
 		{
 			ItemStack[] stacksArray = ArrayPool<ItemStack>.Shared.Rent(ItemStacks.Count);
 			Span<ItemStack> stacks = stacksArray.AsSpan(0, ItemStacks.Count);
