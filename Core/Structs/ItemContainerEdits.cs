@@ -6,24 +6,21 @@ namespace Kryz.RPG.Items
 {
 	public struct ItemContainerEdits
 	{
-		private readonly ArrayPool<int> intPool;
-		private readonly ArrayPool<SlotEdit> slotEditPool;
+		private static readonly ArrayPool<int> intPool = ArrayPool<int>.Shared;
+		private static readonly ArrayPool<SlotEdit> slotEditPool = ArrayPool<SlotEdit>.Shared;
 
 		private int[] editIndexes;
 		private SlotEdit[] slotEdits;
-		private int editsCount;
+		private int slotEditsCount;
 		private SizeEdit? sizeEdit;
 
 		public readonly IItemContainerTransactional Container;
 
 		public ItemContainerEdits(IItemContainerTransactional container)
 		{
-			intPool = ArrayPool<int>.Shared;
-			slotEditPool = ArrayPool<SlotEdit>.Shared;
-
 			editIndexes = intPool.Rent(container.Size);
 			slotEdits = slotEditPool.Rent(container.Size);
-			editsCount = 0;
+			slotEditsCount = 0;
 			sizeEdit = default;
 
 			Container = container;
@@ -51,18 +48,18 @@ namespace Kryz.RPG.Items
 			}
 			else
 			{
-				if (editsCount >= slotEdits.Length)
+				if (slotEditsCount >= slotEdits.Length)
 				{
-					ArrayPoolUtils.Resize(ref slotEdits, slotEdits.Length, editsCount + 1);
+					ArrayPoolUtils.Resize(ref slotEdits, slotEdits.Length, slotEditsCount + 1);
 				}
 
-				slotEdits[editsCount++] = new SlotEdit(index, oldStack, newStack);
-				editIndex = editsCount;
+				slotEdits[slotEditsCount++] = new SlotEdit(index, oldStack, newStack);
+				editIndex = slotEditsCount;
 			}
 		}
 
-		public readonly void Notify() => Container.Notify(slotEdits.AsSpan(0, editsCount), sizeEdit);
-		public readonly void Rollback() => Container.Rollback(slotEdits.AsSpan(0, editsCount), sizeEdit);
+		public readonly void Notify() => Container.Notify(slotEdits.AsSpan(0, slotEditsCount), sizeEdit);
+		public readonly void Rollback() => Container.Rollback(slotEdits.AsSpan(0, slotEditsCount), sizeEdit);
 
 		public readonly void Dispose()
 		{

@@ -57,11 +57,9 @@ namespace Kryz.RPG.Items
 			completed = true;
 			commited = true;
 
-			ReadOnlySpan<ItemContainerEdits> span = edits.AsSpan();
-			for (int i = 0; i < span.Length; i++)
+			for (int i = 0; i < edits.Count; i++)
 			{
-				ref readonly ItemContainerEdits edit = ref span[i];
-				edit.Notify();
+				edits[i].Notify();
 			}
 		}
 
@@ -69,10 +67,9 @@ namespace Kryz.RPG.Items
 		{
 			completed = true;
 
-			ReadOnlySpan<ItemContainerEdits> span = edits.AsSpan();
-			for (int i = 0; i < span.Length; i++)
+			for (int i = 0; i < edits.Count; i++)
 			{
-				ref readonly ItemContainerEdits edit = ref span[i];
+				ref readonly ItemContainerEdits edit = ref edits[i];
 				if (!commited)
 				{
 					edit.Rollback();
