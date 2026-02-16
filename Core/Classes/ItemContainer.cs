@@ -57,7 +57,7 @@ namespace Kryz.RPG.Items
 		public virtual bool TryMove(int fromIndex, IItemContainer to, int count = -1)
 		{
 			using ItemTransaction transaction = new(this);
-			if (!IItemContainerTransactional.TryMove(transaction, this, fromIndex, to, count))
+			if (!TryMove(transaction, this, fromIndex, to, count))
 			{
 				return false;
 			}
@@ -68,7 +68,7 @@ namespace Kryz.RPG.Items
 		public virtual bool TryMoveSlot(int fromIndex, IItemContainer to, int toIndex, int count = -1)
 		{
 			using ItemTransaction transaction = new(this);
-			if (!IItemContainerTransactional.TryMoveSlot(transaction, this, fromIndex, to, toIndex, count))
+			if (!TryMoveSlot(transaction, this, fromIndex, to, toIndex, count))
 			{
 				return false;
 			}
