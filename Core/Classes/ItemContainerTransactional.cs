@@ -41,84 +41,6 @@ namespace Kryz.RPG.Items
 
 		public virtual bool CanRemove(int index) => true;
 
-		public bool CanAdd(in ItemStack stack, out ItemStack remainder)
-		{
-			remainder = stack;
-
-			if (stack.Item == null)
-			{
-				return false;
-			}
-
-			int maxCount = GetMaxStacks(stack.Item);
-
-			for (int i = 0; i < size && remainder.Count > 0; i++)
-			{
-				if (CanReceive(i, stack.Item))
-				{
-					slots[i].TryAdd(remainder, out _, out remainder, maxCount);
-				}
-			}
-
-			return remainder.Count < stack.Count; // Return true if we added at least 1 item
-		}
-
-		public bool CanAddSlot(int index, in ItemStack stack, out ItemStack result, out ItemStack remainder)
-		{
-			ItemStack slot = slots[index];
-			remainder = stack;
-			result = slot;
-
-			return stack.Item != null
-				&& CanReceive(index, stack.Item)
-				&& slot.TryAdd(stack, out result, out remainder, GetMaxStacks(stack.Item));
-		}
-
-		public bool CanRemove(in ItemStack stack)
-		{
-			if (stack.Item == null)
-			{
-				return false;
-			}
-
-			int required = stack.Count;
-
-			for (int i = 0; i < size && required > 0; i++)
-			{
-				ItemStack slot = slots[i];
-
-				if (slot.Item == stack.Item && CanRemove(i))
-				{
-					required -= slot.Count;
-				}
-			}
-
-			return required <= 0;
-		}
-
-		public bool CanRemoveSlot(int index, out ItemStack result, out ItemStack removed, int count = -1)
-		{
-			ItemStack slot = slots[index];
-			removed = default;
-			result = slot;
-			return CanRemove(index) && slot.TryRemove(count < 0 ? slot.Count : count, out result, out removed);
-		}
-
-		public bool CanMove(int fromIndex, IReadOnlyItemContainer to, int count = -1)
-		{
-			return CanMove(this, fromIndex, to, count);
-		}
-
-		public bool CanMoveSlot(int fromIndex, IReadOnlyItemContainer to, int toIndex, int count = -1)
-		{
-			return CanMoveSlot(this, fromIndex, to, toIndex, count);
-		}
-
-		public bool CanSetSlot(int index, in ItemStack stack)
-		{
-			return stack.Item == null || CanReceive(index, stack.Item) && stack.Count < GetMaxStacks(stack.Item);
-		}
-
 		public bool CanSetSize(int value)
 		{
 			if (value < 0) return false;
@@ -225,12 +147,37 @@ namespace Kryz.RPG.Items
 
 		public bool TryMove<T>(T transaction, int fromIndex, IItemContainerTransactional to, int count = -1) where T : IItemTransaction
 		{
-			return TryMove(transaction, this, fromIndex, to, count);
+			if (!TryRemoveSlot(transaction, fromIndex, out _, out ItemStack removed, count))
+			{
+				return false;
+			}
+
+			if (to.TryAdd(transaction, removed, out ItemStack rem))
+			{
+				return rem.IsEmpty || TryAddSlot(transaction, fromIndex, rem, out _, out rem) && rem.IsEmpty;
+			}
+
+			return false;
 		}
 
 		public bool TryMoveSlot<T>(T transaction, int fromIndex, IItemContainerTransactional to, int toIndex, int count = -1) where T : IItemTransaction
 		{
-			return TryMoveSlot(transaction, this, fromIndex, to, toIndex, count);
+			if (!TryRemoveSlot(transaction, fromIndex, out ItemStack result, out ItemStack fromSlot, count))
+			{
+				return false;
+			}
+
+			if (to.TryAddSlot(transaction, toIndex, fromSlot, out _, out ItemStack rem))
+			{
+				return rem.IsEmpty || TryAddSlot(transaction, fromIndex, rem, out _, out rem) && rem.IsEmpty;
+			}
+			else if (result.IsEmpty && to.TryRemoveSlot(transaction, toIndex, out _, out ItemStack toSlot))
+			{
+				return TryAddSlot(transaction, fromIndex, toSlot, out _, out rem) && rem.IsEmpty
+					&& to.TryAddSlot(transaction, toIndex, fromSlot, out _, out rem) && rem.IsEmpty;
+			}
+
+			return false;
 		}
 
 		public bool TrySetSize<T>(T transaction, int value) where T : IItemTransaction
@@ -373,81 +320,5 @@ namespace Kryz.RPG.Items
 
 		IEnumerator<ItemStack> IEnumerable<ItemStack>.GetEnumerator() => GetEnumerator();
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-		public static bool CanAddSlot(IReadOnlyItemContainer container, int index, ItemStack slot, ItemStack stack, out ItemStack remainder)
-		{
-			remainder = stack;
-			return stack.Item != null && container.CanReceive(index, stack.Item) && slot.TryAdd(stack, out remainder, out stack, container.GetMaxStacks(stack.Item));
-		}
-
-		public static bool CanMove(IReadOnlyItemContainer from, int fromIndex, IReadOnlyItemContainer to, int count = -1)
-		{
-			if (!from.CanRemoveSlot(fromIndex, out ItemStack result, out ItemStack removed, count))
-			{
-				return false;
-			}
-
-			if (to.CanAdd(removed, out ItemStack rem))
-			{
-				return rem.IsEmpty || CanAddSlot(from, fromIndex, result, rem, out rem) && rem.IsEmpty;
-			}
-
-			return false;
-		}
-
-		public static bool CanMoveSlot(IReadOnlyItemContainer from, int fromIndex, IReadOnlyItemContainer to, int toIndex, int count = -1)
-		{
-			if (!from.CanRemoveSlot(fromIndex, out ItemStack result, out ItemStack fromSlot, count))
-			{
-				return false;
-			}
-
-			if (to.CanAddSlot(toIndex, fromSlot, out _, out ItemStack rem))
-			{
-				return rem.IsEmpty || CanAddSlot(from, fromIndex, result, rem, out rem) && rem.IsEmpty;
-			}
-			else if (result.IsEmpty && to.CanRemoveSlot(toIndex, out ItemStack toResult, out ItemStack toSlot))
-			{
-				return CanAddSlot(from, fromIndex, result, toSlot, out rem) && rem.IsEmpty
-					&& CanAddSlot(to, toIndex, toResult, fromSlot, out rem) && rem.IsEmpty;
-			}
-
-			return false;
-		}
-
-		public static bool TryMove<T>(T transaction, IItemContainerTransactional from, int fromIndex, IItemContainerTransactional to, int count = -1) where T : IItemTransaction
-		{
-			if (!from.TryRemoveSlot(transaction, fromIndex, out _, out ItemStack removed, count))
-			{
-				return false;
-			}
-
-			if (to.TryAdd(transaction, removed, out ItemStack rem))
-			{
-				return rem.IsEmpty || from.TryAddSlot(transaction, fromIndex, rem, out _, out rem) && rem.IsEmpty;
-			}
-
-			return false;
-		}
-
-		public static bool TryMoveSlot<T>(T transaction, IItemContainerTransactional from, int fromIndex, IItemContainerTransactional to, int toIndex, int count = -1) where T : IItemTransaction
-		{
-			if (!from.TryRemoveSlot(transaction, fromIndex, out ItemStack result, out ItemStack fromSlot, count))
-			{
-				return false;
-			}
-
-			if (to.TryAddSlot(transaction, toIndex, fromSlot, out _, out ItemStack rem))
-			{
-				return rem.IsEmpty || from.TryAddSlot(transaction, fromIndex, rem, out _, out rem) && rem.IsEmpty;
-			}
-			else if (result.IsEmpty && to.TryRemoveSlot(transaction, toIndex, out _, out ItemStack toSlot))
-			{
-				return from.TryAddSlot(transaction, fromIndex, toSlot, out _, out rem) && rem.IsEmpty
-					&& to.TryAddSlot(transaction, toIndex, fromSlot, out _, out rem) && rem.IsEmpty;
-			}
-
-			return false;
-		}
 	}
 }

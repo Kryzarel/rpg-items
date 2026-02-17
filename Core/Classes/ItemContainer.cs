@@ -10,6 +10,48 @@ namespace Kryz.RPG.Items
 		{
 		}
 
+		public bool CanAdd(in ItemStack stack, out ItemStack remainder)
+		{
+			using ItemTransaction transaction = new(this);
+			return TryAdd(transaction, stack, out remainder);
+		}
+
+		public bool CanAddSlot(int index, in ItemStack stack, out ItemStack result, out ItemStack remainder)
+		{
+			using ItemTransaction transaction = new(this);
+			return TryAddSlot(transaction, index, stack, out result, out remainder);
+		}
+
+		public bool CanRemove(in ItemStack stack)
+		{
+			using ItemTransaction transaction = new(this);
+			return TryRemove(transaction, stack);
+		}
+
+		public bool CanRemoveSlot(int index, out ItemStack result, out ItemStack removed, int count = -1)
+		{
+			using ItemTransaction transaction = new(this);
+			return TryRemoveSlot(transaction, index, out result, out removed, count);
+		}
+
+		public bool CanMove(int fromIndex, IItemContainer to, int count = -1)
+		{
+			using ItemTransaction transaction = new(this);
+			return TryMove(transaction, fromIndex, to, count);
+		}
+
+		public bool CanMoveSlot(int fromIndex, IItemContainer to, int toIndex, int count = -1)
+		{
+			using ItemTransaction transaction = new(this);
+			return TryMove(transaction, fromIndex, to, count);
+		}
+
+		public bool CanSetSlot(int index, in ItemStack stack)
+		{
+			using ItemTransaction transaction = new(this);
+			return TrySetSlot(transaction, index, stack);
+		}
+
 		public virtual bool TryAdd(in ItemStack stack, out ItemStack remainder)
 		{
 			using ItemTransaction transaction = new(this);
@@ -57,7 +99,7 @@ namespace Kryz.RPG.Items
 		public virtual bool TryMove(int fromIndex, IItemContainer to, int count = -1)
 		{
 			using ItemTransaction transaction = new(this);
-			if (!TryMove(transaction, this, fromIndex, to, count))
+			if (!TryMove(transaction, fromIndex, to, count))
 			{
 				return false;
 			}
@@ -68,7 +110,7 @@ namespace Kryz.RPG.Items
 		public virtual bool TryMoveSlot(int fromIndex, IItemContainer to, int toIndex, int count = -1)
 		{
 			using ItemTransaction transaction = new(this);
-			if (!TryMoveSlot(transaction, this, fromIndex, to, toIndex, count))
+			if (!TryMoveSlot(transaction, fromIndex, to, toIndex, count))
 			{
 				return false;
 			}
