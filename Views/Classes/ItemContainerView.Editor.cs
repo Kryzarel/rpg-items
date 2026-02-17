@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Kryz.RPG.Items.Views
 {
-	public partial class InventoryView : MonoBehaviour
+	public partial class ItemContainerView : MonoBehaviour
 	{
 		partial void OnValidateEditor()
 		{

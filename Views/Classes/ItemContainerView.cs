@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Kryz.RPG.Items.Views
 {
 	[RequireComponent(typeof(RectTransform))]
-	public partial class InventoryView : MonoBehaviour, IInventoryView
+	public partial class ItemContainerView : MonoBehaviour, IItemContainerView
 	{
 		[Header("Project References")]
 		[SerializeField]
@@ -25,15 +25,15 @@ namespace Kryz.RPG.Items.Views
 		[SerializeField, Tooltip("The maximum number of slots that can be displayed. A value of 0 or negative means unlimited.\nIf the assigned " + nameof(IItemContainer) + " is larger, slots beyond the maximum cannot be accessed and an error is logged to the console, but other slots will still function.")]
 		private int maxSlots;
 
-		private IItemContainer.OnSlotChangedDelegate? onSlotChangedAction;
-		private IItemContainer.OnSizeChangedDelegate? onSizeChangedAction;
+		private IItemContainerTransactional.OnSlotChangedDelegate? onSlotChangedAction;
+		private IItemContainerTransactional.OnSizeChangedDelegate? onSizeChangedAction;
 		private IItemContainer? itemContainer;
 		private IItemSlotController? controller;
 
 		public IItemContainer? ItemContainer { get => itemContainer; set => SetItemContainer(value); }
 		public IReadOnlyList<BaseItemSlotView> ItemSlots => itemSlots;
 
-		IReadOnlyList<IItemSlotView> IInventoryView.ItemSlots => ItemSlots;
+		IReadOnlyList<IItemSlotView> IItemContainerView.ItemSlots => ItemSlots;
 
 		partial void OnValidateEditor();
 
@@ -107,13 +107,13 @@ namespace Kryz.RPG.Items.Views
 
 		private void HandleSlotViews()
 		{
-			int inventorySlots = itemContainer != null ? itemContainer.Size : 0;
+			int containerSlots = itemContainer != null ? itemContainer.Size : 0;
 			int maxSlots = this.maxSlots > 0 ? this.maxSlots : int.MaxValue;
-			int numSlots = Math.Min(Math.Max(inventorySlots, minSlots), maxSlots);
+			int numSlots = Math.Min(Math.Max(containerSlots, minSlots), maxSlots);
 
 			if (itemContainer != null && itemContainer.Size > maxSlots)
 			{
-				Debug.LogError("Inventory has " + itemContainer.Size + " slots, but the " + nameof(InventoryView) + " is configured to display a maximum of " + maxSlots, this);
+				Debug.LogError(nameof(IItemContainer) + " has " + itemContainer.Size + " slots, but the " + nameof(ItemContainerView) + " is configured to display a maximum of " + maxSlots, this);
 			}
 
 			if (itemSlots.Count < numSlots)
@@ -150,7 +150,7 @@ namespace Kryz.RPG.Items.Views
 		{
 			if (itemContainer == null || index < 0 || index >= itemContainer.Size)
 			{
-				Debug.LogError($"Error handling {nameof(IItemContainer.OnSlotChanged)} event. Slot Index: {index} | Inventory Size: {itemContainer?.Size}", this);
+				Debug.LogError($"Error handling {nameof(IItemContainer.OnSlotChanged)} event. Slot Index: {index} | Container Size: {itemContainer?.Size}", this);
 				return;
 			}
 

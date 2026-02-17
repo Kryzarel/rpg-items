@@ -32,7 +32,7 @@ namespace Kryz.RPG.Items
 			}
 		}
 
-		public void ToItemContainer(IItemFactory itemFactory, IItemContainer inventory)
+		public void ToItemContainer(IItemFactory itemFactory, IItemContainer container)
 		{
 			ItemStack[] stacksArray = ArrayPool<ItemStack>.Shared.Rent(ItemStacks.Count);
 			Span<ItemStack> stacks = stacksArray.AsSpan(0, ItemStacks.Count);
@@ -47,7 +47,7 @@ namespace Kryz.RPG.Items
 				}
 			}
 
-			inventory.CopyFrom(stacks);
+			container.CopyFrom(stacks);
 
 			stacks.Clear();
 			ArrayPool<ItemStack>.Shared.Return(stacksArray);

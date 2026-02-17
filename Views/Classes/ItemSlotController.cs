@@ -53,29 +53,29 @@ namespace Kryz.RPG.Items.Views
 
 		protected virtual bool TryDrop(IItemSlotView itemSlotView)
 		{
-			if (!ValidateSlot(itemSlotView, out int dropIndex, out IItemContainer? dropInventory))
+			if (!ValidateSlot(itemSlotView, out int dropIndex, out IItemContainer? dropContainer))
 				return false;
 
 			if (dragController == null /* || dragController.CursorSlot == null */ || dragController.SourceSlot == null)
 				return false;
 
-			// if (!ValidateSlot(dragController.CursorSlot, out int cursorIndex, out IItemContainer? cursorInventory))
+			// if (!ValidateSlot(dragController.CursorSlot, out int cursorIndex, out IItemContainer? cursorContainer))
 			// 	return false;
 
-			if (!ValidateSlot(dragController.SourceSlot, out int sourceIndex, out IItemContainer? sourceInventory))
+			if (!ValidateSlot(dragController.SourceSlot, out int sourceIndex, out IItemContainer? sourceContainer))
 				return false;
 
 			if (!dragController.StopDrag())
 				return false;
 
-			return sourceInventory.TryMoveSlot(sourceIndex, dropInventory, dropIndex);
+			return sourceContainer.TryMoveSlot(sourceIndex, dropContainer, dropIndex);
 		}
 
-		protected static bool ValidateSlot(IItemSlotView itemSlotView, out int index, [MaybeNullWhen(returnValue: false)] out IItemContainer inventory)
+		protected static bool ValidateSlot(IItemSlotView itemSlotView, out int index, [MaybeNullWhen(returnValue: false)] out IItemContainer container)
 		{
 			index = itemSlotView.SlotIndex;
-			inventory = itemSlotView.ItemContainer;
-			return inventory != null && index >= 0 && index < inventory.Size;
+			container = itemSlotView.ItemContainer;
+			return container != null && index >= 0 && index < container.Size;
 		}
 
 		public override bool OnPointerClick(IItemSlotView itemSlotView, PointerEventData eventData)
