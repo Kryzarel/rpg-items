@@ -7,7 +7,7 @@ namespace Kryz.RPG.Items.Views
 		public abstract IItemSlotView? CursorSlot { get; }
 		public abstract IItemSlotView? SourceSlot { get; }
 
-		public abstract bool StartDrag(IItemSlotView slotView, int count);
+		public abstract bool StartDrag(IItemSlotView slotView);
 		public abstract bool StopDrag();
 	}
 }

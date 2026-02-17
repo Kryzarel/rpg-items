@@ -7,7 +7,7 @@ namespace Kryz.RPG.Items.Views
 	{
 		[SerializeField] Canvas? canvas;
 		[SerializeField] BaseItemSlotView? cursorSlot;
-		[SerializeField] bool copySourceSlotSize = true;
+		[SerializeField] bool copySourceSlotSize;
 
 		private IItemSlotView? sourceSlot;
 
@@ -18,14 +18,6 @@ namespace Kryz.RPG.Items.Views
 		{
 			if (canvas == null) canvas = GetComponentInParent<Canvas>(includeInactive: true);
 			if (cursorSlot == null) cursorSlot = GetComponentInChildren<BaseItemSlotView>(includeInactive: true);
-		}
-
-		private void Start()
-		{
-			if (cursorSlot != null)
-			{
-				cursorSlot.gameObject.SetActive(false);
-			}
 		}
 
 		private void LateUpdate()
@@ -57,30 +49,10 @@ namespace Kryz.RPG.Items.Views
 			}
 		}
 
-		private static void ReturnCursorItem(IItemSlotView cursorSlot, IItemSlotView sourceSlot)
+		public override bool StartDrag(IItemSlotView slotView)
 		{
-			if (cursorSlot.ItemContainer == null || cursorSlot.ItemContainer[cursorSlot.SlotIndex] == default || sourceSlot.ItemContainer == null)
-				return;
-
-			if (!cursorSlot.ItemContainer.TryMoveSlot(cursorSlot.SlotIndex, sourceSlot.ItemContainer, sourceSlot.SlotIndex))
-			{
-				cursorSlot.ItemContainer.TryMove(cursorSlot.SlotIndex, sourceSlot.ItemContainer);
-			}
-		}
-
-		public override bool StartDrag(IItemSlotView slotView, int count)
-		{
-			if (slotView.ItemContainer == null || cursorSlot == null || cursorSlot.ItemContainer == null)
-			{
+			if (cursorSlot == null || slotView == null)
 				return false;
-			}
-
-			if (!slotView.ItemContainer.TryMove(slotView.SlotIndex, cursorSlot.ItemContainer, count))
-			{
-				return false;
-			}
-
-			sourceSlot = slotView;
 
 			if (copySourceSlotSize && slotView is BaseItemSlotView baseView)
 			{
@@ -95,19 +67,12 @@ namespace Kryz.RPG.Items.Views
 				cursorSlot.RectTransform.sizeDelta = baseView.RectTransform.sizeDelta;
 			}
 
-			cursorSlot.gameObject.SetActive(true);
+			sourceSlot = slotView;
 			return true;
 		}
 
 		public override bool StopDrag()
 		{
-			if (cursorSlot == null || sourceSlot == null)
-			{
-				return false;
-			}
-
-			ReturnCursorItem(cursorSlot, sourceSlot);
-			cursorSlot.gameObject.SetActive(false);
 			sourceSlot = null;
 			return true;
 		}

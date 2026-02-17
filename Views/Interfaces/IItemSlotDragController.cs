@@ -5,7 +5,7 @@ namespace Kryz.RPG.Items.Views
 		IItemSlotView? CursorSlot { get; }
 		IItemSlotView? SourceSlot { get; }
 
-		bool StartDrag(IItemSlotView slotView, int count);
+		bool StartDrag(IItemSlotView slotView);
 		bool StopDrag();
 	}
 }

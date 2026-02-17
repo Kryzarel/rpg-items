@@ -32,20 +32,31 @@ namespace Kryz.RPG.Items.Views
 
 		protected virtual bool StartDrag(IItemSlotView slotView, int count)
 		{
-			if (dragController == null || !dragController.StartDrag(slotView, count))
-			{
+			if (dragController == null || dragController.CursorSlot == null || !dragController.StartDrag(slotView))
 				return false;
-			}
+
+			ItemStack slot = slotView.ItemStack;
+			slotView.SetItemStack(slot.Remove(count, out ItemStack removed));
+			dragController.CursorSlot.SetItemStack(removed);
 
 			if (useAction != null) useAction.action.Disable();
 			if (splitStackAction != null) splitStackAction.action.Disable();
-
 			return true;
 		}
 
 		protected virtual void EndDrag()
 		{
-			if (dragController != null) dragController.StopDrag();
+			if (dragController != null)
+			{
+				IItemSlotView? sourceSlot = dragController.SourceSlot;
+				if (sourceSlot != null && sourceSlot.ItemContainer != null)
+				{
+					sourceSlot.SetItemStack(sourceSlot.ItemContainer[sourceSlot.SlotIndex]);
+				}
+
+				dragController.CursorSlot?.SetItemStack(default);
+				dragController.StopDrag();
+			}
 
 			if (useAction != null) useAction.action.Enable();
 			if (splitStackAction != null) splitStackAction.action.Enable();
@@ -56,19 +67,13 @@ namespace Kryz.RPG.Items.Views
 			if (!ValidateSlot(itemSlotView, out int dropIndex, out IItemContainer? dropContainer))
 				return false;
 
-			if (dragController == null /* || dragController.CursorSlot == null */ || dragController.SourceSlot == null)
+			if (dragController == null || dragController.CursorSlot == null || dragController.SourceSlot == null)
 				return false;
 
-			// if (!ValidateSlot(dragController.CursorSlot, out int cursorIndex, out IItemContainer? cursorContainer))
-			// 	return false;
-
-			if (!ValidateSlot(dragController.SourceSlot, out int sourceIndex, out IItemContainer? sourceContainer))
+			if (!ValidateSlot(dragController.SourceSlot, out int dragIndex, out IItemContainer? dragContainer))
 				return false;
 
-			if (!dragController.StopDrag())
-				return false;
-
-			return sourceContainer.TryMoveSlot(sourceIndex, dropContainer, dropIndex);
+			return dragContainer.TryMoveSlot(dragIndex, dropContainer, dropIndex);
 		}
 
 		protected static bool ValidateSlot(IItemSlotView itemSlotView, out int index, [MaybeNullWhen(returnValue: false)] out IItemContainer container)
