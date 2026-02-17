@@ -4,11 +4,11 @@ namespace Kryz.RPG.Items
 {
 	public interface IItemContainerTransactional : IReadOnlyItemContainer
 	{
-		public delegate void OnSlotChangedDelegate(int index, ItemStack oldStack, ItemStack newStack);
 		public delegate void OnSizeChangedDelegate(int oldSize, int newSize);
+		public delegate void OnSlotChangedDelegate(int index, ItemStack oldStack, ItemStack newStack);
 
-		event OnSlotChangedDelegate OnSlotChanged;
 		event OnSizeChangedDelegate OnSizeChanged;
+		event OnSlotChangedDelegate OnSlotChanged;
 
 		/// <summary>
 		/// Try to add an <see cref="ItemStack"/> to any slots that can receive it.
@@ -92,6 +92,13 @@ namespace Kryz.RPG.Items
 		void Sort<T, TComparer>(T transaction, TComparer comparer) where TComparer : IComparer<ItemStack> where T : IItemTransaction;
 
 		/// <summary>
+		/// Notify observers of a size change after a successful transaction.
+		/// </summary>
+		/// <param name="oldSize">The old size</param>
+		/// <param name="newSize">The new size</param>
+		void NotifySize(int oldSize, int newSize);
+
+		/// <summary>
 		/// Notify observers of a slot change after a successful transaction.
 		/// </summary>
 		/// <param name="index">The changed slot index</param>
@@ -100,11 +107,10 @@ namespace Kryz.RPG.Items
 		void NotifySlot(int index, ItemStack oldStack, ItemStack newStack);
 
 		/// <summary>
-		/// Notify observers of a size change after a successful transaction.
+		/// Rollback a slot change after a failed transaction.
 		/// </summary>
 		/// <param name="oldSize">The old size</param>
-		/// <param name="newSize">The new size</param>
-		void NotifySize(int oldSize, int newSize);
+		void RollbackSize(int oldSize);
 
 		/// <summary>
 		/// Rollback a slot change after a failed transaction.
@@ -112,11 +118,5 @@ namespace Kryz.RPG.Items
 		/// <param name="index">The slot index</param>
 		/// <param name="oldStack">The old slot</param>
 		void RollbackSlot(int index, ItemStack oldStack);
-
-		/// <summary>
-		/// Rollback a slot change after a failed transaction.
-		/// </summary>
-		/// <param name="oldSize">The old size</param>
-		void RollbackSize(int oldSize);
 	}
 }

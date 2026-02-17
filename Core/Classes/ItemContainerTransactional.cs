@@ -230,6 +230,11 @@ namespace Kryz.RPG.Items
 			arrayPool.Return(sortedArray);
 		}
 
+		public void NotifySize(int oldSize, int newSize)
+		{
+			OnSizeChanged?.Invoke(oldSize, newSize);
+		}
+
 		public void NotifySlot(int index, ItemStack oldStack, ItemStack newStack)
 		{
 			if ((uint)index < (uint)size)
@@ -238,9 +243,9 @@ namespace Kryz.RPG.Items
 			}
 		}
 
-		public void NotifySize(int oldSize, int newSize)
+		public void RollbackSize(int oldSize)
 		{
-			OnSizeChanged?.Invoke(oldSize, newSize);
+			SetSize(oldSize);
 		}
 
 		public void RollbackSlot(int index, ItemStack oldStack)
@@ -249,11 +254,6 @@ namespace Kryz.RPG.Items
 			{
 				SetSlotRef(ref slots[index], oldStack);
 			}
-		}
-
-		public void RollbackSize(int oldSize)
-		{
-			SetSize(oldSize);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
