@@ -59,36 +59,28 @@ namespace Kryz.RPG.Items.Views
 
 		private static void ReturnCursorItem(IItemSlotView cursorSlot, IItemSlotView sourceSlot)
 		{
-			if (cursorSlot.Inventory == null || cursorSlot.Inventory[cursorSlot.SlotIndex] == default || sourceSlot.Inventory == null)
+			if (cursorSlot.ItemContainer == null || cursorSlot.ItemContainer[cursorSlot.SlotIndex] == default || sourceSlot.ItemContainer == null)
 				return;
 
-			if (!cursorSlot.Inventory.CanRemove(cursorSlot.SlotIndex, out _, out ItemStack removed))
-				return;
-
-			if (!sourceSlot.Inventory.CanAdd(sourceSlot.SlotIndex, removed, out _, out _) && !sourceSlot.Inventory.CanAdd(removed, out _))
-				return;
-
-			if (sourceSlot.Inventory.TryAdd(sourceSlot.SlotIndex, removed, out _, out _) || sourceSlot.Inventory.TryAdd(removed, out _))
+			if (!cursorSlot.ItemContainer.TryMoveSlot(cursorSlot.SlotIndex, sourceSlot.ItemContainer, sourceSlot.SlotIndex))
 			{
-				cursorSlot.Inventory.TryRemove(cursorSlot.SlotIndex, out _, out _);
+				cursorSlot.ItemContainer.TryMove(cursorSlot.SlotIndex, sourceSlot.ItemContainer);
 			}
 		}
 
 		public override bool StartDrag(IItemSlotView slotView, int count)
 		{
-			if (slotView.Inventory == null || cursorSlot == null || cursorSlot.Inventory == null)
+			if (slotView.ItemContainer == null || cursorSlot == null || cursorSlot.ItemContainer == null)
 			{
 				return false;
 			}
 
-			if (!slotView.Inventory.CanRemove(slotView.SlotIndex, count, out _, out ItemStack removed) || !cursorSlot.Inventory.CanAdd(removed, out _))
+			if (!slotView.ItemContainer.TryMove(slotView.SlotIndex, cursorSlot.ItemContainer, count))
 			{
 				return false;
 			}
 
 			sourceSlot = slotView;
-			sourceSlot.Inventory.TryRemove(sourceSlot.SlotIndex, count, out _, out _);
-			cursorSlot.Inventory.TryAdd(removed, out _);
 
 			if (copySourceSlotSize && slotView is BaseItemSlotView baseView)
 			{

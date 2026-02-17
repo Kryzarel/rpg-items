@@ -28,7 +28,7 @@ public class RPGItemsPerformanceTests : MonoBehaviour
 	[SerializeField] int numItems = 100;
 
 	private ItemStack[]? itemsToAdd;
-	private Inventory? inventory;
+	private NewInventory? inventory;
 
 	private void Awake()
 	{

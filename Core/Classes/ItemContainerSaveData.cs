@@ -32,7 +32,7 @@ namespace Kryz.RPG.Items
 			}
 		}
 
-		public void ToItemContainer(IItemFactory itemFactory, IInventory inventory)
+		public void ToItemContainer(IItemFactory itemFactory, IItemContainer inventory)
 		{
 			ItemStack[] stacksArray = ArrayPool<ItemStack>.Shared.Rent(ItemStacks.Count);
 			Span<ItemStack> stacks = stacksArray.AsSpan(0, ItemStacks.Count);

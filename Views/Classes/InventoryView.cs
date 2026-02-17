@@ -20,17 +20,17 @@ namespace Kryz.RPG.Items.Views
 		private BaseItemSlotController? itemSlotController;
 
 		[Header("Settings")]
-		[SerializeField, Tooltip("The minimum number of slots to display. If the assigned " + nameof(IInventory) + " is smaller, extra slots are shown but disabled.")]
+		[SerializeField, Tooltip("The minimum number of slots to display. If the assigned " + nameof(IItemContainer) + " is smaller, extra slots are shown but disabled.")]
 		private int minSlots;
-		[SerializeField, Tooltip("The maximum number of slots that can be displayed. A value of 0 or negative means unlimited.\nIf the assigned " + nameof(IInventory) + " is larger, slots beyond the maximum cannot be accessed and an error is logged to the console, but other slots will still function.")]
+		[SerializeField, Tooltip("The maximum number of slots that can be displayed. A value of 0 or negative means unlimited.\nIf the assigned " + nameof(IItemContainer) + " is larger, slots beyond the maximum cannot be accessed and an error is logged to the console, but other slots will still function.")]
 		private int maxSlots;
 
-		private IInventory.OnSlotChangedDelegate? onSlotChangedAction;
-		private IInventory.OnSizeChangedDelegate? onSizeChangedAction;
-		private IInventory? inventory;
+		private IItemContainer.OnSlotChangedDelegate? onSlotChangedAction;
+		private IItemContainer.OnSizeChangedDelegate? onSizeChangedAction;
+		private IItemContainer? itemContainer;
 		private IItemSlotController? controller;
 
-		public IInventory? Inventory { get => inventory; set => SetInventory(value); }
+		public IItemContainer? ItemContainer { get => itemContainer; set => SetItemContainer(value); }
 		public IReadOnlyList<BaseItemSlotView> ItemSlots => itemSlots;
 
 		IReadOnlyList<IItemSlotView> IInventoryView.ItemSlots => ItemSlots;
@@ -57,25 +57,25 @@ namespace Kryz.RPG.Items.Views
 			HandleSlotViews();
 		}
 
-		public void SetInventory(IInventory? newInventory)
+		public void SetItemContainer(IItemContainer? newContainer)
 		{
-			if (inventory == newInventory)
+			if (itemContainer == newContainer)
 			{
 				return;
 			}
 
-			if (inventory != null)
+			if (itemContainer != null)
 			{
-				inventory.OnSlotChanged -= onSlotChangedAction;
-				inventory.OnSizeChanged -= onSizeChangedAction;
+				itemContainer.OnSlotChanged -= onSlotChangedAction;
+				itemContainer.OnSizeChanged -= onSizeChangedAction;
 			}
 
-			inventory = newInventory;
+			itemContainer = newContainer;
 
-			if (inventory != null)
+			if (itemContainer != null)
 			{
-				inventory.OnSlotChanged += onSlotChangedAction;
-				inventory.OnSizeChanged += onSizeChangedAction;
+				itemContainer.OnSlotChanged += onSlotChangedAction;
+				itemContainer.OnSizeChanged += onSizeChangedAction;
 			}
 
 			HandleSlotViews();
@@ -94,9 +94,9 @@ namespace Kryz.RPG.Items.Views
 			for (int i = 0; i < itemSlots.Count; i++)
 			{
 				BaseItemSlotView itemSlotView = itemSlots[i];
-				if (inventory != null)
+				if (itemContainer != null)
 				{
-					itemSlotView.Bind(i, inventory, controller);
+					itemSlotView.Bind(i, itemContainer, controller);
 				}
 				else
 				{
@@ -107,13 +107,13 @@ namespace Kryz.RPG.Items.Views
 
 		private void HandleSlotViews()
 		{
-			int inventorySlots = inventory != null ? inventory.Size : 0;
+			int inventorySlots = itemContainer != null ? itemContainer.Size : 0;
 			int maxSlots = this.maxSlots > 0 ? this.maxSlots : int.MaxValue;
 			int numSlots = Math.Min(Math.Max(inventorySlots, minSlots), maxSlots);
 
-			if (inventory != null && inventory.Size > maxSlots)
+			if (itemContainer != null && itemContainer.Size > maxSlots)
 			{
-				Debug.LogError("Inventory has " + inventory.Size + " slots, but the " + nameof(InventoryView) + " is configured to display a maximum of " + maxSlots, this);
+				Debug.LogError("Inventory has " + itemContainer.Size + " slots, but the " + nameof(InventoryView) + " is configured to display a maximum of " + maxSlots, this);
 			}
 
 			if (itemSlots.Count < numSlots)
@@ -134,9 +134,9 @@ namespace Kryz.RPG.Items.Views
 			for (int i = 0; i < itemSlots.Count; i++)
 			{
 				BaseItemSlotView itemSlotView = itemSlots[i];
-				if (inventory != null)
+				if (itemContainer != null)
 				{
-					itemSlotView.Bind(i, inventory, controller);
+					itemSlotView.Bind(i, itemContainer, controller);
 				}
 				else
 				{
@@ -148,9 +148,9 @@ namespace Kryz.RPG.Items.Views
 
 		private void OnSlotChanged(int index, ItemStack previousStack, ItemStack newStack)
 		{
-			if (inventory == null || index < 0 || index >= inventory.Size)
+			if (itemContainer == null || index < 0 || index >= itemContainer.Size)
 			{
-				Debug.LogError($"Error handling {nameof(IInventory.OnSlotChanged)} event. Slot Index: {index} | Inventory Size: {inventory?.Size}", this);
+				Debug.LogError($"Error handling {nameof(IItemContainer.OnSlotChanged)} event. Slot Index: {index} | Inventory Size: {itemContainer?.Size}", this);
 				return;
 			}
 

@@ -132,6 +132,25 @@ namespace Kryz.RPG.Items
 		bool TryRemoveSlot(int index, out ItemStack result, out ItemStack removed, int count = -1);
 
 		/// <summary>
+		/// Try to move a certain amount of items from a specific slot to another <see cref="IItemContainer"/>.
+		/// </summary>
+		/// <param name="fromIndex">The slot index to move from.</param>
+		/// <param name="to">The <see cref="IItemContainer"/> to move to.</param>
+		/// <param name="count">The amount of items to move. Passing in a negative number moves the entire stack.</param>
+		/// <returns><see cref="true"/> if it was possible to move the specified amount of items. Otherwise <see cref="false"/>.</returns>
+		bool TryMove(int fromIndex, IItemContainer to, int count = -1);
+
+		/// <summary>
+		/// Try to move a certain amount of items from a specific slot to another slot of an <see cref="IItemContainer"/>.
+		/// </summary>
+		/// <param name="fromIndex">The slot index to move from.</param>
+		/// <param name="to">The <see cref="IItemContainer"/> to move to.</param>
+		/// <param name="toIndex">The slot index of the target <see cref="IItemContainer"/> to move to.</param>
+		/// <param name="count">The amount of items to move. Passing in a negative number moves the entire stack.</param>
+		/// <returns><see cref="true"/> if it was possible to move the specified amount of items. Otherwise <see cref="false"/>.</returns>
+		bool TryMoveSlot(int fromIndex, IItemContainer to, int toIndex, int count = -1);
+
+		/// <summary>
 		/// Try to set the size of the container.
 		/// </summary>
 		/// <param name="value">The size to set.</param>

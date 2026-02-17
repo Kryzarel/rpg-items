@@ -22,16 +22,16 @@ namespace Kryz.RPG.Items.Views
 
 		protected int cachedCount;
 		protected int slotIndex = -1;
-		protected IInventory? inventory;
+		protected IItemContainer? itemContainer;
 		protected IItemSlotController? controller;
 		protected ItemStack itemStack;
 
 		public override int SlotIndex => slotIndex;
-		public override IInventory? Inventory => inventory;
+		public override IItemContainer? ItemContainer => itemContainer;
 		public override IItemSlotController? Controller => controller;
 		public override ItemStack ItemStack => itemStack;
 
-		public bool IsBound => itemStack != default || inventory != null && slotIndex >= 0 && slotIndex < inventory.Size;
+		public bool IsBound => itemStack != default || itemContainer != null && slotIndex >= 0 && slotIndex < itemContainer.Size;
 
 		private void OnValidate()
 		{
@@ -47,15 +47,15 @@ namespace Kryz.RPG.Items.Views
 			RefreshVisuals();
 		}
 
-		public override void Bind(int slotIndex, IInventory inventory, IItemSlotController? controller = null)
+		public override void Bind(int slotIndex, IItemContainer itemContainer, IItemSlotController? controller = null)
 		{
 			this.slotIndex = slotIndex;
-			this.inventory = inventory;
+			this.itemContainer = itemContainer;
 			this.controller = controller;
 
-			if (inventory != null && slotIndex >= 0 && slotIndex < inventory.Size)
+			if (itemContainer != null && slotIndex >= 0 && slotIndex < itemContainer.Size)
 			{
-				itemStack = inventory[slotIndex];
+				itemStack = itemContainer[slotIndex];
 			}
 
 			RefreshVisuals();
@@ -64,7 +64,7 @@ namespace Kryz.RPG.Items.Views
 		public override void Unbind()
 		{
 			slotIndex = -1;
-			inventory = null;
+			itemContainer = null;
 			controller = null;
 			itemStack = default;
 			RefreshVisuals();

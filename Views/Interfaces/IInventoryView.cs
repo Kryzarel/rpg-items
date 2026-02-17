@@ -4,7 +4,7 @@ namespace Kryz.RPG.Items.Views
 {
 	public interface IInventoryView
 	{
-		IInventory? Inventory { get; set; }
+		IItemContainer? ItemContainer { get; set; }
 		IReadOnlyList<IItemSlotView> ItemSlots { get; }
 	}
 }
