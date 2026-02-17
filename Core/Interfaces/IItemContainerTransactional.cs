@@ -80,7 +80,8 @@ namespace Kryz.RPG.Items
 		bool TrySetSlot<T>(T transaction, int index, in ItemStack stack) where T : IItemTransaction;
 
 		/// <summary>
-		/// Set a slot to the specified <see cref="ItemStack"/>. Skips most checks other methods do.
+		/// <para>Set a slot to the specified <see cref="ItemStack"/>. Sets the slot whether the Container allows it or not.</para>
+		/// <para>If you want to obey the Container's rules use <see cref="TrySetSlot"/> instead.</para>
 		/// </summary>
 		/// <param name="index">The slot index to set.</param>
 		/// <param name="stack">The stack to set the slot to.</param>
