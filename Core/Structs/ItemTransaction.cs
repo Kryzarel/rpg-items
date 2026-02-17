@@ -8,13 +8,13 @@ namespace Kryz.RPG.Items
 	{
 		private readonly PooledList<ItemContainerEdit> edits;
 
-		private bool commited;
+		private bool commit;
 		private bool completed;
 
 		public ItemTransaction(IItemContainerTransactional container)
 		{
 			edits = PooledList<ItemContainerEdit>.Rent();
-			commited = false;
+			commit = false;
 			completed = false;
 		}
 
@@ -28,7 +28,13 @@ namespace Kryz.RPG.Items
 			edits.Add(new ItemContainerEdit(container, new SlotEdit(index, oldStack, newStack)));
 		}
 
-		public void Commit()
+		public bool SetResult(bool value)
+		{
+			commit = value;
+			return value;
+		}
+
+		public void Dispose()
 		{
 			if (completed)
 			{
@@ -36,16 +42,13 @@ namespace Kryz.RPG.Items
 				return;
 			}
 
-			commited = true;
-			completed = true;
-			Notify();
-		}
-
-		public void Dispose()
-		{
 			completed = true;
 
-			if (!commited)
+			if (commit)
+			{
+				Notify();
+			}
+			else
 			{
 				Rollback();
 			}

@@ -55,78 +55,43 @@ namespace Kryz.RPG.Items
 		public virtual bool TryAdd(in ItemStack stack, out ItemStack remainder)
 		{
 			using ItemTransaction transaction = new(this);
-			if (!TryAdd(transaction, stack, out remainder))
-			{
-				return false;
-			}
-			transaction.Commit();
-			return true;
+			return transaction.SetResult(TryAdd(transaction, stack, out remainder));
 		}
 
 		public virtual bool TryAddSlot(int index, in ItemStack stack, out ItemStack result, out ItemStack remainder)
 		{
 			using ItemTransaction transaction = new(this);
-			if (!TryAddSlot(transaction, index, stack, out result, out remainder))
-			{
-				return false;
-			}
-			transaction.Commit();
-			return true;
+			return transaction.SetResult(TryAddSlot(transaction, index, stack, out result, out remainder));
 		}
 
 		public virtual bool TryRemove(in ItemStack stack)
 		{
 			using ItemTransaction transaction = new(this);
-			if (!TryRemove(transaction, stack))
-			{
-				return false;
-			}
-			transaction.Commit();
-			return true;
+			return transaction.SetResult(TryRemove(transaction, stack));
 		}
 
 		public virtual bool TryRemoveSlot(int index, out ItemStack result, out ItemStack removed, int count = -1)
 		{
 			using ItemTransaction transaction = new(this);
-			if (!TryRemoveSlot(transaction, index, out result, out removed, count))
-			{
-				return false;
-			}
-			transaction.Commit();
-			return true;
+			return transaction.SetResult(TryRemoveSlot(transaction, index, out result, out removed, count));
 		}
 
 		public virtual bool TryMove(int fromIndex, IItemContainer to, int count = -1)
 		{
 			using ItemTransaction transaction = new(this);
-			if (!TryMove(transaction, fromIndex, to, count))
-			{
-				return false;
-			}
-			transaction.Commit();
-			return true;
+			return transaction.SetResult(TryMove(transaction, fromIndex, to, count));
 		}
 
 		public virtual bool TryMoveSlot(int fromIndex, IItemContainer to, int toIndex, int count = -1)
 		{
 			using ItemTransaction transaction = new(this);
-			if (!TryMoveSlot(transaction, fromIndex, to, toIndex, count))
-			{
-				return false;
-			}
-			transaction.Commit();
-			return true;
+			return transaction.SetResult(TryMoveSlot(transaction, fromIndex, to, toIndex, count));
 		}
 
 		public virtual bool TrySetSize(int value)
 		{
 			using ItemTransaction transaction = new(this);
-			if (!TrySetSize(transaction, value))
-			{
-				return false;
-			}
-			transaction.Commit();
-			return true;
+			return transaction.SetResult(TrySetSize(transaction, value));
 		}
 
 		public virtual void CopyFrom(ItemStack[] stacks) => CopyFrom(stacks.AsSpan());
@@ -147,7 +112,7 @@ namespace Kryz.RPG.Items
 				SetSlot(transaction, i, stack);
 			}
 
-			transaction.Commit();
+			transaction.SetResult(true);
 		}
 
 		public virtual void CopyFrom(IReadOnlyList<ItemStack> stacks)
@@ -166,7 +131,7 @@ namespace Kryz.RPG.Items
 				SetSlot(transaction, i, stack);
 			}
 
-			transaction.Commit();
+			transaction.SetResult(true);
 		}
 
 		public virtual void Clear()
@@ -176,14 +141,14 @@ namespace Kryz.RPG.Items
 			{
 				SetSlot(transaction, i, default);
 			}
-			transaction.Commit();
+			transaction.SetResult(true);
 		}
 
 		public virtual void Sort()
 		{
 			using ItemTransaction transaction = new(this);
 			Sort(transaction);
-			transaction.Commit();
+			transaction.SetResult(true);
 		}
 	}
 }
