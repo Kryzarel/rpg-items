@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Kryz.RPG.Items.Tests
 {
-	public class NewInventoryTests
+	public class InventoryTests
 	{
 		private class TestItem : IItem
 		{
@@ -35,7 +35,7 @@ namespace Kryz.RPG.Items.Tests
 		[Test]
 		public void Create([ValueSource(inventorySizesSrc)] int size)
 		{
-			NewInventory inventory = new(size);
+			Inventory inventory = new(size);
 
 			int expectedSize = Math.Max(0, size);
 
@@ -60,7 +60,7 @@ namespace Kryz.RPG.Items.Tests
 		[Test]
 		public void SetSize([ValueSource(inventorySizesSrc)] int size)
 		{
-			NewInventory inventory = new(0);
+			Inventory inventory = new(0);
 
 			inventory.TrySetSize(size);
 			int expectedSize = Math.Max(0, size);
@@ -89,7 +89,7 @@ namespace Kryz.RPG.Items.Tests
 		public void SetSize_PreserveItems([ValueSource(inventorySizesSrc)] int size)
 		{
 			// Arrange
-			NewInventory inventory = new(0);
+			Inventory inventory = new(0);
 			ItemStack[] itemStacks = new ItemStack[] { default, new(items[1]), new(items[2]) };
 			inventory.CopyFrom(itemStacks);
 
@@ -221,7 +221,7 @@ namespace Kryz.RPG.Items.Tests
 		[Test]
 		public void Add_OneStack_Full([ValueSource(inventorySizesSrc)] int size, [ValueSource(itemsSrc)] IItem item, [ValueSource(stackSizesSrc)] int stackSize)
 		{
-			NewInventory inventory = new(size);
+			Inventory inventory = new(size);
 			ItemStack stack = new(item, stackSize);
 
 			if (inventory.Size == 0 || stack.Count == 0 || stack.Item == null)
@@ -266,7 +266,7 @@ namespace Kryz.RPG.Items.Tests
 		[Test]
 		public void Add_OneStack_Partial([ValueSource(inventorySizesSrc)] int size, [ValueSource(itemsSrc)] IItem item, [ValueSource(stackSizesSrc)] int stackSize)
 		{
-			NewInventory inventory = new(size);
+			Inventory inventory = new(size);
 			ItemStack stack = new(item, stackSize);
 
 			if (inventory.Size == 0 || stack.Count == 0 || stack.Item == null)
@@ -307,7 +307,7 @@ namespace Kryz.RPG.Items.Tests
 		[Test]
 		public void Add_TwoStacks_SameItem([ValueSource(stackSizesSrc)] int stackSize1, [ValueSource(stackSizesSrc)] int stackSize2)
 		{
-			NewInventory inventory = new(2);
+			Inventory inventory = new(2);
 			ItemStack stack1 = new(items[1], stackSize1);
 			ItemStack stack2 = new(items[1], stackSize2);
 			int maxStacks = stack2.Item == null ? 0 : stack2.Item.MaxStacks;
@@ -359,7 +359,7 @@ namespace Kryz.RPG.Items.Tests
 		[Test]
 		public void Add_TwoStacks_DifferentItems([ValueSource(stackSizesSrc)] int stackSize1, [ValueSource(stackSizesSrc)] int stackSize2)
 		{
-			NewInventory inventory = new(2);
+			Inventory inventory = new(2);
 			ItemStack stack1 = new(items[1], stackSize1);
 			ItemStack stack2 = new(items[2], stackSize2);
 			int maxStacks = stack2.Item == null ? 0 : stack2.Item.MaxStacks;
@@ -410,7 +410,7 @@ namespace Kryz.RPG.Items.Tests
 		[Test]
 		public void Add_Slot([ValueSource(itemsSrc)] IItem? item, [ValueSource(stackSizesSrc)] int stackSize)
 		{
-			NewInventory inventory = new(3);
+			Inventory inventory = new(3);
 			ItemStack stack = new(item!, stackSize);
 
 			for (int i = 0; i < inventory.Size; i++)
@@ -465,7 +465,7 @@ namespace Kryz.RPG.Items.Tests
 		[Test]
 		public void CanRemove([ValueSource(inventorySizesSrc)] int size, [ValueSource(itemsSrc)] IItem item1, [ValueSource(stackSizesSrc)] int stackSize1, [ValueSource(itemsSrc)] IItem item2, [ValueSource(stackSizesSrc)] int stackSize2)
 		{
-			NewInventory inventory = new(size);
+			Inventory inventory = new(size);
 			ItemStack stack1 = new(item1, stackSize1);
 			ItemStack stack2 = new(item2, stackSize2);
 
@@ -489,7 +489,7 @@ namespace Kryz.RPG.Items.Tests
 		[Test]
 		public void Remove_OneStack([ValueSource(inventorySizesSrc)] int size, [ValueSource(itemsSrc)] IItem item, [ValueSource(stackSizesSrc)] int stackSize)
 		{
-			NewInventory inventory = new(size);
+			Inventory inventory = new(size);
 			ItemStack stack = new(item, stackSize);
 			inventory.TryAdd(stack, out ItemStack remainder);
 
@@ -525,7 +525,7 @@ namespace Kryz.RPG.Items.Tests
 		[Test]
 		public void Remove_Slot([ValueSource(stackSizesSrc)] int stackSize)
 		{
-			NewInventory inventory = new(3);
+			Inventory inventory = new(3);
 
 			for (int i = 0; i < inventory.Size; i++)
 			{
@@ -572,7 +572,7 @@ namespace Kryz.RPG.Items.Tests
 		[Test]
 		public void Remove_Slot_Full()
 		{
-			NewInventory inventory = new(3);
+			Inventory inventory = new(3);
 
 			for (int i = 0; i < inventory.Size; i++)
 			{
@@ -616,7 +616,7 @@ namespace Kryz.RPG.Items.Tests
 		[Test]
 		public void Move_SameInventory()
 		{
-			NewInventory inventory = new(0);
+			Inventory inventory = new(0);
 			inventory.CopyFrom(new ItemStack[] { new(items[1]), new(items[1]), new(items[2]) });
 
 			Assert.AreEqual(0, inventory.FreeSlots);
@@ -654,10 +654,10 @@ namespace Kryz.RPG.Items.Tests
 		[Test]
 		public void Move_DifferentInventories()
 		{
-			NewInventory inventory1 = new(0);
+			Inventory inventory1 = new(0);
 			inventory1.CopyFrom(new ItemStack[] { new(items[1]), new(items[1]), new(items[2]) });
 
-			NewInventory inventory2 = new(0);
+			Inventory inventory2 = new(0);
 			inventory2.CopyFrom(new ItemStack[] { new(items[1]), new(items[1], items[1].MaxStacks), new(items[2]) });
 
 			Assert.AreEqual(0, inventory1.FreeSlots);
@@ -711,7 +711,7 @@ namespace Kryz.RPG.Items.Tests
 		{
 			// Arrange
 			ItemStack[] itemStacks = new ItemStack[] { default, new(items[1]), new(items[2]) };
-			NewInventory inventory = new(size);
+			Inventory inventory = new(size);
 
 			// Act
 			inventory.CopyFrom(itemStacks);
@@ -731,7 +731,7 @@ namespace Kryz.RPG.Items.Tests
 		{
 			// Arrange
 			ItemStack[] itemStacks = new ItemStack[] { default, new(items[1]), new(items[2]) };
-			NewInventory inventory = new(size);
+			Inventory inventory = new(size);
 
 			// Act
 			inventory.CopyFrom(itemStacks.AsSpan());
@@ -751,7 +751,7 @@ namespace Kryz.RPG.Items.Tests
 		{
 			// Arrange
 			ItemStack[] itemStacks = new ItemStack[] { default, new(items[1]), new(items[2]) };
-			NewInventory inventory = new(size);
+			Inventory inventory = new(size);
 
 			// Act
 			inventory.CopyFrom((IReadOnlyList<ItemStack>)itemStacks);
@@ -771,7 +771,7 @@ namespace Kryz.RPG.Items.Tests
 		{
 			// Arrange
 			ItemStack[] itemStacks = new ItemStack[] { default, new(items[1]), new(items[2]) };
-			NewInventory inventory = new(size);
+			Inventory inventory = new(size);
 			inventory.CopyFrom(itemStacks);
 
 			// Act
@@ -786,7 +786,7 @@ namespace Kryz.RPG.Items.Tests
 		{
 			// Arrange
 			ItemStack[] itemStacks = new ItemStack[] { default, new(items[1]), new(items[2]) };
-			NewInventory inventory = new(size);
+			Inventory inventory = new(size);
 			inventory.CopyFrom(itemStacks);
 
 			// Act
