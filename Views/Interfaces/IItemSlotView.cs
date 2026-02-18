@@ -5,7 +5,8 @@ namespace Kryz.RPG.Items.Views
 		int SlotIndex { get; }
 		IItemContainer? ItemContainer { get; }
 		IItemSlotController? Controller { get; }
-		ItemStack ItemStack { get; }
+		ItemStack VisualItemStack { get; }
+		ItemStack RealItemStack { get; }
 
 		void Bind(int slotIndex, IItemContainer itemContainer, IItemSlotController? controller = null);
 		void Unbind();

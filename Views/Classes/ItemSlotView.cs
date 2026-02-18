@@ -29,7 +29,7 @@ namespace Kryz.RPG.Items.Views
 		public override int SlotIndex => slotIndex;
 		public override IItemContainer? ItemContainer => itemContainer;
 		public override IItemSlotController? Controller => controller;
-		public override ItemStack ItemStack => itemStack;
+		public override ItemStack VisualItemStack => itemStack;
 
 		public bool IsBound => itemStack != default || itemContainer != null && slotIndex >= 0 && slotIndex < itemContainer.Size;
 

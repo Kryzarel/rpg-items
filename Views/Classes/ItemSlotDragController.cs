@@ -24,7 +24,7 @@ namespace Kryz.RPG.Items.Views
 		{
 			if (cursorSlot != null)
 			{
-				bool enabled = cursorSlot.ItemStack != default;
+				bool enabled = cursorSlot.VisualItemStack != default;
 
 				if (enabled)
 				{

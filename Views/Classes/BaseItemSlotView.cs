@@ -8,7 +8,9 @@ namespace Kryz.RPG.Items.Views
 		public abstract int SlotIndex { get; }
 		public abstract IItemContainer? ItemContainer { get; }
 		public abstract IItemSlotController? Controller { get; }
-		public abstract ItemStack ItemStack { get; }
+		public abstract ItemStack VisualItemStack { get; }
+
+		public ItemStack RealItemStack => ItemContainer != null && SlotIndex >= 0 && SlotIndex < ItemContainer.Size ? ItemContainer[SlotIndex] : default;
 
 		public RectTransform RectTransform => (RectTransform)transform;
 

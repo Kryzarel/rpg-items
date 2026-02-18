@@ -13,9 +13,16 @@ namespace Kryz.RPG.Items.Views
 		[SerializeField] protected InputActionReference? useAction;
 		[SerializeField] protected InputActionReference? splitStackAction;
 
+		private IItemContainerTransactional.OnSlotChangedDelegate? refreshDraggedSlotAction;
+
 		protected virtual void OnValidate()
 		{
 			if (dragController == null) dragController = FindAnyObjectByType<BaseItemSlotDragController>();
+		}
+
+		protected virtual void Awake()
+		{
+			refreshDraggedSlotAction = RefreshDraggedSlot;
 		}
 
 		protected virtual void OnEnable()
@@ -35,9 +42,14 @@ namespace Kryz.RPG.Items.Views
 			if (dragController == null || dragController.CursorSlot == null || !dragController.StartDrag(slotView))
 				return false;
 
-			ItemStack slot = slotView.ItemStack;
+			ItemStack slot = slotView.VisualItemStack;
 			slotView.SetItemStack(slot.Remove(count, out ItemStack removed));
 			dragController.CursorSlot.SetItemStack(removed);
+
+			if (slotView.ItemContainer != null)
+			{
+				slotView.ItemContainer.OnSlotChanged += refreshDraggedSlotAction;
+			}
 
 			if (useAction != null) useAction.action.Disable();
 			if (splitStackAction != null) splitStackAction.action.Disable();
@@ -48,10 +60,12 @@ namespace Kryz.RPG.Items.Views
 		{
 			if (dragController != null)
 			{
-				IItemSlotView? sourceSlot = dragController.SourceSlot;
-				if (sourceSlot != null && sourceSlot.ItemContainer != null)
+				IItemSlotView? slotView = dragController.SourceSlot;
+
+				if (slotView != null && slotView.ItemContainer != null)
 				{
-					sourceSlot.SetItemStack(sourceSlot.ItemContainer[sourceSlot.SlotIndex]);
+					slotView.SetItemStack(slotView.RealItemStack);
+					slotView.ItemContainer.OnSlotChanged -= refreshDraggedSlotAction;
 				}
 
 				dragController.CursorSlot?.SetItemStack(default);
@@ -73,7 +87,8 @@ namespace Kryz.RPG.Items.Views
 			if (!ValidateSlot(dragController.SourceSlot, out int dragIndex, out IItemContainer? dragContainer))
 				return false;
 
-			return dragContainer.TryMoveSlot(dragIndex, dropContainer, dropIndex);
+			int count = dragController.CursorSlot.VisualItemStack.Count;
+			return dragContainer.TryMoveSlot(dragIndex, dropContainer, dropIndex, count);
 		}
 
 		protected static bool ValidateSlot(IItemSlotView itemSlotView, out int index, [MaybeNullWhen(returnValue: false)] out IItemContainer container)
@@ -85,11 +100,11 @@ namespace Kryz.RPG.Items.Views
 
 		public override bool OnPointerClick(IItemSlotView itemSlotView, PointerEventData eventData)
 		{
-			if (ValidateSlot(itemSlotView, out _, out _) && itemSlotView.ItemStack.Item != null)
+			if (ValidateSlot(itemSlotView, out _, out _) && itemSlotView.VisualItemStack.Item != null)
 			{
 				if (useAction != null && useAction.action.WasPerformedThisFrame())
 				{
-					Debug.Log($"Item Used: {itemSlotView.ItemStack.Item.Name}");
+					Debug.Log($"Item Used: {itemSlotView.VisualItemStack.Item.Name}");
 					return true;
 				}
 			}
@@ -112,10 +127,10 @@ namespace Kryz.RPG.Items.Views
 			{
 				if (splitStackAction != null && splitStackAction.action.IsPressed())
 				{
-					return StartDrag(itemSlotView, itemSlotView.ItemStack.Count / 2);
+					return StartDrag(itemSlotView, itemSlotView.VisualItemStack.Count / 2);
 				}
 
-				return StartDrag(itemSlotView, itemSlotView.ItemStack.Count);
+				return StartDrag(itemSlotView, itemSlotView.VisualItemStack.Count);
 			}
 			return false;
 		}
@@ -144,6 +159,24 @@ namespace Kryz.RPG.Items.Views
 		public override bool OnDeselect(IItemSlotView itemSlotView, BaseEventData eventData)
 		{
 			return true;
+		}
+
+		private void RefreshDraggedSlot(int index, ItemStack oldStack, ItemStack newStack)
+		{
+			if (dragController == null)
+				return;
+
+			IItemSlotView? cursorSlot = dragController.CursorSlot;
+			IItemSlotView? sourceSlot = dragController.SourceSlot;
+
+			if (cursorSlot == null || sourceSlot == null || sourceSlot.SlotIndex != index)
+				return;
+
+			int count = cursorSlot.VisualItemStack.Count;
+			if (newStack.TryRemove(count, out ItemStack result, out _))
+			{
+				sourceSlot.SetItemStack(result);
+			}
 		}
 	}
 }
