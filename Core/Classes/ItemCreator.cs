@@ -2,7 +2,7 @@ using System;
 
 namespace Kryz.RPG.Items
 {
-	public abstract class ItemCreatorBase<TDefinition, TItem, TSaveData> : IItemCreator<TDefinition, TSaveData>, IItemSaver<TItem, TSaveData> where TDefinition : IItemDefinition where TItem : IItem where TSaveData : IItemSaveData
+	public abstract class ItemCreator<TDefinition, TItem, TSaveData> : IItemCreator<TDefinition, TSaveData>, IItemSaver<TItem, TSaveData> where TDefinition : IItemDefinition where TItem : IItem where TSaveData : IItemSaveData
 	{
 		public bool CanCreate(IItemDefinition definition)
 		{
