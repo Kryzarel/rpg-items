@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using Kryz.Utils;
 
 namespace Kryz.RPG.Items
@@ -19,6 +20,10 @@ namespace Kryz.RPG.Items
 
 		public event IItemContainerTransactional.OnSlotChangedDelegate? OnSlotChanged;
 		public event IItemContainerTransactional.OnSizeChangedDelegate? OnSizeChanged;
+		public event IItemContainerTransactional.OnTransactionSuccessDelegate? OnTransactionSuccess;
+
+		private static int nextId;
+		public int InstanceId { get; } = Interlocked.Increment(ref nextId);
 
 		public ItemStack this[int index] => (uint)index >= (uint)size ? throw new IndexOutOfRangeException(indexOutOfRangeMsg) : slots[index];
 		public ReadOnlySpan<ItemStack> Slots => new(slots, 0, size);
@@ -241,6 +246,11 @@ namespace Kryz.RPG.Items
 			{
 				OnSlotChanged?.Invoke(index, oldStack, newStack);
 			}
+		}
+
+		public void NotifyTransactionSuccess()
+		{
+			OnTransactionSuccess?.Invoke();
 		}
 
 		public void RollbackSize(int oldSize)

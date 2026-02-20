@@ -6,9 +6,13 @@ namespace Kryz.RPG.Items
 	{
 		public delegate void OnSizeChangedDelegate(int oldSize, int newSize);
 		public delegate void OnSlotChangedDelegate(int index, ItemStack oldStack, ItemStack newStack);
+		public delegate void OnTransactionSuccessDelegate();
 
 		event OnSizeChangedDelegate OnSizeChanged;
 		event OnSlotChangedDelegate OnSlotChanged;
+		event OnTransactionSuccessDelegate OnTransactionSuccess;
+
+		int InstanceId { get; }
 
 		/// <summary>
 		/// Try to add an <see cref="ItemStack"/> to any slots that can receive it.
@@ -106,6 +110,11 @@ namespace Kryz.RPG.Items
 		/// <param name="oldStack">The old slot</param>
 		/// <param name="newStack">The new slot</param>
 		void NotifySlot(int index, ItemStack oldStack, ItemStack newStack);
+
+		/// <summary>
+		/// Notify observers at the end of a successful transaction.
+		/// </summary>
+		void NotifyTransactionSuccess();
 
 		/// <summary>
 		/// Rollback a slot change after a failed transaction.

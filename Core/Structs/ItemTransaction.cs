@@ -56,40 +56,87 @@ namespace Kryz.RPG.Items
 			edits.Dispose();
 		}
 
+		private static readonly ItemContainerEdit defaultEdit = default;
+
 		private readonly void Notify()
 		{
-			ReadOnlySpan<ItemContainerEdit> edits = this.edits.AsSpan();
+			Span<ItemContainerEdit> edits = this.edits.AsSpan();
+			TimSortLite.Sort(edits);
+			int? firstSizeInBlock = null;
+			ItemStack? firstSlotInBlock = null;
 
-			for (int i = 0; i < edits.Length; i++)
+			for (int i = 0, len = edits.Length; i < len; i++)
 			{
-				ref readonly ItemContainerEdit edit = ref edits[i];
+				ref readonly ItemContainerEdit edit1 = ref edits[i];
+				ref readonly ItemContainerEdit edit2 = ref i + 1 < len ? ref edits[i + 1] : ref defaultEdit;
 
-				if (edit.IsSizeEdit)
+				bool isLastInContainer = edit1.Container != edit2.Container;
+
+				if (edit1.IsSizeEdit)
 				{
-					edit.Container.NotifySize(edit.SizeEdit.OldSize, edit.SizeEdit.NewSize);
+					firstSizeInBlock ??= edit1.SizeEdit.OldSize;
+					if (isLastInContainer || !edit2.IsSizeEdit)
+					{
+						edit1.Container.NotifySize(firstSizeInBlock.Value, edit1.SizeEdit.NewSize);
+						firstSizeInBlock = null;
+					}
 				}
 				else
 				{
-					edit.Container.NotifySlot(edit.SlotEdit.Index, edit.SlotEdit.OldStack, edit.SlotEdit.NewStack);
+					firstSlotInBlock ??= edit1.SlotEdit.OldStack;
+					if (isLastInContainer || edit2.IsSizeEdit || edit1.SlotEdit.Index != edit2.SlotEdit.Index)
+					{
+						edit1.Container.NotifySlot(edit1.SlotEdit.Index, firstSlotInBlock.Value, edit1.SlotEdit.NewStack);
+						firstSlotInBlock = null;
+					}
+				}
+
+				if (isLastInContainer)
+				{
+					edit1.Container.NotifyTransactionSuccess();
+					firstSizeInBlock = null;
+					firstSlotInBlock = null;
 				}
 			}
 		}
 
 		private readonly void Rollback()
 		{
-			ReadOnlySpan<ItemContainerEdit> edits = this.edits.AsSpan();
+			Span<ItemContainerEdit> edits = this.edits.AsSpan();
+			TimSortLite.Sort(edits);
+			int? firstSizeInBlock = null;
+			ItemStack? firstSlotInBlock = null;
 
-			for (int i = edits.Length - 1; i >= 0; i--)
+			for (int i = 0, len = edits.Length; i < len; i++)
 			{
-				ref readonly ItemContainerEdit edit = ref edits[i];
+				ref readonly ItemContainerEdit edit1 = ref edits[i];
+				ref readonly ItemContainerEdit edit2 = ref i + 1 < len ? ref edits[i + 1] : ref defaultEdit;
 
-				if (edit.IsSizeEdit)
+				bool isLastInContainer = edit1.Container != edit2.Container;
+
+				if (edit1.IsSizeEdit)
 				{
-					edit.Container.RollbackSize(edit.SizeEdit.OldSize);
+					firstSizeInBlock ??= edit1.SizeEdit.OldSize;
+					if (isLastInContainer || !edit2.IsSizeEdit)
+					{
+						edit1.Container.RollbackSize(firstSizeInBlock.Value);
+						firstSizeInBlock = null;
+					}
 				}
 				else
 				{
-					edit.Container.RollbackSlot(edit.SlotEdit.Index, edit.SlotEdit.OldStack);
+					firstSlotInBlock ??= edit1.SlotEdit.OldStack;
+					if (isLastInContainer || edit2.IsSizeEdit || edit1.SlotEdit.Index != edit2.SlotEdit.Index)
+					{
+						edit1.Container.RollbackSlot(edit1.SlotEdit.Index, firstSlotInBlock.Value);
+						firstSlotInBlock = null;
+					}
+				}
+
+				if (isLastInContainer)
+				{
+					firstSizeInBlock = null;
+					firstSlotInBlock = null;
 				}
 			}
 		}
