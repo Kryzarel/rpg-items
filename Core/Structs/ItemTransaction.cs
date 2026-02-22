@@ -61,7 +61,7 @@ namespace Kryz.RPG.Items
 		private readonly void Notify()
 		{
 			Span<ItemContainerEdit> edits = this.edits.AsSpan();
-			TimSortLite.Sort(edits);
+			TimSortLite.Sort(edits); // This sort must be stable, otherwise the deduplication will be incorrect
 			int? firstSizeInBlock = null;
 			ItemStack? firstSlotInBlock = null;
 
@@ -103,7 +103,7 @@ namespace Kryz.RPG.Items
 		private readonly void Rollback()
 		{
 			Span<ItemContainerEdit> edits = this.edits.AsSpan();
-			TimSortLite.Sort(edits);
+			TimSortLite.Sort(edits); // This sort must be stable, otherwise the deduplication will be incorrect
 			int? firstSizeInBlock = null;
 			ItemStack? firstSlotInBlock = null;
 
