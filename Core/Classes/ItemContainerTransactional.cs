@@ -10,7 +10,7 @@ namespace Kryz.RPG.Items
 {
 	public abstract class ItemContainerTransactional : IItemContainerTransactional, IDisposable
 	{
-		private const string indexOutOfRangeMsg = "Index was out of range. Must be non-negative and less than the size of the collection.";
+		private const string outOfRange = "Index was out of range. Must be non-negative and less than the size of the collection.";
 
 		private readonly ArrayPool<ItemStack> arrayPool;
 
@@ -25,7 +25,7 @@ namespace Kryz.RPG.Items
 		private static int nextId;
 		public int InstanceId { get; } = Interlocked.Increment(ref nextId);
 
-		public ItemStack this[int index] => (uint)index >= (uint)size ? throw new IndexOutOfRangeException(indexOutOfRangeMsg) : slots[index];
+		public ItemStack this[int index] => (uint)index >= (uint)size ? throw new IndexOutOfRangeException(outOfRange) : slots[index];
 		public ReadOnlySpan<ItemStack> Slots => new(slots, 0, size);
 		public int Size => size;
 		public int FreeSlots => size - occupiedSlots;
