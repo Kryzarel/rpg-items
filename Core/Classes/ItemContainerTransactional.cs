@@ -46,6 +46,110 @@ namespace Kryz.RPG.Items
 
 		public virtual bool CanRemove(int index) => true;
 
+		public bool CanAdd(in ItemStack stack, out ItemStack remainder)
+		{
+			remainder = stack;
+
+			if (stack.Item == null)
+			{
+				return false;
+			}
+
+			int maxCount = GetMaxStacks(stack.Item);
+
+			for (int i = 0; i < size && remainder.Count > 0; i++)
+			{
+				ref ItemStack slot = ref slots[i];
+
+				if (slot.Item == stack.Item && CanReceive(i, stack.Item))
+				{
+					// Call try add but don't assign the result to anything
+					slot.TryAdd(remainder, out _, out remainder, maxCount);
+				}
+			}
+
+			return remainder.Count < stack.Count; // Return true if we added at least 1 item
+		}
+
+		public bool CanAddSlot(int index, in ItemStack stack, out ItemStack result, out ItemStack remainder)
+		{
+			ItemStack slot = slots[index];
+
+			if (stack.Item != null && CanReceive(index, stack.Item))
+			{
+				return slot.TryAdd(stack, out result, out remainder, GetMaxStacks(stack.Item));
+			}
+
+			remainder = stack;
+			result = slot;
+			return false;
+		}
+
+		public bool CanRemove(in ItemStack stack)
+		{
+			if (stack.Item == null)
+			{
+				return false;
+			}
+
+			int required = stack.Count;
+
+			for (int i = 0; i < size && required > 0; i++)
+			{
+				ItemStack slot = slots[i];
+
+				if (slot.Item == stack.Item && CanRemove(i))
+				{
+					required -= slot.Count;
+				}
+			}
+
+			return required <= 0;
+		}
+
+		public bool CanRemoveSlot(int index, out ItemStack result, out ItemStack removed, int count = -1)
+		{
+			ItemStack slot = slots[index];
+
+			if (CanRemove(index))
+			{
+				return slot.TryRemove(count < 0 ? slot.Count : count, out result, out removed);
+			}
+
+			removed = default;
+			result = slot;
+			return false;
+		}
+
+		public bool CanMove(int fromIndex, IItemContainer to, int count = -1)
+		{
+			return CanRemoveSlot(fromIndex, out _, out ItemStack removed, count) && to.CanAdd(removed, out _);
+		}
+
+		public bool CanMoveSlot(int fromIndex, IItemContainer to, int toIndex, int count = -1)
+		{
+			if (!CanRemoveSlot(fromIndex, out ItemStack result, out ItemStack removed, count))
+			{
+				return false;
+			}
+
+			if (to.CanAddSlot(toIndex, removed, out _, out _))
+			{
+				return true;
+			}
+			else if (result.IsEmpty && to.CanRemoveSlot(toIndex, out _, out ItemStack toSlot))
+			{
+				return CanSetSlot(fromIndex, toSlot) && to.CanSetSlot(toIndex, removed);
+			}
+
+			return false;
+		}
+
+		public bool CanSetSlot(int index, in ItemStack stack)
+		{
+			return stack.Item == null || CanReceive(index, stack.Item) && stack.Count <= GetMaxStacks(stack.Item);
+		}
+
 		public bool CanSetSize(int value)
 		{
 			if (value < 0) return false;
@@ -185,21 +289,21 @@ namespace Kryz.RPG.Items
 			return false;
 		}
 
-		public bool TrySetSize<T>(T transaction, int value) where T : IItemTransaction
+		public bool TrySetSlot<T>(T transaction, int index, in ItemStack stack) where T : IItemTransaction
 		{
-			if (CanSetSize(value))
+			if (CanSetSlot(index, stack))
 			{
-				SetSize(transaction, value);
+				SetSlot(transaction, index, stack);
 				return true;
 			}
 			return false;
 		}
 
-		public bool TrySetSlot<T>(T transaction, int index, in ItemStack stack) where T : IItemTransaction
+		public bool TrySetSize<T>(T transaction, int value) where T : IItemTransaction
 		{
-			if (stack.Item == null || CanReceive(index, stack.Item) && stack.Count < GetMaxStacks(stack.Item))
+			if (CanSetSize(value))
 			{
-				SetSlot(transaction, index, stack);
+				SetSize(transaction, value);
 				return true;
 			}
 			return false;
