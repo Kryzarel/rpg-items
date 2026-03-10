@@ -61,7 +61,7 @@ namespace Kryz.RPG.Items
 			{
 				ref ItemStack slot = ref slots[i];
 
-				if (slot.Item == stack.Item && CanReceive(i, stack.Item))
+				if (CanReceive(i, stack.Item))
 				{
 					// Call try add but don't assign the result to anything
 					slot.TryAdd(remainder, out _, out remainder, maxCount);
