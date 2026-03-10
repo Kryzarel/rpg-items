@@ -412,7 +412,7 @@ namespace Kryz.RPG.Items
 			}
 			else if (value < size)
 			{
-				Array.Clear(slots, value, size);
+				Array.Clear(slots, value, size - value);
 			}
 
 			size = value;
