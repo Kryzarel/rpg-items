@@ -80,11 +80,11 @@ namespace Kryz.RPG.Items
 		/// <param name="stacks">The <see cref="ItemStack"/>s to copy from.</param>
 		void CopyFrom(IReadOnlyList<ItemStack> stacks);
 
+		void Sort();
+
 		/// <summary>
 		/// Clear the container, emptying all slots.
 		/// </summary>
 		void Clear();
-
-		void Sort();
 	}
 }

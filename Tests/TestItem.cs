@@ -16,5 +16,7 @@ namespace Kryz.RPG.Items.Tests
 		}
 
 		public int CompareTo(IItem other) => string.Compare(Name, other.Name);
+
+		public override string ToString() => Name;
 	}
 }

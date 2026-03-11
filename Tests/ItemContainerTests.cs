@@ -233,47 +233,81 @@ namespace Kryz.RPG.Items.Tests
 			AssertInvariants(container);
 		}
 
-		private ItemStack RandomStack()
+		protected virtual ItemStack RandomStack()
 		{
 			IItem item = rng.Next(2) == 0 ? itemA : itemB;
 			int count = rng.Next(1, 40);
 			return new ItemStack(item, count);
 		}
 
+		protected enum InventoryOperation { TryAdd, TryAddSlot, TryRemove, TryRemoveSlot, TryMove, TryMoveSlot, TrySetSize, Sort, Clear }
+
+		protected static readonly int numOps = Enum.GetValues(typeof(InventoryOperation)).Length;
+
 		[Test]
-		public void RandomOperationsMaintainInvariants()
+		public virtual void RandomOperationsMaintainInvariants()
 		{
 			T container = CreateContainer(10);
 
 			for (int i = 0; i < 5000; i++)
 			{
-				int op = rng.Next(5);
+				InventoryOperation op = (InventoryOperation)rng.Next(numOps);
 
 				switch (op)
 				{
-					case 0:
+					case InventoryOperation.TryAdd:
 						container.TryAdd(RandomStack(), out _);
 						break;
 
-					case 1:
+					case InventoryOperation.TryAddSlot:
+						if (container.Size > 0)
+						{
+							int index = rng.Next(container.Size);
+							container.TryAddSlot(index, RandomStack(), out _, out _);
+						}
+						break;
+
+					case InventoryOperation.TryRemove:
 						container.TryRemove(RandomStack());
 						break;
 
-					case 2:
-						container.Sort();
+					case InventoryOperation.TryRemoveSlot:
+						if (container.Size > 0)
+						{
+							int index = rng.Next(container.Size);
+							int count = rng.Next(-1, 40);
+							container.TryRemoveSlot(index, out _, out _, count);
+						}
 						break;
 
-					case 3:
+					case InventoryOperation.TryMove:
+						if (container.Size > 0)
+						{
+							int index = rng.Next(container.Size);
+							int count = rng.Next(-1, 40);
+							container.TryMove(index, container, count);
+						}
+						break;
+
+					case InventoryOperation.TryMoveSlot:
+						if (container.Size > 0)
+						{
+							int index1 = rng.Next(container.Size);
+							int index2 = rng.Next(container.Size);
+							container.TryMoveSlot(index1, container, index2);
+						}
+						break;
+
+					case InventoryOperation.TrySetSize:
 						container.TrySetSize(rng.Next(0, 15));
 						break;
 
-					case 4:
-						if (container.Size > 0)
-						{
-							int a = rng.Next(container.Size);
-							int b = rng.Next(container.Size);
-							container.TryMoveSlot(a, container, b);
-						}
+					case InventoryOperation.Sort:
+						container.Sort();
+						break;
+
+					case InventoryOperation.Clear:
+						container.Clear();
 						break;
 				}
 
