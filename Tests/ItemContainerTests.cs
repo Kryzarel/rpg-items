@@ -13,7 +13,7 @@ namespace Kryz.RPG.Items.Tests
 
 		protected virtual T CreateContainer(int size) => (T)Activator.CreateInstance(typeof(T), size, null);
 
-		protected static void AssertInvariants(T container)
+		protected virtual void AssertInvariants(T container)
 		{
 			int occupied = container.Count(s => !s.IsEmpty);
 			int free = container.Count(s => s.IsEmpty);
