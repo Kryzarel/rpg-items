@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Kryz.RPG.Items.Views
+namespace Kryz.RPG.Items.UGUI
 {
 	[RequireComponent(typeof(RectTransform))]
 	public abstract class BaseItemSlotView : MonoBehaviour, IItemSlotView

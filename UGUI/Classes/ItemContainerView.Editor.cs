@@ -3,7 +3,7 @@ using System;
 using UnityEditor;
 using UnityEngine;
 
-namespace Kryz.RPG.Items.Views
+namespace Kryz.RPG.Items.UGUI
 {
 	public partial class ItemContainerView : MonoBehaviour
 	{

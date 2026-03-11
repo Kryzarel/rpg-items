@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Kryz.RPG.Items.Views
+namespace Kryz.RPG.Items.UGUI
 {
 	public interface IItemContainerView
 	{

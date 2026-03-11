@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace Kryz.RPG.Items.Views
+namespace Kryz.RPG.Items.UGUI
 {
 	public class ItemSlotDragController : BaseItemSlotDragController
 	{

@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace Kryz.RPG.Items.Views
+namespace Kryz.RPG.Items.UGUI
 {
 	public abstract class BaseItemSlotController : MonoBehaviour, IItemSlotController
 	{

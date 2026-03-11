@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Kryz.RPG.Items.Views
+namespace Kryz.RPG.Items.UGUI
 {
 	[RequireComponent(typeof(RectTransform))]
 	public partial class ItemContainerView : MonoBehaviour, IItemContainerView

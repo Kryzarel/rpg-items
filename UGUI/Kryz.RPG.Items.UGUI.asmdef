@@ -1,6 +1,6 @@
 {
-    "name": "Kryz.RPG.Items.Views",
-    "rootNamespace": "Kryz.RPG.Items.Views",
+    "name": "Kryz.RPG.Items.UGUI",
+    "rootNamespace": "Kryz.RPG.Items.UGUI",
     "references": [
         "Kryz.RPG.Items",
         "UnityEngine.UI",

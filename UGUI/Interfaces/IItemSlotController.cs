@@ -1,6 +1,6 @@
 using UnityEngine.EventSystems;
 
-namespace Kryz.RPG.Items.Views
+namespace Kryz.RPG.Items.UGUI
 {
 	public interface IItemSlotController
 	{
