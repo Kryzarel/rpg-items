@@ -76,7 +76,7 @@ namespace Kryz.RPG.Items.Tests
 		}
 
 		[Test]
-		public virtual void RandomOperationsMaintainInvariants()
+		public virtual void Fuzz_RandomOperationsMaintainInvariants()
 		{
 			T container = CreateContainer(10);
 
@@ -147,7 +147,7 @@ namespace Kryz.RPG.Items.Tests
 		}
 
 		[Test]
-		public virtual void RandomOperationsMaintainInvariants_TwoInventories()
+		public virtual void Fuzz_RandomOperationsMaintainInvariants_TwoInventories()
 		{
 			T a = CreateContainer(10);
 			T b = CreateContainer(10);
