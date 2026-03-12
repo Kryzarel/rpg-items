@@ -66,8 +66,7 @@ namespace Kryz.RPG.Items
 
 			for (int i = 0; i < size; i++)
 			{
-				ItemStack stack = stacks[i];
-				SetSlot(transaction, i, stack);
+				SetSlot(transaction, i, stacks[i]);
 			}
 
 			transaction.SetResult(true);
@@ -85,8 +84,7 @@ namespace Kryz.RPG.Items
 
 			for (int i = 0; i < size; i++)
 			{
-				ItemStack stack = stacks[i];
-				SetSlot(transaction, i, stack);
+				SetSlot(transaction, i, stacks[i]);
 			}
 
 			transaction.SetResult(true);
