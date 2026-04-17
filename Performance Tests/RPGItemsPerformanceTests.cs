@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Kryz.RPG.Items;
 using UnityEngine;
+using Debug = System.Diagnostics.Debug;
 
 public class RPGItemsPerformanceTests : MonoBehaviour
 {
@@ -45,11 +46,32 @@ public class RPGItemsPerformanceTests : MonoBehaviour
 
 	private void Update()
 	{
-		// inventory.CopyFrom(itemsToAdd);
-		// inventory.Sort();
+		ClearAndAdd();
+		ClearAndCopy();
 
-		Enumerate();
-		EnumerateInterface();
+		// Enumerate();
+		// EnumerateInterface();
+	}
+
+	private void ClearAndAdd()
+	{
+		Debug.Assert(inventory != null);
+		Debug.Assert(itemsToAdd != null);
+
+		inventory.Clear();
+		for (int i = 0; i < itemsToAdd.Length; i++)
+		{
+			inventory.TryAdd(itemsToAdd[i], out _);
+		}
+	}
+
+	private void ClearAndCopy()
+	{
+		Debug.Assert(inventory != null);
+		Debug.Assert(itemsToAdd != null);
+
+		inventory.Clear();
+		inventory.CopyFrom(itemsToAdd);
 	}
 
 	private void Enumerate()
