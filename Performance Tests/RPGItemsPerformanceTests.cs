@@ -47,6 +47,7 @@ public class RPGItemsPerformanceTests : MonoBehaviour
 	private void Update()
 	{
 		ClearAndAdd();
+		ClearAndAddTransaction();
 		ClearAndCopy();
 
 		// Enumerate();
@@ -63,6 +64,21 @@ public class RPGItemsPerformanceTests : MonoBehaviour
 		{
 			inventory.TryAdd(itemsToAdd[i], out _);
 		}
+	}
+
+	private void ClearAndAddTransaction()
+	{
+		Debug.Assert(inventory != null);
+		Debug.Assert(itemsToAdd != null);
+
+		inventory.Clear();
+
+		using ItemTransaction transaction = new(inventory);
+		for (int i = 0; i < itemsToAdd.Length; i++)
+		{
+			inventory.TryAdd(transaction, itemsToAdd[i], out _);
+		}
+		transaction.SetResult(true);
 	}
 
 	private void ClearAndCopy()

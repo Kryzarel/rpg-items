@@ -346,10 +346,7 @@ namespace Kryz.RPG.Items
 
 		public void NotifySlot(int index, ItemStack oldStack, ItemStack newStack)
 		{
-			if ((uint)index < (uint)size)
-			{
-				OnSlotChanged?.Invoke(index, oldStack, newStack);
-			}
+			OnSlotChanged?.Invoke(index, oldStack, newStack);
 		}
 
 		public void NotifyTransactionSuccess()
@@ -364,12 +361,9 @@ namespace Kryz.RPG.Items
 
 		public void RollbackSlot(int index, ItemStack oldStack)
 		{
-			if ((uint)index < (uint)size)
-			{
-				ref ItemStack slot = ref slots[index];
-				UpdateDerivedValues(index, slot, oldStack);
-				slot = oldStack;
-			}
+			ref ItemStack slot = ref slots[index];
+			UpdateDerivedValues(index, slot, oldStack);
+			slot = oldStack;
 		}
 
 		protected virtual void UpdateDerivedValues(int index, ItemStack oldStack, ItemStack newStack)

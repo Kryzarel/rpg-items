@@ -14,18 +14,21 @@ namespace Kryz.RPG.Items
 		public ItemTransaction(IItemContainerTransactional container)
 		{
 			edits = PooledList<ItemContainerEdit>.Rent();
+			edits.Add(new ItemContainerEdit(container));
 			commit = false;
 			completed = false;
 		}
 
 		public readonly void RecordSize(IItemContainerTransactional container, int oldSize, int newSize)
 		{
-			edits.Add(new ItemContainerEdit(container, new SizeEdit(oldSize, newSize)));
+			ref ItemContainerEdit edit = ref GetOrCreate(container);
+			edit.RecordSize(oldSize, newSize);
 		}
 
 		public readonly void RecordSlot(IItemContainerTransactional container, int index, ItemStack oldStack, ItemStack newStack)
 		{
-			edits.Add(new ItemContainerEdit(container, new SlotEdit(index, oldStack, newStack)));
+			ref ItemContainerEdit edit = ref GetOrCreate(container);
+			edit.RecordSlot(index, oldStack, newStack);
 		}
 
 		public bool SetResult(bool value)
@@ -56,88 +59,72 @@ namespace Kryz.RPG.Items
 			edits.Dispose();
 		}
 
-		private static readonly ItemContainerEdit defaultEdit = default;
+		private readonly ref ItemContainerEdit GetOrCreate(IItemContainerTransactional container)
+		{
+			for (int i = 0, count = edits.Count; i < count; i++)
+			{
+				ref ItemContainerEdit edit = ref edits[i];
+
+				if (edit.Container == container)
+				{
+					return ref edit;
+				}
+			}
+
+			edits.Add(new ItemContainerEdit(container));
+			return ref edits[^1];
+		}
 
 		private readonly void Notify()
 		{
-			Span<ItemContainerEdit> edits = this.edits.AsSpan();
-			TimSortLite.Sort(edits); // This sort must be stable, otherwise the deduplication will be incorrect
-			int? firstSizeInBlock = null;
-			ItemStack? firstSlotInBlock = null;
-
-			for (int i = 0, len = edits.Length; i < len; i++)
+			foreach (ItemContainerEdit edit in edits.AsSpan())
 			{
-				ref readonly ItemContainerEdit edit1 = ref edits[i];
-				ref readonly ItemContainerEdit edit2 = ref i + 1 < len ? ref edits[i + 1] : ref defaultEdit;
-
-				bool isLastInContainer = edit1.Container != edit2.Container;
-
-				if (edit1.IsSizeEdit)
+				if (edit.SizeEdit.HasValue)
 				{
-					firstSizeInBlock ??= edit1.SizeEdit.OldSize;
-					if (isLastInContainer || !edit2.IsSizeEdit)
-					{
-						edit1.Container.NotifySize(firstSizeInBlock.Value, edit1.SizeEdit.NewSize);
-						firstSizeInBlock = null;
-					}
+					SizeEdit sizeEdit = edit.SizeEdit.Value;
+					edit.Container.NotifySize(sizeEdit.OldSize, sizeEdit.NewSize);
 				}
-				else
+
+				int size = edit.Container.Size;
+				ReadOnlySpan<SlotEdit> slotEdits = edit.SlotEdits;
+
+				foreach (int index in edit.EditedIndexes)
 				{
-					firstSlotInBlock ??= edit1.SlotEdit.OldStack;
-					if (isLastInContainer || edit2.IsSizeEdit || edit1.SlotEdit.Index != edit2.SlotEdit.Index)
+					if (index < size)
 					{
-						edit1.Container.NotifySlot(edit1.SlotEdit.Index, firstSlotInBlock.Value, edit1.SlotEdit.NewStack);
-						firstSlotInBlock = null;
+						SlotEdit slotEdit = slotEdits[index];
+						edit.Container.NotifySlot(slotEdit.Index, slotEdit.OldStack, slotEdit.NewStack);
 					}
 				}
 
-				if (isLastInContainer)
-				{
-					edit1.Container.NotifyTransactionSuccess();
-					firstSizeInBlock = null;
-					firstSlotInBlock = null;
-				}
+				edit.Container.NotifyTransactionSuccess();
+				edit.Dispose();
 			}
 		}
 
 		private readonly void Rollback()
 		{
-			Span<ItemContainerEdit> edits = this.edits.AsSpan();
-			TimSortLite.Sort(edits); // This sort must be stable, otherwise the deduplication will be incorrect
-			int? firstSizeInBlock = null;
-			ItemStack? firstSlotInBlock = null;
-
-			for (int i = 0, len = edits.Length; i < len; i++)
+			foreach (ItemContainerEdit edit in edits.AsSpan())
 			{
-				ref readonly ItemContainerEdit edit1 = ref edits[i];
-				ref readonly ItemContainerEdit edit2 = ref i + 1 < len ? ref edits[i + 1] : ref defaultEdit;
-
-				bool isLastInContainer = edit1.Container != edit2.Container;
-
-				if (edit1.IsSizeEdit)
+				if (edit.SizeEdit.HasValue)
 				{
-					firstSizeInBlock ??= edit1.SizeEdit.OldSize;
-					if (isLastInContainer || !edit2.IsSizeEdit)
-					{
-						edit1.Container.RollbackSize(firstSizeInBlock.Value);
-						firstSizeInBlock = null;
-					}
+					SizeEdit sizeEdit = edit.SizeEdit.Value;
+					edit.Container.RollbackSize(sizeEdit.OldSize);
 				}
-				else
+
+				int size = edit.Container.Size;
+				ReadOnlySpan<SlotEdit> slotEdits = edit.SlotEdits;
+
+				foreach (int index in edit.EditedIndexes)
 				{
-					firstSlotInBlock ??= edit1.SlotEdit.OldStack;
-					if (isLastInContainer || edit2.IsSizeEdit || edit1.SlotEdit.Index != edit2.SlotEdit.Index)
+					if (index < size)
 					{
-						edit1.Container.RollbackSlot(edit1.SlotEdit.Index, firstSlotInBlock.Value);
-						firstSlotInBlock = null;
+						SlotEdit slotEdit = slotEdits[index];
+						edit.Container.RollbackSlot(slotEdit.Index, slotEdit.OldStack);
 					}
 				}
 
-				if (isLastInContainer)
-				{
-					firstSizeInBlock = null;
-					firstSlotInBlock = null;
-				}
+				edit.Dispose();
 			}
 		}
 	}
