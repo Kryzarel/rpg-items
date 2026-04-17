@@ -322,21 +322,21 @@ namespace Kryz.RPG.Items
 
 		public virtual void Sort<T, TComparer>(T transaction, TComparer comparer) where T : IItemTransaction where TComparer : IComparer<ItemStack>
 		{
-			ItemStack[] sortedArray = arrayPool.Rent(size);
-			Array.Copy(slots, sortedArray, size);
-			Span<ItemStack> sorted = new(sortedArray, 0, size);
+			ItemStack[] sortArray = arrayPool.Rent(size);
+			Span<ItemStack> sortSpan = new(sortArray, 0, size);
+			Slots.CopyTo(sortSpan);
 
 			// We DON'T use the default Array.Sort because it is unstable. I think stable sorting is very valuable here.
 			// Our version also tends to be just as fast, if not slightly faster, which is nice.
-			TimSortLite.Sort(sorted, comparer);
+			TimSortLite.Sort(sortSpan, comparer);
 
 			for (int i = 0; i < size; i++)
 			{
-				SetSlot(transaction, i, sorted[i]);
+				SetSlot(transaction, i, sortSpan[i]);
 			}
 
-			sorted.Clear();
-			arrayPool.Return(sortedArray);
+			sortSpan.Clear();
+			arrayPool.Return(sortArray);
 		}
 
 		public void NotifySize(int oldSize, int newSize)
@@ -366,22 +366,23 @@ namespace Kryz.RPG.Items
 		{
 			if ((uint)index < (uint)size)
 			{
-				SetSlotRef(ref slots[index], oldStack);
+				ref ItemStack slot = ref slots[index];
+				UpdateDerivedValues(index, slot, oldStack);
+				slot = oldStack;
 			}
+		}
+
+		protected virtual void UpdateDerivedValues(int index, ItemStack oldStack, ItemStack newStack)
+		{
+			if (oldStack.Count <= 0 && newStack.Count > 0) occupiedSlots++;
+			else if (oldStack.Count > 0 && newStack.Count <= 0) occupiedSlots--;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void SetSlotRef<T>(T transaction, ref ItemStack slot, int index, in ItemStack value) where T : IItemTransaction
 		{
 			transaction.RecordSlot(this, index, slot, value);
-			SetSlotRef(ref slot, value);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void SetSlotRef(ref ItemStack slot, in ItemStack value)
-		{
-			if (slot.Count <= 0 && value.Count > 0) occupiedSlots++;
-			else if (slot.Count > 0 && value.Count <= 0) occupiedSlots--;
+			UpdateDerivedValues(index, slot, value);
 			slot = value;
 		}
 
