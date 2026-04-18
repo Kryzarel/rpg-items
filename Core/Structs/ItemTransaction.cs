@@ -93,7 +93,10 @@ namespace Kryz.RPG.Items
 					if (index < size)
 					{
 						SlotEdit slotEdit = slotEdits[index];
-						edit.Container.NotifySlot(slotEdit.Index, slotEdit.OldStack, slotEdit.NewStack);
+						if (slotEdit.OldStack != slotEdit.NewStack)
+						{
+							edit.Container.NotifySlot(slotEdit.Index, slotEdit.OldStack, slotEdit.NewStack);
+						}
 					}
 				}
 

@@ -19,7 +19,7 @@ namespace Kryz.RPG.Items
 
 		public ItemContainerEdit(IItemContainerTransactional container)
 		{
-			sizeEdit = default;
+			sizeEdit = null;
 			int size = container.Size;
 			slotEdits = ArrayPool<SlotEdit>.Shared.Rent(size);
 			edited = ArrayPool<int>.Shared.Rent(size);
@@ -31,7 +31,7 @@ namespace Kryz.RPG.Items
 		{
 			ref SlotEdit edit = ref slotEdits[index];
 
-			if (edit.Index == default && edit.OldStack == default && edit.NewStack == default)
+			if (edit.IsEmpty)
 			{
 				edit = new SlotEdit(index, oldStack, newStack);
 				edited[editedCount++] = index;
@@ -55,8 +55,6 @@ namespace Kryz.RPG.Items
 
 		public void Dispose()
 		{
-			sizeEdit = default;
-
 			for (int i = 0; i < editedCount; i++)
 			{
 				slotEdits[edited[i]] = default;
@@ -64,6 +62,10 @@ namespace Kryz.RPG.Items
 
 			ArrayPool<SlotEdit>.Shared.Return(slotEdits);
 			ArrayPool<int>.Shared.Return(edited);
+
+			sizeEdit = null;
+			slotEdits = null!;
+			edited = null!;
 			editedCount = 0;
 		}
 	}
