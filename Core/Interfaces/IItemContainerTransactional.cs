@@ -12,8 +12,6 @@ namespace Kryz.RPG.Items
 		event OnSlotChangedDelegate OnSlotChanged;
 		event OnTransactionSuccessDelegate OnTransactionSuccess;
 
-		int InstanceId { get; }
-
 		/// <summary>
 		/// Get the maximum stack size of a particular item.
 		/// </summary>
