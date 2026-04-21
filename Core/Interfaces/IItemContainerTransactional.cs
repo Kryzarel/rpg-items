@@ -4,9 +4,9 @@ namespace Kryz.RPG.Items
 {
 	public interface IItemContainerTransactional : IReadOnlyItemContainer
 	{
-		public delegate void OnSizeChangedDelegate(int oldSize, int newSize);
-		public delegate void OnSlotChangedDelegate(int index, ItemStack oldStack, ItemStack newStack);
-		public delegate void OnTransactionSuccessDelegate();
+		delegate void OnSizeChangedDelegate(int oldSize, int newSize);
+		delegate void OnSlotChangedDelegate(int index, ItemStack oldStack, ItemStack newStack);
+		delegate void OnTransactionSuccessDelegate();
 
 		event OnSizeChangedDelegate OnSizeChanged;
 		event OnSlotChangedDelegate OnSlotChanged;
@@ -78,7 +78,7 @@ namespace Kryz.RPG.Items
 		/// <param name="to">The <see cref="IItemContainer"/> to move to.</param>
 		/// <param name="count">The amount of items to move. Passing in a negative number moves the entire stack.</param>
 		/// <returns><see cref="true"/> if it is possible to move the specified amount of items. Otherwise <see cref="false"/>.</returns>
-		public bool CanMove(int fromIndex, IItemContainer to, int count = -1);
+		bool CanMove(int fromIndex, IItemContainer to, int count = -1);
 
 		/// <summary>
 		/// Check if it's possible to move a certain amount of items from a specific slot to another slot of an <see cref="IItemContainer"/>.
@@ -88,7 +88,7 @@ namespace Kryz.RPG.Items
 		/// <param name="toIndex">The slot index of the target <see cref="IItemContainer"/> to move to.</param>
 		/// <param name="count">The amount of items to move. Passing in a negative number moves the entire stack.</param>
 		/// <returns><see cref="true"/> if it is possible to move the specified amount of items. Otherwise <see cref="false"/>.</returns>
-		public bool CanMoveSlot(int fromIndex, IItemContainer to, int toIndex, int count = -1);
+		bool CanMoveSlot(int fromIndex, IItemContainer to, int toIndex, int count = -1);
 
 		/// <summary>
 		/// Check if it's possible to set a slot to the specified <see cref="ItemStack"/>.
@@ -147,7 +147,7 @@ namespace Kryz.RPG.Items
 		/// <param name="to">The <see cref="IItemContainer"/> to move to.</param>
 		/// <param name="count">The amount of items to move. Passing in a negative number moves the entire stack.</param>
 		/// <returns><see cref="true"/> if it was possible to move the specified amount of items. Otherwise <see cref="false"/>.</returns>
-		public bool TryMove<T>(T transaction, int fromIndex, IItemContainerTransactional to, int count = -1) where T : IItemTransaction;
+		bool TryMove<T>(T transaction, int fromIndex, IItemContainerTransactional to, int count = -1) where T : IItemTransaction;
 
 		/// <summary>
 		/// Try to move a certain amount of items from a specific slot to another slot of an <see cref="IItemContainer"/>.
@@ -157,7 +157,7 @@ namespace Kryz.RPG.Items
 		/// <param name="toIndex">The slot index of the target <see cref="IItemContainer"/> to move to.</param>
 		/// <param name="count">The amount of items to move. Passing in a negative number moves the entire stack.</param>
 		/// <returns><see cref="true"/> if it was possible to move the specified amount of items. Otherwise <see cref="false"/>.</returns>
-		public bool TryMoveSlot<T>(T transaction, int fromIndex, IItemContainerTransactional to, int toIndex, int count = -1) where T : IItemTransaction;
+		bool TryMoveSlot<T>(T transaction, int fromIndex, IItemContainerTransactional to, int toIndex, int count = -1) where T : IItemTransaction;
 
 		/// <summary>
 		/// Try to set a slot to the specified <see cref="ItemStack"/>.
