@@ -180,7 +180,6 @@ namespace Kryz.RPG.Items
 		/// </summary>
 		/// <param name="index">The slot index to set.</param>
 		/// <param name="stack">The stack to set the slot to.</param>
-		/// <returns><see cref="true"/> if it was possible to set the slot. Otherwise <see cref="false"/>.</returns>
 		void SetSlot<T>(T transaction, int index, in ItemStack stack) where T : IItemTransaction;
 
 		void Sort<T>(T transaction) where T : IItemTransaction;
