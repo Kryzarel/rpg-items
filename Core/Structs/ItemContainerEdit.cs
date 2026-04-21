@@ -9,13 +9,14 @@ namespace Kryz.RPG.Items
 		private SizeEdit? sizeEdit;
 		private SlotEdit[] slotEdits;
 		private int[] edited;
-		private int editedCount;
+		private int editCount;
 
 		public readonly IItemContainerTransactional Container;
 
 		public readonly SizeEdit? SizeEdit => sizeEdit;
 		public readonly ReadOnlySpan<SlotEdit> SlotEdits => new(slotEdits, 0, Container.Size);
-		public readonly ReadOnlySpan<int> EditedIndexes => new(edited, 0, editedCount);
+		public readonly ReadOnlySpan<int> EditedIndexes => new(edited, 0, editCount);
+		public readonly int EditCount => editCount;
 
 		public ItemContainerEdit(IItemContainerTransactional container)
 		{
@@ -23,7 +24,7 @@ namespace Kryz.RPG.Items
 			int size = container.Size;
 			slotEdits = ArrayPool<SlotEdit>.Shared.Rent(size);
 			edited = ArrayPool<int>.Shared.Rent(size);
-			editedCount = 0;
+			editCount = 0;
 			Container = container;
 		}
 
@@ -34,7 +35,7 @@ namespace Kryz.RPG.Items
 			if (edit.IsEmpty)
 			{
 				edit = new SlotEdit(index, oldStack, newStack);
-				edited[editedCount++] = index;
+				edited[editCount++] = index;
 			}
 			else
 			{
@@ -55,7 +56,7 @@ namespace Kryz.RPG.Items
 
 		public void Dispose()
 		{
-			for (int i = 0; i < editedCount; i++)
+			for (int i = 0; i < editCount; i++)
 			{
 				slotEdits[edited[i]] = default;
 			}
@@ -66,7 +67,7 @@ namespace Kryz.RPG.Items
 			sizeEdit = null;
 			slotEdits = null!;
 			edited = null!;
-			editedCount = 0;
+			editCount = 0;
 		}
 	}
 }
