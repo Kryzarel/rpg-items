@@ -100,7 +100,11 @@ namespace Kryz.RPG.Items
 					}
 				}
 
-				edit.Container.NotifyTransactionSuccess();
+				if (edit.SizeEdit.HasValue || edit.EditCount > 0)
+				{
+					edit.Container.NotifyTransactionSuccess();
+				}
+
 				edit.Dispose();
 			}
 		}
