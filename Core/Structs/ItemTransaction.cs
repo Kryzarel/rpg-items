@@ -49,6 +49,7 @@ namespace Kryz.RPG.Items
 
 			if (commit)
 			{
+				FinalizeTransaction();
 				Notify();
 			}
 			else
@@ -73,6 +74,26 @@ namespace Kryz.RPG.Items
 
 			edits.Add(new ItemContainerEdit(container));
 			return ref edits[^1];
+		}
+
+		private readonly void FinalizeTransaction()
+		{
+			bool changed;
+			do
+			{
+				changed = false;
+				foreach (ItemContainerEdit edit in edits.AsSpan())
+				{
+					if (edit.Container.UpdateTransactionInvariants(this))
+						changed = true;
+				}
+			}
+			while (changed);
+
+			foreach (ItemContainerEdit edit in edits.AsSpan())
+			{
+				edit.Container.FinalizeTransaction(this);
+			}
 		}
 
 		private readonly void Notify()

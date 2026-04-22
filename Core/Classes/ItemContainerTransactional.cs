@@ -358,11 +358,20 @@ namespace Kryz.RPG.Items
 		public void RollbackSlot(int index, ItemStack oldStack)
 		{
 			ref ItemStack slot = ref slots[index];
-			UpdateDerivedValues(index, slot, oldStack);
+			UpdateInvariants(index, slot, oldStack);
 			slot = oldStack;
 		}
 
-		protected virtual void UpdateDerivedValues(int index, ItemStack oldStack, ItemStack newStack)
+		public virtual bool UpdateTransactionInvariants<T>(T transaction) where T : IItemTransaction
+		{
+			return false;
+		}
+
+		public virtual void FinalizeTransaction<T>(T transaction) where T : IItemTransaction
+		{
+		}
+
+		protected virtual void UpdateInvariants(int index, ItemStack oldStack, ItemStack newStack)
 		{
 			if (oldStack.Count <= 0 && newStack.Count > 0) occupiedSlots++;
 			else if (oldStack.Count > 0 && newStack.Count <= 0) occupiedSlots--;
@@ -372,7 +381,7 @@ namespace Kryz.RPG.Items
 		private void SetSlotRef<T>(T transaction, ref ItemStack slot, int index, in ItemStack value) where T : IItemTransaction
 		{
 			transaction.RecordSlot(this, index, slot, value);
-			UpdateDerivedValues(index, slot, value);
+			UpdateInvariants(index, slot, value);
 			slot = value;
 		}
 

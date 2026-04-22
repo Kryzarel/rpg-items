@@ -216,5 +216,16 @@ namespace Kryz.RPG.Items
 		/// <param name="index">The slot index</param>
 		/// <param name="oldStack">The old slot</param>
 		void RollbackSlot(int index, ItemStack oldStack);
+
+		/// <summary>
+		/// Run any checks and operations that need to be enforced at the end of a transaction.
+		/// </summary>
+		/// <returns><see cref="true"/> if any changes were made, <see cref="false"/> otherwise.</returns>
+		bool UpdateTransactionInvariants<T>(T transaction) where T : IItemTransaction;
+
+		/// <summary>
+		/// Run any final operations at the end of a transaction, these can mutate the container itself but should NOT mutate other containers, e.g. auto-sort.
+		/// </summary>
+		void FinalizeTransaction<T>(T transaction) where T : IItemTransaction;
 	}
 }
