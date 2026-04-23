@@ -146,7 +146,7 @@ namespace Kryz.RPG.Items.UGUI
 			}
 		}
 
-		private void OnSlotChanged(int index, ItemStack previousStack, ItemStack newStack)
+		private void OnSlotChanged(IItemContainerTransactional sender, int index, ItemStack previousStack, ItemStack newStack)
 		{
 			if (itemContainer == null || index < 0 || index >= itemContainer.Size)
 			{
@@ -157,7 +157,7 @@ namespace Kryz.RPG.Items.UGUI
 			itemSlots[index].SetItemStack(newStack);
 		}
 
-		private void OnSizeChanged(int previousSize, int newSize)
+		private void OnSizeChanged(IItemContainerTransactional sender, int previousSize, int newSize)
 		{
 			HandleSlotViews();
 		}

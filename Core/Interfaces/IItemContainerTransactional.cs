@@ -4,9 +4,9 @@ namespace Kryz.RPG.Items
 {
 	public interface IItemContainerTransactional : IReadOnlyItemContainer
 	{
-		delegate void OnSizeChangedDelegate(int oldSize, int newSize);
-		delegate void OnSlotChangedDelegate(int index, ItemStack oldStack, ItemStack newStack);
-		delegate void OnTransactionSuccessDelegate();
+		delegate void OnSizeChangedDelegate(IItemContainerTransactional sender, int oldSize, int newSize);
+		delegate void OnSlotChangedDelegate(IItemContainerTransactional sender, int index, ItemStack oldStack, ItemStack newStack);
+		delegate void OnTransactionSuccessDelegate(IItemContainerTransactional sender);
 
 		event OnSizeChangedDelegate OnSizeChanged;
 		event OnSlotChangedDelegate OnSlotChanged;

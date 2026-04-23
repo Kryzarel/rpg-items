@@ -92,7 +92,7 @@ namespace Kryz.RPG.Items.Tests
 			T container = CreateContainer(4);
 
 			int fired = 0;
-			container.OnTransactionSuccess += () => fired++;
+			container.OnTransactionSuccess += (_) => fired++;
 
 			using (ItemTransaction tx = new(container))
 			{
@@ -110,7 +110,7 @@ namespace Kryz.RPG.Items.Tests
 			T container = CreateContainer(4);
 
 			int fired = 0;
-			container.OnTransactionSuccess += () => fired++;
+			container.OnTransactionSuccess += (_) => fired++;
 
 			using (ItemTransaction tx = new(container))
 			{
@@ -126,7 +126,7 @@ namespace Kryz.RPG.Items.Tests
 			T container = CreateContainer(4);
 
 			int fired = 0;
-			container.OnSlotChanged += (_, _, _) => fired++;
+			container.OnSlotChanged += (_, _, _, _) => fired++;
 
 			using (ItemTransaction tx = new(container))
 			{

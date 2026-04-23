@@ -161,7 +161,7 @@ namespace Kryz.RPG.Items.UGUI
 			return true;
 		}
 
-		private void RefreshDraggedSlot(int index, ItemStack oldStack, ItemStack newStack)
+		private void RefreshDraggedSlot(IItemContainerTransactional sender, int index, ItemStack oldStack, ItemStack newStack)
 		{
 			if (dragController == null)
 				return;

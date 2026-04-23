@@ -337,17 +337,17 @@ namespace Kryz.RPG.Items
 
 		public void NotifySize(int oldSize, int newSize)
 		{
-			OnSizeChanged?.Invoke(oldSize, newSize);
+			OnSizeChanged?.Invoke(this, oldSize, newSize);
 		}
 
 		public void NotifySlot(int index, ItemStack oldStack, ItemStack newStack)
 		{
-			OnSlotChanged?.Invoke(index, oldStack, newStack);
+			OnSlotChanged?.Invoke(this, index, oldStack, newStack);
 		}
 
 		public void NotifyTransactionSuccess()
 		{
-			OnTransactionSuccess?.Invoke();
+			OnTransactionSuccess?.Invoke(this);
 		}
 
 		public void RollbackSize(int oldSize)
