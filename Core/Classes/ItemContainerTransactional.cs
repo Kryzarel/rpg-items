@@ -55,16 +55,14 @@ namespace Kryz.RPG.Items
 
 			for (int i = 0; i < size && remainder.Count > 0; i++)
 			{
-				ref ItemStack slot = ref slots[i];
-
 				if (CanReceive(i, stack.Item))
 				{
-					// Call try add but don't assign the result to anything
-					slot.TryAdd(remainder, out _, out remainder, maxCount);
+					// Call TryAdd but don't assign the result to anything
+					slots[i].TryAdd(remainder, out _, out remainder, maxCount);
 				}
 			}
 
-			return remainder.Count < stack.Count; // Return true if we added at least 1 item
+			return remainder.Count < stack.Count; // Return true if it's possible to add at least 1 item
 		}
 
 		public virtual bool CanAddSlot(int index, in ItemStack stack, out ItemStack result, out ItemStack remainder)
@@ -124,18 +122,18 @@ namespace Kryz.RPG.Items
 
 		public virtual bool CanMoveSlot(int fromIndex, IItemContainer to, int toIndex, int count = -1)
 		{
-			if (!CanRemoveSlot(fromIndex, out ItemStack result, out ItemStack removed, count))
+			if (!CanRemoveSlot(fromIndex, out ItemStack result, out ItemStack fromSlot, count))
 			{
 				return false;
 			}
 
-			if (to.CanAddSlot(toIndex, removed, out _, out _))
+			if (to.CanAddSlot(toIndex, fromSlot, out _, out _))
 			{
 				return true;
 			}
 			else if (result.IsEmpty && to.CanRemoveSlot(toIndex, out _, out ItemStack toSlot))
 			{
-				return CanSetSlot(fromIndex, toSlot) && to.CanSetSlot(toIndex, removed);
+				return CanSetSlot(fromIndex, toSlot) && to.CanSetSlot(toIndex, fromSlot);
 			}
 
 			return false;
