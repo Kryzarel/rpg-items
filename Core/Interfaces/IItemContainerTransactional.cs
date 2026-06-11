@@ -180,6 +180,13 @@ namespace Kryz.RPG.Items
 		/// <param name="stack">The stack to set the slot to.</param>
 		void SetSlot<T>(T transaction, int index, in ItemStack stack) where T : IItemTransaction;
 
+		/// <summary>
+		/// <para>Set the container to the specified size. Sets the size whether the Container allows it or not.</para>
+		/// <para>If you want to obey the Container's rules use <see cref="TrySetSize"/> instead.</para>
+		/// </summary>
+		/// <param name="value">The size to set.</param>
+		void SetSize<T>(T transaction, int value) where T : IItemTransaction;
+
 		void Sort<T>(T transaction) where T : IItemTransaction;
 
 		void Sort<T, TComparer>(T transaction, TComparer comparer) where TComparer : IComparer<ItemStack> where T : IItemTransaction;

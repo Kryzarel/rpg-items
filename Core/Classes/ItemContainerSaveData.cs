@@ -1,5 +1,4 @@
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using Kryz.Utils;
 using UnityEngine;
@@ -12,45 +11,47 @@ namespace Kryz.RPG.Items
 		[SerializeField]
 		public List<ItemStackSaveData> ItemStacks = new();
 
-		public void FromItems(IItemFactory itemFactory, ReadOnlySpan<ItemStack> items)
+		public void FromItemContainer(IItemFactory itemFactory, IReadOnlyItemContainer container)
 		{
-			ItemStacks.EnsureCapacity(items.Length);
+			ReadOnlySpan<ItemStack> items = container.Slots;
+
 			ItemStacks.Clear();
+			ItemStacks.EnsureCapacity(items.Length);
 
 			for (int i = 0; i < items.Length; i++)
 			{
 				ItemStack stack = items[i];
+				ItemStackSaveData saveData = default;
 
 				if (stack.Item != null && stack.Count > 0)
 				{
-					ItemStacks.Add(new ItemStackSaveData(itemFactory.ToSaveData(stack.Item), stack.Count));
+					saveData = new ItemStackSaveData(itemFactory.ToSaveData(stack.Item), stack.Count);
 				}
-				else
-				{
-					ItemStacks.Add(default);
-				}
+
+				ItemStacks.Add(saveData);
 			}
 		}
 
 		public void ToItemContainer(IItemFactory itemFactory, IItemContainer container)
 		{
-			ItemStack[] stacksArray = ArrayPool<ItemStack>.Shared.Rent(ItemStacks.Count);
-			Span<ItemStack> stacks = stacksArray.AsSpan(0, ItemStacks.Count);
+			using ItemTransaction transaction = new(container);
 
-			for (int i = 0; i < stacks.Length; i++)
+			container.SetSize(transaction, ItemStacks.Count);
+
+			for (int i = 0; i < ItemStacks.Count; i++)
 			{
 				ItemStackSaveData saveData = ItemStacks[i];
+				ItemStack stack = default;
 
 				if (saveData.Item != null && saveData.Count > 0)
 				{
-					stacks[i] = new ItemStack(itemFactory.CreateFromSave(saveData.Item), saveData.Count);
+					stack = new ItemStack(itemFactory.CreateFromSave(saveData.Item), saveData.Count);
 				}
+
+				container.SetSlot(transaction, i, stack);
 			}
 
-			container.CopyFrom(stacks);
-
-			stacks.Clear();
-			ArrayPool<ItemStack>.Shared.Return(stacksArray);
+			transaction.SetResult(true);
 		}
 	}
 }

@@ -2,7 +2,6 @@ using System;
 using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using Kryz.Utils;
 
 namespace Kryz.RPG.Items
@@ -312,6 +311,12 @@ namespace Kryz.RPG.Items
 			}
 		}
 
+		public void SetSize<T>(T transaction, int value) where T : IItemTransaction
+		{
+			transaction.RecordSize(this, size, value);
+			SetSize(value);
+		}
+
 		public virtual void Sort<T>(T transaction) where T : IItemTransaction => Sort(transaction, ValueComparer<ItemStack>.Default);
 
 		public virtual void Sort<T, TComparer>(T transaction, TComparer comparer) where T : IItemTransaction where TComparer : IComparer<ItemStack>
@@ -375,19 +380,11 @@ namespace Kryz.RPG.Items
 			else if (oldStack.Count > 0 && newStack.Count <= 0) occupiedSlots--;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void SetSlotRef<T>(T transaction, ref ItemStack slot, int index, in ItemStack value) where T : IItemTransaction
 		{
 			transaction.RecordSlot(this, index, slot, value);
 			UpdateInvariants(index, slot, value);
 			slot = value;
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void SetSize<T>(T transaction, int value) where T : IItemTransaction
-		{
-			transaction.RecordSize(this, size, value);
-			SetSize(value);
 		}
 
 		private void SetSize(int value)

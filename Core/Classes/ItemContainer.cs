@@ -59,10 +59,7 @@ namespace Kryz.RPG.Items
 			using ItemTransaction transaction = new(this);
 			int size = stacks.Length;
 
-			if (Size < size)
-			{
-				TrySetSize(transaction, size);
-			}
+			SetSize(transaction, size);
 
 			for (int i = 0; i < size; i++)
 			{
@@ -77,10 +74,7 @@ namespace Kryz.RPG.Items
 			using ItemTransaction transaction = new(this);
 			int size = stacks.Count;
 
-			if (Size < size)
-			{
-				TrySetSize(transaction, size);
-			}
+			SetSize(transaction, size);
 
 			for (int i = 0; i < size; i++)
 			{
