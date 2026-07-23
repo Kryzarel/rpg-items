@@ -114,7 +114,6 @@ namespace Kryz.RPG.Items.UGUI
 					cachedCount = itemStack.Count;
 				}
 
-				text.color = nonEmptyColor;
 				text.enabled = itemStack.Count > 1;
 			}
 

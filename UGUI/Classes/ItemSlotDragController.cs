@@ -28,7 +28,7 @@ namespace Kryz.RPG.Items.UGUI
 
 				if (enabled)
 				{
-					SetScreenPosition(cursorSlot.RectTransform, Mouse.current.position.value);
+					SetScreenPosition(canvas, cursorSlot.RectTransform, Mouse.current.position.value);
 				}
 
 				if (cursorSlot.gameObject.activeSelf != enabled)
@@ -38,14 +38,14 @@ namespace Kryz.RPG.Items.UGUI
 			}
 		}
 
-		private void SetScreenPosition(RectTransform rect, Vector2 screenPos)
+		private static void SetScreenPosition(Canvas? canvas, RectTransform rectTransform, Vector2 screenPos)
 		{
 			Camera? cam = canvas != null ? canvas.worldCamera : null;
-			RectTransform parent = (RectTransform)rect.parent;
+			RectTransform parent = (RectTransform)rectTransform.parent;
 
-			if (RectTransformUtility.ScreenPointToLocalPointInRectangle(parent, screenPos, cam, out Vector2 position))
+			if (RectTransformUtility.ScreenPointToLocalPointInRectangle(parent, screenPos, cam, out Vector2 localPos))
 			{
-				rect.localPosition = position;
+				rectTransform.localPosition = localPos;
 			}
 		}
 
