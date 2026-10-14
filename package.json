@@ -10,5 +10,6 @@
   "dependencies": {
     "com.kryzarel.c-sharp-utilities": "0.10.0",
     "com.unity.ugui": "2.0.0"
-  }
+  },
+  "unity": "2021.2"
 }
