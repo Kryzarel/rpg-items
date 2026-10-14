@@ -1,5 +1,4 @@
 using System;
-using Kryz.UnityUtils;
 using UnityEngine;
 
 namespace Kryz.RPG.Items
@@ -7,7 +6,7 @@ namespace Kryz.RPG.Items
 	[Serializable]
 	public struct ItemStackSaveData
 	{
-		[SerializeReference, SerializeReferencePicker]
+		[SerializeReference]
 		public IItemSaveData? Item;
 
 		[SerializeField]
